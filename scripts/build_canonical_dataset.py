@@ -59,6 +59,22 @@ def generate_player_id(canonical_name: str) -> str:
     h = hashlib.sha1(canonical_name.encode("utf-8")).hexdigest()
     return f"p_{h[:8]}"
 
+# Add a helper to get gender from match_id
+def get_gender_from_match_id(match_id: str) -> str:
+    """
+    Returns 'M' for men or 'W' for women based on the match_id convention.
+    Example match_id: '20251221-M-NextGen_Finals-F-Alexander_Blockx-Learner_Tien'
+    """
+    try:
+        # Split by '-' and take the second token
+        gender_token = match_id.split("-")[1]
+        if gender_token in ("M", "W"):
+            return gender_token
+    except Exception:
+        pass
+    return None  # fallback if parsing fails
+
+
 def clean_matches(path, output_directory):
     file_path = Path(path)
     if not file_path.exists():
@@ -78,13 +94,13 @@ def clean_matches(path, output_directory):
     shape = df.shape
     print(f"Successfully loaded dataframe: {file_path.name} ({shape[0]}x{shape[1]})")
     print(df.head())
-    print(f"Column Names: {df.columns.to_list()}")
     df.columns = [c.strip() for c in df.columns]
-    print(f"New Column Names: {df.columns.to_list()}")
+    print(f"Column Names: {df.columns.to_list()}")
 
     player_rows = []
 
     for idx, row in df.iterrows():
+        gender = get_gender_from_match_id(row["match_id"])
         for side in [1, 2]:
             name_col = f"Player {side}"
             hand_col = f"Pl {side} hand"
@@ -94,35 +110,23 @@ def clean_matches(path, output_directory):
             if not canonical_name:
                 print(f"[FATAL] - Player name is not canonical: {row}")
                 quit() # continue
-            player_rows.append({"display_name": display_name, "canonical_name": canonical_name, "handedness": row.get(hand_col), "date": row.get("Date")})
+            player_rows.append({"display_name": display_name, "canonical_name": canonical_name, "handedness": row.get(hand_col), "date": row.get("Date"), "gender": gender})
 
     players_df = pd.DataFrame(player_rows)
 
     # Aggregate into unique players
-    players = (
-        players_df
-        .groupby("canonical_name", as_index=False)
-        .agg(
-            display_name=("display_name", "first"),
-            handedness=("handedness", "first"),
-            first_seen=("date", "min"),
-            last_seen=("date", "max")
-        )
-    )
-
+    players = (players_df.groupby("canonical_name", as_index=False).agg(display_name=("display_name", "first"), handedness=("handedness", "first"), gender=("gender", "first"), first_seen=("date", "min"), last_seen=("date", "max")))
     players["player_id"] = players["canonical_name"].apply(generate_player_id)
-    players = players[["player_id", "canonical_name", "display_name", "handedness", "first_seen", "last_seen"]]
-
+    players = players[["player_id", "canonical_name", "display_name", "handedness", "gender", "first_seen", "last_seen"]]
     # Build lookup
     id_lookup = dict(zip(players["canonical_name"], players["player_id"]))
-
+    
     # Rewrite matches
     def map_player(name):
         return id_lookup.get(normalize_name(name))
 
     df["player1_id"] = df["Player 1"].apply(map_player)
     df["player2_id"] = df["Player 2"].apply(map_player)
-
     df_clean = df.drop(columns=["Player 1", "Player 2", "Pl 1 hand", "Pl 2 hand"])
 
     # Reorder columns
@@ -130,22 +134,20 @@ def clean_matches(path, output_directory):
     remaining = [c for c in df_clean.columns if c not in front_cols]
     df_clean = df_clean[front_cols + remaining]
 
-    print(f"\n----------- CLEAN DF {df_clean.shape} -------------\n")
+    print(f"\n----------- CLEAN DF {df_clean.shape} -------------")
     print(df_clean.head())
     print(f"\nColumn Names: {df_clean.columns.to_list()}")
 
-    print("\n\n--------------------------------------------------")
-    print(f"Players: {players}")
-
-    print(f"\n----------- SAVING -------------\n")
+    print(f"\n\n----------- SAVING -------------")
     players_output_path = output_directory / "players.csv"
     matches_output_path = output_directory / "matches.csv"
     players.to_csv(players_output_path, index=False)
     df_clean.to_csv(matches_output_path, index=False)
-
-    print("\n[SUCCESS]")
     print(f"Players written to: {players_output_path}")
     print(f"Matches written to: {matches_output_path}")
+
+    print(f"\n\n----------- SUMMARY -------------")
+    print(f"Status: SUCCESS")
     print(f"Total players: {len(players)}")
     print(f"Total matches: {len(df_clean)}")
 
