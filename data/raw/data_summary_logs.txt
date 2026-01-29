@@ -1,0 +1,1229 @@
+[INFO] - Repository Root: /home/mcilek/Github/maximcilek/lewis-university-tennis-research
+[INFO] - Data Directory: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw
+[INFO] - Walking Files filtering files with regex pattern: \.(xls|xlsx|csv|json)$
+[INFO] - Sucessfully Found 136 Data Files
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2014-wimbledon-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 6.08 MB
+Memory Usage: 34.03 MB
+Shape (Rows x Cols): 47619x59
+Total Missing Values (19.01%): 905014
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2018-usopen-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 4.86 MB
+Memory Usage: 29.15 MB
+Shape (Rows x Cols): 31851x65
+Total Missing Values (17.41%): 554571
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2014-frenchopen-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 5.72 MB
+Memory Usage: 31.79 MB
+Shape (Rows x Cols): 44426x59
+Total Missing Values (19.03%): 845496
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2012-frenchopen-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 3.99 MB
+Memory Usage: 20.57 MB
+Shape (Rows x Cols): 31184x56
+Total Missing Values (17.10%): 533334
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2013-usopen-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 3.65 MB
+Memory Usage: 18.48 MB
+Shape (Rows x Cols): 30353x56
+Total Missing Values (19.00%): 576707
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2020-ausopen-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 4.68 MB
+Memory Usage: 29.44 MB
+Shape (Rows x Cols): 46530x65
+Total Missing Values (46.00%): 2140380
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2019-frenchopen-points-mixed.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 388.84 KB
+Memory Usage: 2.06 MB
+Shape (Rows x Cols): 3713x65
+Total Missing Values (46.00%): 170798
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2014-ausopen-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 3.43 MB
+Memory Usage: 17.50 MB
+Shape (Rows x Cols): 27659x59
+Total Missing Values (22.00%): 608498
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2021-usopen-points-doubles.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 2.59 MB
+Memory Usage: 14.84 MB
+Shape (Rows x Cols): 18054x65
+Total Missing Values (20.01%): 361320
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2019-ausopen-points-doubles.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 1.85 MB
+Memory Usage: 11.70 MB
+Shape (Rows x Cols): 18469x65
+Total Missing Values (46.00%): 849574
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2020-ausopen-points-mixed.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 396.17 KB
+Memory Usage: 2.11 MB
+Shape (Rows x Cols): 3822x65
+Total Missing Values (46.00%): 175812
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2019-usopen-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 7.13 MB
+Memory Usage: 42.90 MB
+Shape (Rows x Cols): 47893x65
+Total Missing Values (18.48%): 885239
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2019-usopen-points-doubles.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 2.12 MB
+Memory Usage: 11.92 MB
+Shape (Rows x Cols): 14926x65
+Total Missing Values (20.01%): 298726
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2018-frenchopen-points-mixed.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 369.96 KB
+Memory Usage: 1.96 MB
+Shape (Rows x Cols): 3533x65
+Total Missing Values (46.00%): 162518
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2019-ausopen-points-mixed.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 339.36 KB
+Memory Usage: 1.82 MB
+Shape (Rows x Cols): 3287x65
+Total Missing Values (46.00%): 151202
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2013-frenchopen-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 4.25 MB
+Memory Usage: 21.95 MB
+Shape (Rows x Cols): 33248x56
+Total Missing Values (16.92%): 562430
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2017-ausopen-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 6.47 MB
+Memory Usage: 37.90 MB
+Shape (Rows x Cols): 43933x65
+Total Missing Values (20.07%): 881884
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2021-wimbledon-points-doubles.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 2.80 MB
+Memory Usage: 16.08 MB
+Shape (Rows x Cols): 19493x65
+Total Missing Values (20.00%): 389868
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2012-ausopen-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 3.63 MB
+Memory Usage: 19.06 MB
+Shape (Rows x Cols): 29001x56
+Total Missing Values (16.90%): 490062
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2021-wimbledon-points-mixed.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 900.29 KB
+Memory Usage: 5.00 MB
+Shape (Rows x Cols): 6062x65
+Total Missing Values (20.01%): 121296
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2021-frenchopen-points-doubles.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 1.80 MB
+Memory Usage: 11.09 MB
+Shape (Rows x Cols): 17405x65
+Total Missing Values (46.00%): 800630
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2013-wimbledon-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 3.17 MB
+Memory Usage: 15.71 MB
+Shape (Rows x Cols): 25691x56
+Total Missing Values (19.00%): 488129
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2018-ausopen-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 4.76 MB
+Memory Usage: 30.08 MB
+Shape (Rows x Cols): 47540x65
+Total Missing Values (46.00%): 2186840
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2020-usopen-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 6.75 MB
+Memory Usage: 40.75 MB
+Shape (Rows x Cols): 45157x65
+Total Missing Values (18.11%): 817825
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2021-frenchopen-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 4.80 MB
+Memory Usage: 29.46 MB
+Shape (Rows x Cols): 46313x65
+Total Missing Values (46.00%): 2130398
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2015-frenchopen-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 5.26 MB
+Memory Usage: 27.19 MB
+Shape (Rows x Cols): 37208x61
+Total Missing Values (19.01%): 707454
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2017-usopen-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 4.59 MB
+Memory Usage: 27.57 MB
+Shape (Rows x Cols): 30067x65
+Total Missing Values (17.32%): 520865
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2016-wimbledon-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 4.28 MB
+Memory Usage: 24.83 MB
+Shape (Rows x Cols): 29102x65
+Total Missing Values (20.69%): 601999
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2016-frenchopen-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 4.77 MB
+Memory Usage: 27.31 MB
+Shape (Rows x Cols): 32165x65
+Total Missing Values (20.97%): 674414
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2011-usopen-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 3.83 MB
+Memory Usage: 17.72 MB
+Shape (Rows x Cols): 27309x56
+Total Missing Values (0.00%): 0
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2021-frenchopen-points-mixed.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 170.48 KB
+Memory Usage: 1.03 MB
+Shape (Rows x Cols): 1612x65
+Total Missing Values (46.00%): 74152
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2021-ausopen-points-mixed.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 384.50 KB
+Memory Usage: 2.34 MB
+Shape (Rows x Cols): 3690x65
+Total Missing Values (46.00%): 169740
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2020-frenchopen-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 4.80 MB
+Memory Usage: 29.43 MB
+Shape (Rows x Cols): 46273x65
+Total Missing Values (46.00%): 2128558
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2019-usopen-points-mixed.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 467.50 KB
+Memory Usage: 2.31 MB
+Shape (Rows x Cols): 3217x65
+Total Missing Values (20.02%): 64394
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2015-wimbledon-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 6.53 MB
+Memory Usage: 34.17 MB
+Shape (Rows x Cols): 46819x61
+Total Missing Values (19.01%): 889883
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2018-frenchopen-points-doubles.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 1.89 MB
+Memory Usage: 11.71 MB
+Shape (Rows x Cols): 18392x65
+Total Missing Values (46.00%): 846032
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2016-ausopen-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 5.69 MB
+Memory Usage: 30.07 MB
+Shape (Rows x Cols): 41312x61
+Total Missing Values (19.01%): 785159
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2017-wimbledon-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 6.95 MB
+Memory Usage: 39.28 MB
+Shape (Rows x Cols): 45774x65
+Total Missing Values (18.42%): 843023
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2019-ausopen-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 4.67 MB
+Memory Usage: 29.52 MB
+Shape (Rows x Cols): 46663x65
+Total Missing Values (46.00%): 2146498
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2021-usopen-points-mixed.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 547.34 KB
+Memory Usage: 2.68 MB
+Shape (Rows x Cols): 3733x65
+Total Missing Values (20.02%): 74720
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2021-usopen-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 7.37 MB
+Memory Usage: 43.85 MB
+Shape (Rows x Cols): 47867x65
+Total Missing Values (17.38%): 831695
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2014-usopen-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 4.17 MB
+Memory Usage: 23.60 MB
+Shape (Rows x Cols): 33159x59
+Total Missing Values (19.01%): 630236
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2018-wimbledon-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 7.48 MB
+Memory Usage: 44.28 MB
+Shape (Rows x Cols): 49281x65
+Total Missing Values (18.48%): 910929
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2019-frenchopen-points-doubles.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 1.84 MB
+Memory Usage: 11.43 MB
+Shape (Rows x Cols): 17952x65
+Total Missing Values (46.00%): 825792
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2019-frenchopen-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 4.74 MB
+Memory Usage: 29.35 MB
+Shape (Rows x Cols): 46185x65
+Total Missing Values (46.00%): 2124510
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2018-frenchopen-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 4.67 MB
+Memory Usage: 28.93 MB
+Shape (Rows x Cols): 45529x65
+Total Missing Values (46.00%): 2094334
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2021-ausopen-points-doubles.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 1.84 MB
+Memory Usage: 11.47 MB
+Shape (Rows x Cols): 18083x65
+Total Missing Values (46.00%): 831818
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2021-wimbledon-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 7.32 MB
+Memory Usage: 43.30 MB
+Shape (Rows x Cols): 47106x65
+Total Missing Values (17.36%): 817719
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2011-frenchopen-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 4.89 MB
+Memory Usage: 20.78 MB
+Shape (Rows x Cols): 34340x55
+Total Missing Values (0.00%): 35
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2019-wimbledon-points-mixed.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 1002.76 KB
+Memory Usage: 5.42 MB
+Shape (Rows x Cols): 6757x65
+Total Missing Values (20.01%): 135232
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2015-usopen-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 4.36 MB
+Memory Usage: 22.86 MB
+Shape (Rows x Cols): 31442x61
+Total Missing Values (19.01%): 597574
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2017-frenchopen-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 6.34 MB
+Memory Usage: 36.42 MB
+Shape (Rows x Cols): 43122x65
+Total Missing Values (21.22%): 914870
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2018-ausopen-points-mixed.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 381.81 KB
+Memory Usage: 2.04 MB
+Shape (Rows x Cols): 3693x65
+Total Missing Values (46.00%): 169878
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2020-ausopen-points-doubles.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 1.86 MB
+Memory Usage: 11.61 MB
+Shape (Rows x Cols): 18320x65
+Total Missing Values (46.00%): 842720
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2016-usopen-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 4.54 MB
+Memory Usage: 26.51 MB
+Shape (Rows x Cols): 30606x65
+Total Missing Values (19.83%): 606981
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2015-ausopen-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 4.84 MB
+Memory Usage: 27.30 MB
+Shape (Rows x Cols): 38309x59
+Total Missing Values (19.01%): 728094
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2011-ausopen-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 4.22 MB
+Memory Usage: 18.26 MB
+Shape (Rows x Cols): 31523x52
+Total Missing Values (0.00%): 32
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2012-wimbledon-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 3.31 MB
+Memory Usage: 17.08 MB
+Shape (Rows x Cols): 25920x56
+Total Missing Values (16.90%): 438105
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2018-ausopen-points-doubles.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 1.81 MB
+Memory Usage: 11.46 MB
+Shape (Rows x Cols): 18084x65
+Total Missing Values (46.00%): 831864
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2021-ausopen-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 4.53 MB
+Memory Usage: 28.16 MB
+Shape (Rows x Cols): 44412x65
+Total Missing Values (46.00%): 2042952
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2019-wimbledon-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 7.21 MB
+Memory Usage: 42.80 MB
+Shape (Rows x Cols): 47045x65
+Total Missing Values (17.86%): 840397
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2019-wimbledon-points-doubles.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 3.42 MB
+Memory Usage: 20.64 MB
+Shape (Rows x Cols): 23713x65
+Total Missing Values (20.01%): 474496
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2013-ausopen-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 3.98 MB
+Memory Usage: 20.83 MB
+Shape (Rows x Cols): 31688x56
+Total Missing Values (16.90%): 535552
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2020-usopen-points-doubles.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 1.15 MB
+Memory Usage: 6.53 MB
+Shape (Rows x Cols): 8169x65
+Total Missing Values (20.01%): 163495
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2020-frenchopen-points-doubles.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 1.92 MB
+Memory Usage: 11.88 MB
+Shape (Rows x Cols): 18683x65
+Total Missing Values (46.00%): 859418
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2011-wimbledon-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 3.04 MB
+Memory Usage: 12.91 MB
+Shape (Rows x Cols): 21368x55
+Total Missing Values (0.00%): 0
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/points-master/2012-usopen-points.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 3.86 MB
+Memory Usage: 20.33 MB
+Shape (Rows x Cols): 30975x56
+Total Missing Values (16.90%): 523498
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/players/PlayerNames.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 20.91 KB
+Memory Usage: 0.08 MB
+Shape (Rows x Cols): 1249x2
+Total Missing Values (1.00%): 1249
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/players/PlayerNames_And_Gender.xlsx
+[INFO] - File Type: Excel XML Spreadsheet File (.xlsx)
+File Size: 49.29 KB
+Memory Usage: 0.13 MB
+Shape (Rows x Cols): 1247x2
+Total Missing Values (0.00%): 0
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2020-ausopen-matches-mixed.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 3.38 KB
+Memory Usage: 0.02 MB
+Shape (Rows x Cols): 31x20
+Total Missing Values (8.00%): 248
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2017-frenchopen-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 19.78 KB
+Memory Usage: 0.08 MB
+Shape (Rows x Cols): 242x16
+Total Missing Values (10.04%): 2429
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2021-ausopen-matches-doubles.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 11.51 KB
+Memory Usage: 0.06 MB
+Shape (Rows x Cols): 126x20
+Total Missing Values (12.00%): 1512
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2021-wimbledon-matches-doubles.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 13.17 KB
+Memory Usage: 0.05 MB
+Shape (Rows x Cols): 121x18
+Total Missing Values (10.00%): 1210
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2020-frenchopen-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 18.16 KB
+Memory Usage: 0.08 MB
+Shape (Rows x Cols): 254x16
+Total Missing Values (10.00%): 2540
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2012-frenchopen-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 14.07 KB
+Memory Usage: 0.06 MB
+Shape (Rows x Cols): 172x16
+Total Missing Values (10.00%): 1720
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2021-usopen-matches-doubles.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 12.91 KB
+Memory Usage: 0.06 MB
+Shape (Rows x Cols): 125x18
+Total Missing Values (10.00%): 1250
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2013-usopen-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 12.29 KB
+Memory Usage: 0.05 MB
+Shape (Rows x Cols): 167x16
+Total Missing Values (10.00%): 1670
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2018-frenchopen-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 20.11 KB
+Memory Usage: 0.10 MB
+Shape (Rows x Cols): 253x16
+Total Missing Values (8.00%): 2024
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2019-usopen-matches-mixed.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 2.89 KB
+Memory Usage: 0.01 MB
+Shape (Rows x Cols): 27x18
+Total Missing Values (10.00%): 270
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2016-ausopen-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 17.47 KB
+Memory Usage: 0.08 MB
+Shape (Rows x Cols): 231x16
+Total Missing Values (10.00%): 2310
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2021-ausopen-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 17.12 KB
+Memory Usage: 0.09 MB
+Shape (Rows x Cols): 254x16
+Total Missing Values (10.00%): 2540
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2011-ausopen-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 25.16 KB
+Memory Usage: 0.13 MB
+Shape (Rows x Cols): 179x16
+Total Missing Values (0.00%): 0
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2018-ausopen-matches-doubles.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 13.28 KB
+Memory Usage: 0.08 MB
+Shape (Rows x Cols): 126x20
+Total Missing Values (8.00%): 1008
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2012-wimbledon-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 11.19 KB
+Memory Usage: 0.05 MB
+Shape (Rows x Cols): 140x16
+Total Missing Values (10.00%): 1400
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2021-wimbledon-matches-mixed.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 4.29 KB
+Memory Usage: 0.02 MB
+Shape (Rows x Cols): 39x18
+Total Missing Values (10.00%): 390
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2016-usopen-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 12.63 KB
+Memory Usage: 0.06 MB
+Shape (Rows x Cols): 172x16
+Total Missing Values (10.03%): 1725
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2016-frenchopen-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 14.38 KB
+Memory Usage: 0.06 MB
+Shape (Rows x Cols): 176x16
+Total Missing Values (10.00%): 1760
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2012-ausopen-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 12.67 KB
+Memory Usage: 0.06 MB
+Shape (Rows x Cols): 167x16
+Total Missing Values (10.00%): 1670
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2011-wimbledon-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 15.94 KB
+Memory Usage: 0.09 MB
+Shape (Rows x Cols): 117x16
+Total Missing Values (0.00%): 0
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2021-usopen-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 18.84 KB
+Memory Usage: 0.08 MB
+Shape (Rows x Cols): 253x16
+Total Missing Values (10.00%): 2530
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2013-wimbledon-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 11.59 KB
+Memory Usage: 0.05 MB
+Shape (Rows x Cols): 146x16
+Total Missing Values (10.00%): 1460
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2014-frenchopen-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 20.74 KB
+Memory Usage: 0.09 MB
+Shape (Rows x Cols): 254x16
+Total Missing Values (10.00%): 2540
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2018-wimbledon-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 20.23 KB
+Memory Usage: 0.08 MB
+Shape (Rows x Cols): 254x16
+Total Missing Values (10.00%): 2540
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2019-wimbledon-matches-doubles.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 13.57 KB
+Memory Usage: 0.06 MB
+Shape (Rows x Cols): 124x18
+Total Missing Values (10.00%): 1240
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2011-usopen-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 21.64 KB
+Memory Usage: 0.12 MB
+Shape (Rows x Cols): 161x16
+Total Missing Values (0.00%): 0
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2020-usopen-matches-doubles.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 5.93 KB
+Memory Usage: 0.03 MB
+Shape (Rows x Cols): 57x18
+Total Missing Values (10.00%): 570
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2017-wimbledon-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 20.18 KB
+Memory Usage: 0.08 MB
+Shape (Rows x Cols): 254x16
+Total Missing Values (10.00%): 2540
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2021-frenchopen-matches-mixed.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 1.55 KB
+Memory Usage: 0.01 MB
+Shape (Rows x Cols): 15x20
+Total Missing Values (12.00%): 180
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2019-usopen-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 18.40 KB
+Memory Usage: 0.08 MB
+Shape (Rows x Cols): 251x16
+Total Missing Values (10.00%): 2510
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2019-ausopen-matches-doubles.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 13.11 KB
+Memory Usage: 0.08 MB
+Shape (Rows x Cols): 125x20
+Total Missing Values (8.00%): 1000
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2017-usopen-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 12.03 KB
+Memory Usage: 0.05 MB
+Shape (Rows x Cols): 165x16
+Total Missing Values (10.05%): 1658
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2021-wimbledon-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 20.22 KB
+Memory Usage: 0.08 MB
+Shape (Rows x Cols): 253x16
+Total Missing Values (10.00%): 2530
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2015-wimbledon-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 20.11 KB
+Memory Usage: 0.08 MB
+Shape (Rows x Cols): 252x16
+Total Missing Values (10.00%): 2520
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2018-ausopen-matches-mixed.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 3.43 KB
+Memory Usage: 0.02 MB
+Shape (Rows x Cols): 31x20
+Total Missing Values (8.00%): 248
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2021-frenchopen-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 18.29 KB
+Memory Usage: 0.08 MB
+Shape (Rows x Cols): 254x16
+Total Missing Values (10.00%): 2540
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2020-ausopen-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 18.48 KB
+Memory Usage: 0.10 MB
+Shape (Rows x Cols): 253x16
+Total Missing Values (8.00%): 2024
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2019-wimbledon-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 20.14 KB
+Memory Usage: 0.08 MB
+Shape (Rows x Cols): 254x16
+Total Missing Values (10.00%): 2540
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2016-wimbledon-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 9.92 KB
+Memory Usage: 0.04 MB
+Shape (Rows x Cols): 126x16
+Total Missing Values (10.00%): 1260
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2019-frenchopen-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 19.91 KB
+Memory Usage: 0.10 MB
+Shape (Rows x Cols): 252x16
+Total Missing Values (8.00%): 2016
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2019-ausopen-matches-mixed.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 3.40 KB
+Memory Usage: 0.02 MB
+Shape (Rows x Cols): 31x20
+Total Missing Values (8.00%): 248
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2015-ausopen-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 15.75 KB
+Memory Usage: 0.07 MB
+Shape (Rows x Cols): 209x16
+Total Missing Values (10.00%): 2090
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2012-usopen-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 12.61 KB
+Memory Usage: 0.06 MB
+Shape (Rows x Cols): 171x16
+Total Missing Values (10.00%): 1710
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2021-ausopen-matches-mixed.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 2.94 KB
+Memory Usage: 0.02 MB
+Shape (Rows x Cols): 31x20
+Total Missing Values (12.00%): 372
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2020-usopen-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 18.33 KB
+Memory Usage: 0.08 MB
+Shape (Rows x Cols): 248x16
+Total Missing Values (10.00%): 2480
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2015-frenchopen-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 16.89 KB
+Memory Usage: 0.07 MB
+Shape (Rows x Cols): 208x16
+Total Missing Values (10.00%): 2080
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2018-ausopen-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 18.57 KB
+Memory Usage: 0.10 MB
+Shape (Rows x Cols): 253x16
+Total Missing Values (8.00%): 2024
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2021-frenchopen-matches-doubles.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 11.92 KB
+Memory Usage: 0.06 MB
+Shape (Rows x Cols): 125x20
+Total Missing Values (12.00%): 1500
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2014-ausopen-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 11.97 KB
+Memory Usage: 0.05 MB
+Shape (Rows x Cols): 158x16
+Total Missing Values (10.00%): 1580
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2019-wimbledon-matches-mixed.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 5.04 KB
+Memory Usage: 0.02 MB
+Shape (Rows x Cols): 46x18
+Total Missing Values (10.00%): 460
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2019-frenchopen-matches-doubles.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 13.72 KB
+Memory Usage: 0.08 MB
+Shape (Rows x Cols): 124x20
+Total Missing Values (8.00%): 992
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2013-ausopen-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 13.50 KB
+Memory Usage: 0.06 MB
+Shape (Rows x Cols): 179x16
+Total Missing Values (10.00%): 1790
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2018-frenchopen-matches-mixed.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 3.50 KB
+Memory Usage: 0.02 MB
+Shape (Rows x Cols): 30x20
+Total Missing Values (8.00%): 240
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2019-frenchopen-matches-mixed.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 3.56 KB
+Memory Usage: 0.02 MB
+Shape (Rows x Cols): 31x20
+Total Missing Values (8.00%): 248
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2021-usopen-matches-mixed.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 3.20 KB
+Memory Usage: 0.01 MB
+Shape (Rows x Cols): 30x18
+Total Missing Values (10.00%): 300
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2014-wimbledon-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 20.02 KB
+Memory Usage: 0.08 MB
+Shape (Rows x Cols): 253x16
+Total Missing Values (10.00%): 2530
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2019-ausopen-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 18.69 KB
+Memory Usage: 0.10 MB
+Shape (Rows x Cols): 254x16
+Total Missing Values (8.00%): 2032
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2013-frenchopen-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 15.21 KB
+Memory Usage: 0.06 MB
+Shape (Rows x Cols): 186x16
+Total Missing Values (10.00%): 1860
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2017-ausopen-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 17.77 KB
+Memory Usage: 0.08 MB
+Shape (Rows x Cols): 237x16
+Total Missing Values (10.04%): 2380
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2020-ausopen-matches-doubles.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 13.04 KB
+Memory Usage: 0.08 MB
+Shape (Rows x Cols): 125x20
+Total Missing Values (8.00%): 1000
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2011-frenchopen-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 27.37 KB
+Memory Usage: 0.14 MB
+Shape (Rows x Cols): 194x16
+Total Missing Values (0.00%): 0
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2018-usopen-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 13.13 KB
+Memory Usage: 0.06 MB
+Shape (Rows x Cols): 178x16
+Total Missing Values (10.00%): 1780
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2019-usopen-matches-doubles.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 10.73 KB
+Memory Usage: 0.05 MB
+Shape (Rows x Cols): 103x18
+Total Missing Values (10.00%): 1030
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2018-frenchopen-matches-doubles.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 14.11 KB
+Memory Usage: 0.08 MB
+Shape (Rows x Cols): 126x20
+Total Missing Values (8.00%): 1008
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2015-usopen-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 12.96 KB
+Memory Usage: 0.06 MB
+Shape (Rows x Cols): 176x16
+Total Missing Values (10.00%): 1760
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2020-frenchopen-matches-doubles.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 11.68 KB
+Memory Usage: 0.06 MB
+Shape (Rows x Cols): 125x20
+Total Missing Values (12.00%): 1500
+
+-----------------------------------------------------------
+
+[INFO] - Preparing Data File: /home/mcilek/Github/maximcilek/lewis-university-tennis-research/data/raw/matches-master/2014-usopen-matches.csv
+[INFO] - CSV/TSV File (Auto-delimeter detection)
+File Size: 13.73 KB
+Memory Usage: 0.06 MB
+Shape (Rows x Cols): 187x16
+Total Missing Values (10.00%): 1870
+
+-----------------------------------------------------------
+Done: 136 files prepared
