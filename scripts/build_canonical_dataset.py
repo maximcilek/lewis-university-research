@@ -141,8 +141,8 @@ def clean_tennis_matches(path, output_directory):
     print(f"\nColumn Names: {df_clean.columns.to_list()}")
 
     print(f"\n\n----------- SAVING -------------")
-    players_output_path = output_directory / "players.csv"
-    matches_output_path = output_directory / "matches.csv"
+    players_output_path = output_directory / "players" / "players.csv"
+    matches_output_path = output_directory / "matches" / "matches.csv"
     players.to_csv(players_output_path, index=False)
     df_clean.to_csv(matches_output_path, index=False)
     print(f"Players written to: {players_output_path}")
@@ -153,7 +153,7 @@ def clean_tennis_matches(path, output_directory):
     print(f"Total players: {len(players)}")
     print(f"Total matches: {len(df_clean)}")
 
-def clean_tennis_points(data_directory):
+def clean_tennis_points(data_directory, output_directory):
     data_directory = Path(data_directory)
     if not data_directory.exists():
         print(f"[ERROR] - Directory does not exist: {data_directory}")
@@ -179,6 +179,11 @@ def clean_tennis_points(data_directory):
         print(f"Column Names: {df.columns.to_list()}")
         total_points += shape[0]
 
+        print(f"\n\n----------- SAVING -------------")
+        output_path = output_directory / "points" / file_path.name
+        df.to_csv(output_path, index=False)
+        print(f"Points ({file_path.name}) written to: {output_path}")
+
     print(f"Total Number of Points: {total_points}") # 1,755,187 Point Records 01/29/2026
 
 
@@ -192,4 +197,4 @@ if __name__ == "__main__":
     print(f"[INFO] - Repository Root: {root}")
     print(f"[INFO] - Data Directory: {data_directory}")
     # clean_tennis_matches(matches_file, output_data_directory)
-    clean_tennis_points(points_directory)
+    clean_tennis_points(points_directory, output_data_directory)
