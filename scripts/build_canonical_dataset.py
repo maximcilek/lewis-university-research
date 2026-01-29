@@ -74,8 +74,15 @@ def get_gender_from_match_id(match_id: str) -> str:
         pass
     return None  # fallback if parsing fails
 
+def clean_column_name(col_name):
+    col_name = str(col_name).strip()            # remove leading/trailing spaces
+    col_name = col_name.lower()                 # lowercase
+    col_name = re.sub(r"[^\w]", "_", col_name) # replace non-alphanumeric with underscore
+    col_name = re.sub(r"_+", "_", col_name)    # collapse multiple underscores
+    col_name = col_name.strip("_")             # remove leading/trailing underscores
+    return col_name
 
-def clean_matches(path, output_directory):
+def clean_tennis_matches(path, output_directory):
     file_path = Path(path)
     if not file_path.exists():
         print(f"[ERROR] - Directory does not exist: {file_path}")
@@ -93,28 +100,23 @@ def clean_matches(path, output_directory):
         quit()
     shape = df.shape
     print(f"Successfully loaded dataframe: {file_path.name} ({shape[0]}x{shape[1]})")
+    df.columns = [clean_column_name(c) for c in df.columns]
     print(df.head())
-    df.columns = [c.strip() for c in df.columns]
     print(f"Column Names: {df.columns.to_list()}")
 
     player_rows = []
-
-    for idx, row in df.iterrows():
+    for _, row in df.iterrows():
         gender = get_gender_from_match_id(row["match_id"])
         for side in [1, 2]:
-            name_col = f"Player {side}"
-            hand_col = f"Pl {side} hand"
-            display_name = row[name_col]
+            display_name = row[f"player_{side}"]
             canonical_name = normalize_name(display_name)
-
             if not canonical_name:
                 print(f"[FATAL] - Player name is not canonical: {row}")
-                quit() # continue
-            player_rows.append({"display_name": display_name, "canonical_name": canonical_name, "handedness": row.get(hand_col), "date": row.get("Date"), "gender": gender})
-
-    players_df = pd.DataFrame(player_rows)
+                quit()
+            player_rows.append({"display_name": display_name, "canonical_name": canonical_name, "handedness": row.get(f"pl_{side}_hand"), "date": row.get("Date"), "gender": gender})
 
     # Aggregate into unique players
+    players_df = pd.DataFrame(player_rows)
     players = (players_df.groupby("canonical_name", as_index=False).agg(display_name=("display_name", "first"), handedness=("handedness", "first"), gender=("gender", "first"), first_seen=("date", "min"), last_seen=("date", "max")))
     players["player_id"] = players["canonical_name"].apply(generate_player_id)
     players = players[["player_id", "canonical_name", "display_name", "handedness", "gender", "first_seen", "last_seen"]]
@@ -125,9 +127,9 @@ def clean_matches(path, output_directory):
     def map_player(name):
         return id_lookup.get(normalize_name(name))
 
-    df["player1_id"] = df["Player 1"].apply(map_player)
-    df["player2_id"] = df["Player 2"].apply(map_player)
-    df_clean = df.drop(columns=["Player 1", "Player 2", "Pl 1 hand", "Pl 2 hand"])
+    df["player1_id"] = df["player_1"].apply(map_player)
+    df["player2_id"] = df["player_2"].apply(map_player)
+    df_clean = df.drop(columns=["player_1", "player_2", "pl_1_hand", "pl_2_hand"])
 
     # Reorder columns
     front_cols = ["match_id", "player1_id", "player2_id"]
@@ -151,13 +153,43 @@ def clean_matches(path, output_directory):
     print(f"Total players: {len(players)}")
     print(f"Total matches: {len(df_clean)}")
 
+def clean_tennis_points(data_directory):
+    data_directory = Path(data_directory)
+    if not data_directory.exists():
+        print(f"[ERROR] - Directory does not exist: {data_directory}")
+        return
+
+    rename_map = {"gm#": "game_num", "1st": "first_srv", "2nd": "second_srv", "svr": "server", "tbset": "tb_set"}
+    enforced_data_type = {"TbSet": "boolean"}
+    total_points = 0
+    for file_path in data_directory.rglob("*.csv"):
+        if not file_path.is_file():
+            print(f"[FATAL] - File path is not a file: {data_directory}")
+            quit()
+        try:
+            df = pd.read_csv(file_path, encoding=get_file_encoding_type(file_path), on_bad_lines="error", dtype=enforced_data_type)
+        except Exception as e:
+            print(f"[FATAL] - Failed to load {file_path.name}: {e}")
+            quit()
+        shape = df.shape
+        print(f"Successfully loaded dataframe: {file_path.name} ({shape[0]}x{shape[1]})")
+        df.columns = [c.strip().lower().replace(" ", "_") for c in df.columns]
+        df.rename(columns=rename_map, inplace=True)
+        print(df.head())
+        print(f"Column Names: {df.columns.to_list()}")
+        total_points += shape[0]
+
+    print(f"Total Number of Points: {total_points}") # 1,755,187 Point Records 01/29/2026
+
+
 if __name__ == "__main__":
     root = find_repo_root()
     data_directory = root / "data" / "raw"
     output_data_directory = root / "data" / "canonical"
     matches_file = data_directory / "matches" / "matches.csv"
-    # points_file = data_directory / "points" / "m-points-2010s.csv"
+    points_directory = data_directory / "points"
 
     print(f"[INFO] - Repository Root: {root}")
     print(f"[INFO] - Data Directory: {data_directory}")
-    clean_matches(matches_file, output_data_directory)
+    # clean_tennis_matches(matches_file, output_data_directory)
+    clean_tennis_points(points_directory)

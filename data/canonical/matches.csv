@@ -1,4 +1,4 @@
-match_id,player1_id,player2_id,Date,Tournament,Round,Time,Court,Surface,Umpire,Best of,Final TB?,Charted by
+match_id,player1_id,player2_id,date,tournament,round,time,court,surface,umpire,best_of,final_tb,charted_by
 20251221-M-NextGen_Finals-F-Alexander_Blockx-Learner_Tien,p_21727411,p_0d496700,20251221,NextGen Finals,F,,Centre Court,Hard,,5,N,stard54
 20251219-M-NextGen_Finals-RR-Nishesh_Basavareddy-Justin_Engel,p_1fb81ed3,p_24f72e68,20251219,NextGen Finals,RR,,,Hard,Mohamed Lahyani,5,N,Isaac
 20251217-M-NextGen_Finals-RR-Rafael_Jodar-Learner_Tien,p_6c2ccac0,p_0d496700,20251217,NextGen Finals,RR,,Centre Court,Hard,,5,N,stard54
