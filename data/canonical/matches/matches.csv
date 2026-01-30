@@ -707,8 +707,6 @@ match_id,player1_id,player2_id,date,tournament,round,time,court,surface,umpire,b
 20240922-M-Chengdu-QF-Adrian_Mannarino-Lorenzo_Musetti,p_fee56aaa,p_d1739620,20240922,Chengdu,QF,3:00 PM,Center,Hard,R. Haigh,3,1,BG
 20240921-M-Chengdu-R16-Lorenzo_Musetti-Christopher_Oconnell,p_d1739620,p_e9f2232b,20240921,Chengdu,R16,1:35 PM,Center,Hard,C. Rask,3,1,BG
 20240920-M-Chengdu-R16-Giovanni_Mpetshi_Perricard-Yannick_Hanfmann,p_060be673,p_811d9c7f,20240920,Chengdu,R16,,,Hard,,3,1,Ludo
-20240915-M-Davis_Cup_World_Group-RR-Tallon_Griekspoor-Flavio_Cobolli,p_86c8741b,p_9dcd04f3,20240915,Davis Cup World Group,RR,18:05,Unipol Arena,Eva Asderaki-Moore,3,1,,
-20240915-M-Davis_Cup_World_Group-RR-Botic_Van_De_Zandschulp-Matteo_Berrettini,p_4dc7c9ec,p_4dc7c9ec,RR,15:15,Unipol Arena,Hard,Arnaud Gabas,3,1,Zindaras,,
 20240915-M-Davis_Cup_World_Group-RR-Botic_Van_De_Zandschulp-Matteo_Berrettini,p_21ff5c6b,p_fa68f92c,20240915,Davis_Cup_World_Group,RR,,,Hard,,,,Zindaras
 20240914-M-Dobrich_CH-F-Guy_Den_Ouden-Jelle_Sels,p_a9824f1a,p_eda2577e,20240914,Dobrich CH,F,,Center Court,Clay,,3,1,Zindaras
 20240912-M-Davis_Cup_World_Group-RR-Tallon_Griekspoor-Thiago_Monteiro,p_86c8741b,p_429423e8,20240912,Davis Cup World Group,RR,17:15,Bologna,Hard,Eva Asderaki-Moore,3,1,Zindaras
@@ -8542,15 +8540,6 @@ match_id,player1_id,player2_id,date,tournament,round,time,court,surface,umpire,b
 20221111-W-Fort_Worth_Finals-RR-Coco_Gauff-Daria_Kasatkina,p_bdaefbbe,p_e7f9c5bc,20221111,Fort Worth Finals,RR,,,Hard,,3,1,Luke
 20221111-W-BJK_Cup_Finals-RR-Viktorija_Golubic-Bianca_Andreescu,p_df5ef22b,p_f6670c87,20221111,BJK Cup Finals,RR,,,Hard,Louise Azemar Engzell,3,1,Zindaras
 20221111-W-BJK_Cup_Finals-RR-Diane_Parry-Suzan_Lamens,p_cb762d6d,p_8a4c809e,20221111,BJK Cup Finals,RR,16:15,Boulogne sur Mer,Hard,Kelly Thomson,3,1,Zindaras
-20221111-W-BJK_Cup_Finals-RR-Danielle_Collins-Marketa_Vondrousova,p_b9d7ef79,p_ccf2db5d,20221111,BJK Cup Finals,RR,,Emirates Arena,Eva Asderaki-Moore,3,1,,
-20221111-W-BJK_Cup_Finals-RR-Coco_Gauff-Katerina_Siniakova,p_4dc7c9ec,p_4dc7c9ec,RR,,,Marijana Veljovic,3,1,,,,
-20221111-W-BJK_Cup_Finals-RR-Alize_Cornet-Lesley_Pattinama_Kerkhove,p_4dc7c9ec,p_4dc7c9ec,RR,14:50,Boulogne sur Mer,Gianluca Moscarella,3,1,,,,
-20221110-W-BJK_Cup_Finals-RR-Paula_Badosa-Harriet_Dart,p_4dc7c9ec,p_4dc7c9ec,RR,,Emirates Arena Glasgow,Louise Azemar Engzell,3,1,,,,
-20221110-W-BJK_Cup_Finals-RR-Martina_Trevisan-Leylah_Fernandez,p_07c342be,p_07c342be,RR,,,Eva Asderaki,3,1,,,,
-20221110-W-BJK_Cup_Finals-RR-Magdalena_Frech-Karolina_Muchova,p_4dc7c9ec,p_4dc7c9ec,RR,,Sir Chris Hoy Velodrome,Jaume Campistol,3,1,,,,
-20221110-W-BJK_Cup_Finals-RR-Elisabetta_Cocciaretto-Bianca_Andreescu,p_4dc7c9ec,p_4dc7c9ec,RR,,1,Alison Hughes,3,1,,,,
-20221109-W-BJK_Cup_Finals-RR-Yulia_Putintseva-Nuria_Parrizas_Diaz,p_4dc7c9ec,p_4dc7c9ec,RR,,Sir Chris Hoy Velodrome,Eva Asderaki,3,1,,,,
-20221109-W-BJK_Cup_Finals-RR-Magdalena_Frech-Danielle_Collins,p_4dc7c9ec,p_4dc7c9ec,RR,,Emirates Arena,Hard,Jaume Campistol,3,1,Zindaras,,
 20221111-W-BJK_Cup_Finals-RR-Coco_Gauff-Katerina_Siniakova,p_bdaefbbe,p_4bd445b2,,,,,,Hard,,,,Isaac
 20221111-W-BJK_Cup_Finals-RR-Alize_Cornet-Lesley_Pattinama_Kerkhove,p_3adca4b3,p_2e4580a1,,,,,,Hard,,,,Zindaras
 20221110-W-BJK_Cup_Finals-RR-Paula_Badosa-Harriet_Dart,p_763d2d98,p_b16ec40f,,,,,,Hard,,,,Zindaras

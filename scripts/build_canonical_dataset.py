@@ -82,76 +82,143 @@ def clean_column_name(col_name):
     col_name = col_name.strip("_")             # remove leading/trailing underscores
     return col_name
 
+def is_real_match_row(row):
+    """
+    A real match row must have:
+    - Two player names
+    - Names longer than 2 characters
+    - At least two tokens (first + last name)
+    """
+    try:
+        p1 = str(row.get("player_1", "")).strip()
+        p2 = str(row.get("player_2", "")).strip()
+    except Exception:
+        return False
+
+    if not p1 or not p2:
+        return False
+
+    if len(p1) <= 2 or len(p2) <= 2:
+        return False
+
+    if len(p1.split()) < 2 or len(p2.split()) < 2:
+        return False
+    
+    if type(row.get("umpire")) is int:
+        return False
+    
+    if row.get("surface") not in ["Clay", "Hard", "Grass"]:
+        return False
+
+    return True
+
+
 def clean_tennis_matches(path, output_directory):
     file_path = Path(path)
     if not file_path.exists():
         print(f"[ERROR] - Directory does not exist: {file_path}")
         return
-    
-    # for file_path in matches_directory.rglob("*"):
+
     if not file_path.is_file():
         print(f"[FATAL] - File path is not a file: {path}")
         quit()
-    
+
     try:
-        df = pd.read_csv(file_path, encoding=get_file_encoding_type(file_path), on_bad_lines="error")
+        df = pd.read_csv(file_path, encoding=get_file_encoding_type(file_path), on_bad_lines="error", sep=None, engine="python")
     except Exception as e:
         print(f"[FATAL] - Failed to load {file_path.name}: {e}")
         quit()
-    shape = df.shape
-    print(f"Successfully loaded dataframe: {file_path.name} ({shape[0]}x{shape[1]})")
-    df.columns = [clean_column_name(c) for c in df.columns]
-    print(df.head())
-    print(f"Column Names: {df.columns.to_list()}")
 
+    print(f"Successfully loaded dataframe: {file_path.name} {df.shape}")
+    df.columns = [clean_column_name(c) for c in df.columns]
+
+    # ---------------------------
+    # FILTER BAD / HEADER ROWS
+    # ---------------------------
+    before = df.copy()
+    df = df[df.apply(is_real_match_row, axis=1)].copy()  # keep only real match rows
+    after = df.copy()
+    removed_rows = before.loc[~before.index.isin(after.index)]
+    print(f"[INFO] - Removed {len(removed_rows)} non-match rows")
+    print("[INFO] - Removed rows:")
+    print(removed_rows)
+    print(f"[INFO] - Remaining match rows: {len(after)}")
+    for _, r in removed_rows.iterrows():
+        print(r)
+
+
+    # ---------------------------
+    # BUILD PLAYER TABLE
+    # ---------------------------
     player_rows = []
     for _, row in df.iterrows():
         gender = get_gender_from_match_id(row["match_id"])
         for side in [1, 2]:
-            display_name = row[f"player_{side}"]
+            display_name = str(row[f"player_{side}"]).strip()
             canonical_name = normalize_name(display_name)
             if not canonical_name:
-                print(f"[FATAL] - Player name is not canonical: {row}")
+                print("[FATAL] - Failed to canonicalize name:", display_name)
                 quit()
-            player_rows.append({"display_name": display_name, "canonical_name": canonical_name, "handedness": row.get(f"pl_{side}_hand"), "date": row.get("Date"), "gender": gender})
+            player_rows.append({"display_name": display_name, "canonical_name": canonical_name, "handedness": row.get(f"pl_{side}_hand"), "date": row.get("date"), "gender": gender})
 
-    # Aggregate into unique players
     players_df = pd.DataFrame(player_rows)
+
     players = (players_df.groupby("canonical_name", as_index=False).agg(display_name=("display_name", "first"), handedness=("handedness", "first"), gender=("gender", "first"), first_seen=("date", "min"), last_seen=("date", "max")))
+
     players["player_id"] = players["canonical_name"].apply(generate_player_id)
-    players = players[["player_id", "canonical_name", "display_name", "handedness", "gender", "first_seen", "last_seen"]]
-    # Build lookup
+
+    players = players[
+        ["player_id", "canonical_name", "display_name",
+         "handedness", "gender", "first_seen", "last_seen"]
+    ]
+
+    # ---------------------------
+    # BUILD ID LOOKUP
+    # ---------------------------
     id_lookup = dict(zip(players["canonical_name"], players["player_id"]))
-    
-    # Rewrite matches
+
     def map_player(name):
         return id_lookup.get(normalize_name(name))
 
+    # ---------------------------
+    # REWRITE MATCHES
+    # ---------------------------
     df["player1_id"] = df["player_1"].apply(map_player)
     df["player2_id"] = df["player_2"].apply(map_player)
-    df_clean = df.drop(columns=["player_1", "player_2", "pl_1_hand", "pl_2_hand"])
+
+    df_clean = df.drop(
+        columns=["player_1", "player_2", "pl_1_hand", "pl_2_hand"],
+        errors="ignore"
+    )
 
     # Reorder columns
     front_cols = ["match_id", "player1_id", "player2_id"]
     remaining = [c for c in df_clean.columns if c not in front_cols]
     df_clean = df_clean[front_cols + remaining]
 
-    print(f"\n----------- CLEAN DF {df_clean.shape} -------------")
-    print(df_clean.head())
-    print(f"\nColumn Names: {df_clean.columns.to_list()}")
+    # ---------------------------
+    # SAVE OUTPUTS
+    # ---------------------------
+    output_directory = Path(output_directory)
+    (output_directory / "players").mkdir(parents=True, exist_ok=True)
+    (output_directory / "matches").mkdir(parents=True, exist_ok=True)
 
-    print(f"\n\n----------- SAVING -------------")
     players_output_path = output_directory / "players" / "players.csv"
     matches_output_path = output_directory / "matches" / "matches.csv"
+
     players.to_csv(players_output_path, index=False)
     df_clean.to_csv(matches_output_path, index=False)
-    print(f"Players written to: {players_output_path}")
-    print(f"Matches written to: {matches_output_path}")
 
-    print(f"\n\n----------- SUMMARY -------------")
-    print(f"Status: SUCCESS")
-    print(f"Total players: {len(players)}")
-    print(f"Total matches: {len(df_clean)}")
+    # ---------------------------
+    # SUMMARY
+    # ---------------------------
+    print("\n----------- SUMMARY -------------")
+    print("Status: SUCCESS")
+    print("Total players:", len(players))
+    print("Total matches:", len(df_clean))
+    print("Players written to:", players_output_path)
+    print("Matches written to:", matches_output_path)
+
 
 def clean_tennis_points(data_directory, output_directory):
     data_directory = Path(data_directory)
@@ -196,5 +263,5 @@ if __name__ == "__main__":
 
     print(f"[INFO] - Repository Root: {root}")
     print(f"[INFO] - Data Directory: {data_directory}")
-    # clean_tennis_matches(matches_file, output_data_directory)
-    clean_tennis_points(points_directory, output_data_directory)
+    clean_tennis_matches(matches_file, output_data_directory)
+    # clean_tennis_points(points_directory, output_data_directory)
