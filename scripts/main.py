@@ -83,9 +83,48 @@ def load_players_df(players):
     players["ht"] = pd.to_numeric(players["ht"], errors="coerce").astype("Int64")
     players['hand'] = players['hand'].fillna('U')  # Unknown
     players['hand'] = players['hand'].map({'R': 1, 'L': 0, 'U': -1})
-    players['backhand'] = players['backhand'].replace(['', None, pd.NA], '-1')
+    players['backhand'] = players['backhand'].replace(['', None, pd.NA], '-1') # Fill missing or empty backhand
+    players['backhand'] = players['backhand'].replace({'R': 1, 'L': 0, 'U': -1}) # Map letters to integers
+    players['backhand'] = pd.to_numeric(players['backhand'], errors='coerce').fillna(-1).astype(int) # Convert everything to numeric, coercing errors (anything not convertable becomes NaN)
     players.set_index("url_parameter_name", inplace=True)
     return players
+
+def analyze_players(players):
+    print("Missing values per column:")
+    print(players.isna().sum())
+
+    numeric_cols = ['ht', 'hand', 'gender', 'backhand']
+    for col in numeric_cols:
+        plt.figure(figsize=(6, 4))
+        sns.histplot(players[col].dropna(), bins=20, kde=True)
+        plt.title(f"Distribution of {col}")
+        plt.xlabel(col)
+        plt.ylabel("Count")
+        plt.show()
+
+    # ------------------------
+    # 3. Categorical distributions (backhand, country)
+    # ------------------------
+    categorical_cols = ['country']
+    for col in categorical_cols:
+        plt.figure(figsize=(8, 4))
+        sns.countplot(y=players[col], order=players[col].value_counts().index)
+        plt.title(f"Distribution of {col}")
+        plt.xlabel("Count")
+        plt.ylabel(col)
+        plt.show()
+
+    # ------------------------
+    # 4. Age distribution
+    # ------------------------
+    # Compute age from dob (assuming today as reference)
+    players['age'] = (pd.Timestamp('today') - players['dob']).dt.days // 365
+    plt.figure(figsize=(6, 4))
+    sns.histplot(players['age'].dropna(), bins=20, kde=True)
+    plt.title("Distribution of player ages")
+    plt.xlabel("Age")
+    plt.ylabel("Count")
+    plt.show()
 
 def load_matches_df(matches):
     matches = pd.json_normalize(tennisabstract_data.charting_matches)
@@ -95,6 +134,7 @@ def load_matches_df(matches):
     matches["player_1_id"] = matches["player_1.profile_url"].apply(lambda x: x.split("?p=")[1])
     matches["player_2_id"] = matches["player_2.profile_url"].apply(lambda x: x.split("?p=")[1])
     matches = matches.drop(columns=["player_1.profile_url", "player_2.profile_url"])
+    return matches
 
 # round_dict = {"R16": 9, "W": 14, "F": 13, "RR": 8, "R64": 6, "R128": 5, "QF": 10, "SF": 11, "R32": 7, 'Q1': 1, 'Q2': 2, 'Q3': 3, 'Q4': 4, "": 0, "BR": 12}
 # hand_dict = {'1': 'Left', '2': 'Right', '': 'Unknown'}
@@ -108,26 +148,37 @@ if __name__ == "__main__":
     )
 
     players = load_players_df(tennisabstract_data.players)
+    print(players.info())
+    print(players.head())
+    analyze_players(players)
+    quit()
     matches = load_matches_df(tennisabstract_data.charting_matches)
+    print(matches.info())
+    print(matches.head())
 
     parquet_file = pq.ParquetFile(tennisabstract_data.charting_points_file_path)
     total_points = parquet_file.metadata.num_rows
-
     chunk_size = 10_000
     chunk = []
-
     for i, point in enumerate(tennisabstract_data.charting_points, 1):
+        # # feature engineering per chunk
+        # # normalize numerical values
+        # # convert categorical → embeddings or one-hot
+        # Pad sequences to the longest match or truncate.
+        # Batch sequences for training.
+        
+        
         chunk.append(point)
-
         # Log progress every chunk
         if i % chunk_size == 0 or i == total_points:
             percent = (i / total_points) * 100
             LOGGER.info("Processed %d / %d points (%.2f%%)", i, total_points, percent)
             df_chunk = pd.DataFrame(chunk)
             # Do analysis on this chunk
+            print(df_chunk.info())
             print(df_chunk.head())
+            quit()
             chunk = []
-
     # Process remaining rows
     if chunk:
         df_chunk = pd.DataFrame(chunk)

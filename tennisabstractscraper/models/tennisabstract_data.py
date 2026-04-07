@@ -5,6 +5,7 @@ from . import data_objects
 import logging
 import typing
 import json
+import pyarrow.parquet as pq
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +53,12 @@ class TennisAbstractData:
         logger.info("Loading players from file: %s", self.players_file_path)
         try:
             obj = data_objects.DataObjectFactory.create(self.players_file_path)
-            logger.info("Successfully loaded %d players", len(obj.data))
+            if isinstance(obj, data_objects.ParquetDataObject):
+                parquet_file = pq.ParquetFile(self.players_file_path)
+                total_rows = parquet_file.metadata.num_rows
+                logger.info("Successfully loaded %d players (streaming)", total_rows)
+            else:
+                logger.info("Successfully loaded %d players", len(obj.data))
             return obj
         except Exception as e:
             logger.exception("Failed to load players: %s", e)
@@ -62,7 +68,12 @@ class TennisAbstractData:
         logger.info("Loading charting matches from file: %s", self.charting_matches_file_path)
         try:
             obj = data_objects.DataObjectFactory.create(self.charting_matches_file_path)
-            logger.info("Successfully loaded %d matches", len(obj.data))
+            if isinstance(obj, data_objects.ParquetDataObject):
+                parquet_file = pq.ParquetFile(self.charting_matches_file_path)
+                total_rows = parquet_file.metadata.num_rows
+                logger.info("Charting matches ready for streaming (%d rows)", total_rows)
+            else:
+                logger.info("Successfully loaded %d matches", len(obj.data))
             return obj
         except Exception as e:
             logger.exception("Failed to load charting matches: %s", e)
@@ -72,10 +83,7 @@ class TennisAbstractData:
         logger.info("Loading charting points from file: %s", self.charting_points_file_path)
         try:
             obj = data_objects.DataObjectFactory.create(self.charting_points_file_path)
-            logger.info(
-                "Charting points ready for streaming from file: %s", 
-                self.charting_points_file_path
-            )
+            logger.info("Charting points ready for streaming from file: %s", self.charting_points_file_path)
             return obj
         except Exception as e:
             logger.exception("Failed to load charting points: %s", e)
