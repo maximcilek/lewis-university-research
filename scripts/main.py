@@ -79,10 +79,12 @@ def load_players_df(players):
     players = players.drop(columns=["nameparam", "twitter", "wiki_id", "dob_approx", "lastdate", "death_date", "elo_rank", "elo_rating", "atp_id", "wta_id", "itf_id", "fc_id", "dc_id", "matches"])
     for player_col in ["dob"]:
         players[player_col] = pd.to_datetime(players[player_col].replace(["", "0", 0], pd.NA), format="%Y%m%d", errors="coerce")
-    players["gender"] = players["gender"].map({"M": 1, "F": 0}).fillna(-1)
+    # players["gender"] = players["gender"].map({"M": 1, "F": 0}).fillna(-1)
     players["ht"] = pd.to_numeric(players["ht"], errors="coerce").astype("Int64")
-    players['hand'] = players['hand'].fillna('U')  # Unknown
-    players['hand'] = players['hand'].map({'R': 1, 'L': 0, 'U': -1})
+    # players['hand'] = players['hand'].fillna('U')  # Unknown
+    # players['hand'] = players['hand'].map({'R': 1, 'L': 0, 'U': -1})
+    
+    # print(f"Unique Backhands: {players['backhand'].unique()}") # ['2', '', '1', nan]
     players['backhand'] = players['backhand'].replace(['', None, pd.NA], '-1') # Fill missing or empty backhand
     players['backhand'] = players['backhand'].replace({'R': 1, 'L': 0, 'U': -1}) # Map letters to integers
     players['backhand'] = pd.to_numeric(players['backhand'], errors='coerce').fillna(-1).astype(int) # Convert everything to numeric, coercing errors (anything not convertable becomes NaN)
@@ -93,15 +95,71 @@ def analyze_players(players):
     print("Missing values per column:")
     print(players.isna().sum())
 
-    numeric_cols = ['ht', 'hand', 'gender', 'backhand']
-    for col in numeric_cols:
-        plt.figure(figsize=(6, 4))
-        sns.histplot(players[col].dropna(), bins=20, kde=True)
-        plt.title(f"Distribution of {col}")
-        plt.xlabel(col)
-        plt.ylabel("Count")
-        plt.show()
+    """
 
+    # Hand Distribution
+    plt.figure(figsize=(6, 4))
+    sns.countplot(data=players, x='hand', order=players['hand'].value_counts().index)
+    plt.title("Distribution of Hand")
+    plt.xlabel("Hand")
+    plt.ylabel("Count")
+    plt.show()
+    """
+
+    players['age'] = (pd.Timestamp('today') - players['dob']).dt.days // 365
+    
+    # Player Distributions
+    fig, axes = plt.subplots(2, 3, figsize=(18, 10))
+    
+    # Gender Distribution
+    sns.countplot(data=players, x='gender', order=players['gender'].value_counts().index, ax=axes[0,0], palette=['skyblue', 'pink'])
+    axes[0,0].set_title("Gender Distribution")
+    axes[0,0].set_xlabel("Gender")
+    axes[0,0].set_ylabel("Count")
+    
+    # Hand Distribution by Gender
+    sns.countplot(data=players, x='hand', hue='gender', ax=axes[0,1], palette=['pink', 'skyblue'])
+    axes[0,1].set_title("Hand Distribution by Gender")
+    axes[0,1].set_xlabel("Hand")
+    axes[0,1].set_ylabel("Count")
+    
+    # Country Distribution by Gender
+    sns.countplot(data=players, y='country', hue='gender', ax=axes[0,2], palette=['pink', 'skyblue'], order=players['country'].value_counts().index[:20])  # Top 20 countries
+    axes[0,2].set_title("Top 20 Countries by Gender")
+    axes[0,2].set_xlabel("Count")
+    axes[0,2].set_ylabel("Country")
+    
+    # Male players age
+    male_data = players[players['gender'] == 'M']['age'].dropna()
+    sns.histplot(data=male_data, bins=20, kde=True, ax=axes[1,0], color='skyblue')
+    axes[1,0].set_title("Male Players - Age Distribution")
+    axes[1,0].set_xlabel("Age")
+    axes[1,0].set_ylabel("Count")
+    
+    # Female players age
+    female_data = players[players['gender'] == 'F']['age'].dropna()
+    sns.histplot(data=female_data, bins=20, kde=True, ax=axes[1,1], color='pink')
+    axes[1,1].set_title("Female Players - Age Distribution")
+    axes[1,1].set_xlabel("Age")
+    
+    # Hide the empty subplot
+    axes[1,2].set_visible(False)
+    
+    plt.tight_layout()
+    plt.show()
+
+    quit()
+
+    # numeric_cols = ['ht', 'hand', 'gender', 'backhand']
+    # for col in numeric_cols:
+    #     plt.figure(figsize=(6, 4))
+    #     sns.histplot(players[col].dropna(), bins=20, kde=True)
+    #     plt.title(f"Distribution of {col}")
+    #     plt.xlabel(col)
+    #     plt.ylabel("Count")
+    #     plt.show()
+    
+    """
     # ------------------------
     # 3. Categorical distributions (backhand, country)
     # ------------------------
@@ -118,13 +176,8 @@ def analyze_players(players):
     # 4. Age distribution
     # ------------------------
     # Compute age from dob (assuming today as reference)
-    players['age'] = (pd.Timestamp('today') - players['dob']).dt.days // 365
-    plt.figure(figsize=(6, 4))
-    sns.histplot(players['age'].dropna(), bins=20, kde=True)
-    plt.title("Distribution of player ages")
-    plt.xlabel("Age")
-    plt.ylabel("Count")
-    plt.show()
+    
+    """
 
 def load_matches_df(matches):
     matches = pd.json_normalize(tennisabstract_data.charting_matches)
