@@ -1,0 +1,2427 @@
+
+<html><head>
+<title>Tennis Abstract: Anastasia Zolotareva WTA Match Results, Splits, and Analysis</title>
+<link rel="stylesheet" href="https://www.tennisabstract.com/blue/style.css" type="text/css">
+<script type="text/javascript" src="https://www.tennisabstract.com/jquery-1.7.1-min.js"></script>
+<script type="text/javascript" src="https://www.tennisabstract.com/jquery.tablesorter.js"></script>
+<script type="text/javascript" src="https://www.tennisabstract.com/navbar.js"></script>
+<script type="text/javascript" src="https://www.tennisabstract.com/jsmatches/AnastasiaZolotareva.js"></script>
+<script type="text/javascript" src="https://www.tennisabstract.com/jsmatches/AnastasiaZolotarevaCareer.js"></script>
+<script language="JavaScript">
+var currentTime = new Date();
+var month = currentTime.getMonth() + 1;
+var day = currentTime.getDate();
+var year = currentTime.getFullYear().toString();
+var mm, dd;
+if (month < 10) {mm = '0' + month.toString();}
+else {mm = month.toString();}
+if (day < 10) {dd = '0' + day.toString();}
+else {dd = day.toString();}
+var today = year + mm + dd;
+var one_day=1000*60*60*24;
+var nameparam = 'AnastasiaZolotareva';
+var prefilters = {"span": "Careerqq", "raw": "1"};
+
+var opponent="";
+var exclude="";
+
+
+// test
+
+var fourspaces = "    ";
+
+var round_dict = { "R16": 9,
+                   "F": 12,
+                   "RR": 8,
+                   "R64": 6,
+                   "R128": 5,
+                   "QF": 10,
+                   "SF": 11,
+                   "R32": 7,
+                   'Q1': 1,
+                   'Q2': 2,
+                   'Q3': 3,
+                   'Q4': 4
+                  };
+
+// add parser through the tablesorter addParser method 
+$.tablesorter.addParser({ 
+    // set a unique id 
+    id: 'rounds', 
+    is: function(s) { 
+        // return false so this parser is not auto detected 
+        return false; 
+    }, 
+    format: function(s) { 
+        // format your data for normalization 
+        return round_dict[s]; 
+    }, 
+    // set type, either numeric or text 
+    type: 'numeric'
+});
+
+$.tablesorter.addParser({  
+    id: 'scores', 
+    is: function(s) {return false;}, 
+    format: function(s) {
+        if (s == 'W/O') {return 0;}
+        if (s.slice(-3) == 'RET') {s = s.slice(0, -4);}        
+        if (s == 'UNR') {return 2000;}
+        else {return s;}
+            for (k=0; k<sets.length; k++) {
+                var st = sets[k];
+                if (st == 'RET') {newscore = newscore + 'RET ';}
+                else {newscore = newscore + st[2] + st[1] + st[0] + st.slice(3) + ' ';}
+                }
+    },  
+    type: 'numeric'
+});
+
+$.tablesorter.addParser({  
+    id: 'ranks', 
+    is: function(s) {return false;}, 
+    format: function(s) { 
+        if (s == 'UNR') {return 2000;}
+        else {return s;} 
+    },  
+    type: 'numeric'
+});
+
+$.tablesorter.addParser({ 
+    // set a unique id 
+    id: 'dates', 
+    is: function(s) { 
+        // return false so this parser is not auto detected 
+        return false; 
+    }, 
+    format: function(s) { 
+        // format your data for normalization
+        var yyyy = s.slice(-4);
+        var mm = rmonths[s.slice(-8, -5)];
+        var day = s.slice(0, -9);
+        if (day.length == 1) {
+            var dd = '0' + day;
+            }
+        else {
+            var dd = day;
+            }
+        return yyyy + mm + dd; 
+    }, 
+    // set type, either numeric or text 
+    type: 'numeric'
+}); 
+ 
+function playeratt(pname, s, q, cc, lk) {
+    // lk = 1 or 0
+    var precede = ''
+    if (s != '') {
+        precede = '(' + s;
+        if (q != '') {
+            precede = precede + '/' + q;
+            }
+        precede = precede + ')';
+        }
+    else if (q != '') {
+        precede = '(' + q + ')';
+        }
+    //var nlink = '<a href="http://www.tennisabstract.com/cgi-bin/player.cgi?p=' + pname.replace(/ /g, '') + '">' + pname + '</a>'
+    if (cc == '') {var country = '';}
+    else {var country = ' [' + cc + ']';}
+    if (lk == 1) {return precede + nlink + country;}
+    else {return precede + pname + country;}
+    
+    };
+
+function alignRound(num, dec, perc) {
+    if (perc == 1) {
+        num = num*100;
+        }
+    var intrate = Math.round((num)*Math.pow(10, dec))/Math.pow(10, dec);
+    var extra = intrate + Math.pow(10, -1*(dec+1));
+    var strex = String(extra);
+    var indexdot = strex.indexOf('.');
+    var done;
+    if (perc == 1) {done = strex.slice(0, (indexdot+dec+1)) + '%';}
+    else {done = strex.slice(0, (indexdot+dec+1));}
+    if (done[0] == 'N' || done[0] == '%') {return '-';}
+    else if (done[0] == 'I') {return '-';} // infinity
+    else if (dec == 0) {return done.slice(0, -2) + done.slice(-1);}
+    else {return done;}
+    };
+                  
+function make(tag, attr, cont) {
+    if (arguments.length == 2 && (attr instanceof Array || typeof attr == "string")) {
+        cont = attr;
+        attributes = null;
+        }
+    var open = "<" + tag;
+    var close = "</" + tag + ">";
+    if (attr) {
+	for(var name in attr) {
+            attx = " " + name + '="' + attr[name] + '"';
+	    open = open.concat(attx);
+            }
+        }
+    open = open.concat(">");
+    if (cont instanceof Array) {
+	var content = cont.join("");
+	}
+    else {
+	var content = cont;
+	} 
+    var elem = open + content + close;
+    return elem;
+    }
+
+function sortRev(a,b) {return b - a;}
+
+url2filter = {'K': 'hand',
+              'E': 'round',
+              'I': 'rank',
+              'L': 'age',
+              'C': 'level',
+              'B': 'surface',
+              'A': 'span', 
+              'N': 'country', 
+              'D': 'tourney', 
+              'G': 'asrank',
+              'H': 'entry',
+              'J': 'oentry',
+              'M': 'height',
+              'F': 'results',
+              'P': 'sets',
+              'Q': 'scores',
+              'T': 'stats',
+              'X': 'extras',
+              's': 'sort',
+              'r': 'return',
+              'v': 'reverse',
+              'o': 'overall',
+              'v': 'reverse'
+              };
+
+filter2url = {'hand': 'K',
+              'round': 'E',
+              'rank': 'I',
+              'age': 'L',
+              'level': 'C',
+              'surface': 'B',
+              'span': 'A', 
+              'country': 'N', 
+              'tourney': 'D', 
+              'asrank': 'G',
+              'entry': 'H',
+              'oentry': 'J',
+              'height': 'M',
+              'results': 'F',
+              'sets': 'P',
+              'scores': 'Q',
+              'stats': 'T',
+              'extras': 'X'
+              };
+
+filterlist = ['span', 'surface', 'level', 'tourney', 'round', 'results', 'sets', 'scores', 'asrank', 'entry',
+              'rank', 'oentry', 'hand', 'age', 'height', 'country'];
+
+var filteropts = {'hand': ['vs Hand', 'All', 'Right', 'Left'],
+                  'round': ['Round', 'All', 'Final', 'Semis', 'Quarters', 'R16', 'R32', 'R64', 'R128'],
+                  'rank': ['vs Rank', 'All', 'Top 10', 'Top 20', 'Top 50', 'Top 100', '11+', '21+', '51+', '101+', 'Higher', 'Lower'], // add higher/lower ranked
+                  'age': ['vs Age', 'All', 'Younger', 'Older', 'Under 21', 'Under 23', '28 & Over', '30 & Over'],
+                  'level': ['Level', 'All', 'Grand Slams', 'Premiers', 'All Tours', 'Qualifying', '50-100K', '10-25K', 'All ITFs', 'Fed Cup'],
+                  'surface': ['Surface', 'All', 'Hard', 'Clay', 'Grass', 'Carpet'], // add indoor!
+                  'span': ychoices, 
+                  'country': cchoices, 
+                  'tourney': tchoices, 
+                  'asrank': rchoices,
+                  'entry': ['as Entry', 'All', 'Seeded', 'Unseeded', 'Qualifier', 'Wild Card'],
+                  'oentry': ['vs Entry', 'All', 'Seeded', 'Unseeded', 'Qualifier', 'Wild Card'],
+                  'height': ['vs Height', 'All', 'Shorter', 'Taller', "Under 5'6", "Under 5'8", "Over 5'10", "Over 6'0"],
+                  'results': ['Results', 'All', 'Wins', 'Losses', 'W by RET', 'L by RET', 'W by W/O', 'L by W/O', 'Won 1st Set', 'Lost 1st Set'],
+                  'scores': ['Scores', 'All', 'All tiebreaks', 'TB won', 'TB lost', 'All 7-5', '7-5 won', '7-5 lost', 'All bagels', '6-0 won', '6-0 lost', 'All 6-1', '6-1 won', '6-1 lost'],                  
+                  'sets': ['Sets', 'All', 'Straights', 'Deciders']
+                  // 'extras': ['Extras', 'All', 'Charting', 'Pt-by-Pt', 'Video']
+                  };
+
+var rmonths = {'Jan': '01',
+                'Feb': '02',
+                'Mar': '03',
+                'Apr': '04',
+                'May': '05',
+                'Jun': '06',
+                'Jul': '07',
+                'Aug': '08',
+                'Sep': '09',
+                'Oct': '10',
+                'Nov': '11',
+                'Dec': '12'
+                };
+
+var months = {'01': 'Jan',
+                '02': 'Feb',
+                '03': 'Mar',
+                '04': 'Apr',
+                '05': 'May',
+                '06': 'Jun',
+                '07': 'Jul',
+                '08': 'Aug',
+                '09': 'Sep',
+                '10': 'Oct',
+                '11': 'Nov',
+                '12': 'Dec'
+                };
+
+var titleTips = {'DR': 'Dominance Ratio: % of return points won\ndivided by % of serve points lost.',
+                 'TPW': 'Total points won',
+                 'RPW': 'Return points won',
+                 'vA%': 'Ace rate against',
+                 'v1st%': '1st serve return points won',
+                 'v2nd%': '2nd serve return points won',
+                 'BPConv': 'Break point opportunities converted',
+                 'BPSaved': 'Break point opportunities saved',
+                 'A%': 'Ace rate',
+                 'Ace%': 'Ace rate',
+                 'DF%': 'Double fault rate',
+                 '1st In': 'First serve percentage',
+                 '1st%': 'First serve points won',
+                 '2nd%': 'Second serve points won',
+                 'Rk': "Player's WTA Ranking when the tournament began",
+                 'vRk': "Opponent's WTA Ranking when the tournament began"
+                 };
+
+var hdrsServe = ['Date', 'Tournament', 'Surface', 'Rd', 'Rk', 'vRk', '', 'Score', 'DR', 'A%', 'DF%', '1stIn', '1st%', '2nd%', 'BPSaved', 'Time'];
+var hdrsReturn = ['Date', 'Tournament', 'Surface', 'Rd', 'Rk', 'vRk', '', 'Score', 'DR', 'TPW', 'RPW', 'vA%', 'v1st%', 'v2nd%', 'BPConv', 'Time'];
+
+var hdict = {'Left': 'L',
+             'Right': 'R'
+             };
+
+var hdict2 = {'L': 'Left',
+              'R': 'Right',
+              '': 'Unknown'
+             };
+             
+var levdict = {'Grand Slams': 'G',
+               'Masters': 'M',
+               'Challengers': 'C',
+               'Qualifying': 'Q',
+               'Fed Cup': 'D',
+               'Juniors': 'J'
+               }
+
+var levdict2 = {'G': 'Grand Slams',
+               'M': 'Masters',
+               'C': 'Challengers',
+               'Q': 'Qualifying',
+               'D': 'Fed Cup',
+               'J': 'Juniors'
+               }
+
+var rddict = {'Final': 'F',
+              'Semis': 'SF',
+              'Quarters': 'QF',
+              'R16': 'R16',
+              'R32': 'R32',
+              'R64': 'R64',
+              'R128': 'R128',
+              'Other': 'RR'
+              }
+
+var rddict2 = {'F': 'Final',
+              'SF': 'Semis',
+              'QF': 'Quarters',
+              'R16': 'R16',
+              'R32': 'R32',
+              'R64': 'R64',
+              'R128': 'R128',
+              'RR': 'Other'
+              }
+
+function filterDict(fid, match, mults) {
+    if (fid == 'hand') {
+        if (hdict2[match.ohand] in mults) {return 1;}
+        else {return 0;}
+        }
+    else if (fid == 'age') {
+        if ('Younger' in mults && (parseInt(match.obday)) > dob) {return 1;}
+        else if ('Older' in mults && (parseInt(match.obday) < dob)) {return 1;}
+        else if ('Under 21' in mults && (parseInt(match.date) - parseInt(match.obday)) < 210000) {return 1;}
+        else if ('Under 23' in mults && (parseInt(match.date) - parseInt(match.obday)) < 230000) {return 1;}
+        else if ('28 & Over' in mults && (parseInt(match.date) - parseInt(match.obday)) > 280000) {return 1;}
+        else if ('30 & Over' in mults && (parseInt(match.date) - parseInt(match.obday)) > 300000) {return 1;}
+        else {return 0;}
+        }
+    else if (fid == 'rank') {
+        if (match.orank == 'UNR') {match.orank = 2000;}
+        if ('Top 10' in mults && parseInt(match.orank) < 11) {return 1;}
+        else if ('Top 20' in mults && parseInt(match.orank) < 21) {return 1;}
+        else if ('Top 50' in mults && parseInt(match.orank) < 51) {return 1;}
+        else if ('Top 100' in mults && parseInt(match.orank) < 101) {return 1;}
+        else if ('11+' in mults && parseInt(match.orank) > 10) {return 1;}
+        else if ('21+' in mults && parseInt(match.orank) > 20) {return 1;}
+        else if ('51+' in mults && parseInt(match.orank) > 50) {return 1;}
+        else if ('101+' in mults && parseInt(match.orank) > 100) {return 1;}
+        else if ('Higher' in mults && (parseInt(match.orank) < parseInt(match.rank))) {return 1;}
+        else if ('Lower' in mults && (parseInt(match.orank) > parseInt(match.rank))) {return 1;}
+        else if ('Custom' in mults) {
+            if (parseInt(match.orank) >= lowrank && parseInt(match.orank) <= highrank) {return 1;}
+            return 0;
+            }
+
+        else {return 0;}
+        }
+    else if (fid == 'asrank') {
+        if (match.rank == 'UNR') {match.rank = 2000;}
+        if ('Number 1' in mults&& parseInt(match.rank) <= 1) {return 1;}
+        if ('Top 5' in mults && parseInt(match.rank) <= 5) {return 1;}
+        if ('Top 10' in mults && parseInt(match.rank) <= 10) {return 1;}
+        else if ('Top 20' in mults && parseInt(match.rank) <= 20) {return 1;}
+        else if ('Top 50' in mults && parseInt(match.rank) <= 50) {return 1;}
+        else if ('Top 100' in mults && parseInt(match.rank) <= 100) {return 1;}
+        else if ('Top 200' in mults && parseInt(match.rank) <= 200) {return 1;}
+        else if ('2+' in mults && parseInt(match.rank) >= 2) {return 1;}
+        else if ('6+' in mults && parseInt(match.rank) >= 6) {return 1;}
+        else if ('11+' in mults && parseInt(match.rank) >= 11) {return 1;}
+        else if ('21+' in mults && parseInt(match.rank) >= 21) {return 1;}
+        else if ('51+' in mults && parseInt(match.rank) >= 51) {return 1;}
+        else if ('101+' in mults && parseInt(match.rank) >= 101) {return 1;}
+        else if ('201+' in mults && parseInt(match.rank) >= 201) {return 1;}
+        else {return 0;}
+        }
+    else if (fid == 'level') {
+        if ('Premiers' in mults) {
+            if (match.level == 'P' || match.level == 'PM') {return 1;}
+            else if (match.level == 'T1' || match.level == 'T2') {return 1;}
+            else if (match.level == 'W' || match.level == 'O') {return 1;}
+            }
+        if ('All Tours' in mults) {
+            var atx = {'P': 1, 'PM': 1, 'T1': 1, 'T2': 1, 'T3': 1, 'T4': 1, 'T5': 1, 'W': 1, 'I': 1, 'O': 1, 'G': 1, 'F': 1, 'D': 1};
+            if (match.level in atx) {return 1;}
+            }
+        if ('50-100K' in mults) {
+            var btx = {'CH': 1, '50': 1, '75': 1, '100': 1};
+            if (match.level in btx) {return 1;}
+            }
+        if ('10-25K' in mults) {
+            var ctx = {'CC': 1, '25': 1, '20': 1, '10': 1};
+            if (match.level in ctx) {return 1;}
+            }
+        if ('All ITFs' in mults) {
+            var dtx = {'CC': 1, '25': 1, '20': 1, '10': 1, 'CH': 1, '50': 1, '75': 1, '100': 1};
+            if (match.level in dtx) {return 1;}
+            }
+        if (levdict2[match.level] in mults) {return 1;}
+        else {return 0;}
+        }
+    else if (fid == 'round') {
+        if (rddict2[match.round] in mults) {return 1;}
+        else {return 0;}
+        }
+    else if (fid == 'span') {
+        if ('Career' in mults) {return 1;}
+        else if ('Last 52' in mults) {
+            var keyday;
+            if (active == 1) {keyday = today;}
+            else {keyday = lastdate;}
+            if (parseInt(match.date) < (keyday-10000)) {}
+            //else if (parseInt(match.date) > keyday) {}
+            else {return 1;}
+            }
+        if ('Custom' in mults) {
+            if (parseInt(match.date) >= startdate && parseInt(match.date) <= enddate) {return 1;}
+            return 0;
+            }
+        var yr = match.date.slice(0,4);
+        var mmdd = match.date.slice(4);
+        var syr;
+        if (parseInt(mmdd) > 1226) {
+            syr = (parseInt(yr) + 1) + '';
+            }
+        else {syr = yr;}
+        if (syr in mults) {return 1;}
+        else {return 0;}
+        }
+    else if (fid == 'entry') {  // -1 because entry can be '' for seeds
+        if ('Qualifier' in mults && (match.entry == 'Q' || match.entry == 'LL')) {return 1;}
+        else if ('Wild Card' in mults && match.entry == 'WC') {return 1;}
+        else if ('Seeded' in mults && match.seed.length > 0) {return 1;}
+        else if (match.level == 'D') {return 0;}
+        else if ('Unseeded' in mults && match.seed.length == 0) {return 1;}
+        else {return 0;}
+        }
+    else if (fid == 'oentry') {  // -1 because entry can be '' for seeds
+        if ('Qualifier' in mults && (match.oentry == 'Q' || match.oentry == 'LL')) {return 1;}
+        else if ('Wild Card' in mults && match.oentry == 'WC') {return 1;}
+        else if ('Seeded' in mults && match.oseed.length > 0) {return 1;}
+        else if (match.level == 'D') {return 0;}
+        else if ('Unseeded' in mults && match.oseed.length == 0) {return 1;}
+        else {return 0;}
+        }
+    else if (fid == 'height') {  
+        if ('Shorter' in mults && parseInt(match.oht) < ht) {return 1;}
+        else if ('Taller' in mults && parseInt(match.oht) > ht) {return 1;}
+        else if ("Under 5'6" in mults && parseInt(match.oht) <= 167) {return 1;}
+        else if ("Under 5'8" in mults && parseInt(match.oht) <= 173) {return 1;}
+        else if ("Over 5'10" in mults && parseInt(match.oht) >= 178) {return 1;}
+        else if ("Over 6'0" in mults && parseInt(match.oht) >= 183) {return 1;}
+        else {return 0;}
+        }
+    //'All Best of 5', '5-Setters', '4-Setters', '3 Sets (of 5)', 'All Best of 3',
+                  //'3 Sets (of 3)', '2-Setters']
+    else if (fid == 'sets') {
+        if (match.score == '') {return 0;}
+        if (match.score == 'W/O' || match.score == 'DEF') {return 0;}
+        if ('All Best of 3' in mults && (parseInt(match.max) == 3)) {return 1;}
+        if ('Straights' in mults || 'Deciders' in mults) {
+            //if (match.score == 'W/O') {return 0;} // only because later filters could not possibly include this
+            var sets = match.score.split(' ');
+            var nsets = sets.length;
+            if (sets[(sets.length-1)] == 'RET') {nsets = nsets - 1;}
+            if ('Straights' in mults && (match.max/nsets >= 1.4)) {return 1;}
+            else if ('Deciders' in mults && (parseInt(match.max) == nsets)) {return 1;}
+            }
+        }
+    else if (fid == 'scores') {
+        if (match.score.indexOf('7-6') != -1) {
+            if ('All tiebreaks' in mults) {return 1;}
+            else if ('TB won' in mults && match.wl == 'W') {return 1;}
+            else if ('TB lost' in mults && match.wl == 'L') {return 1;}
+            }
+        if (match.score.indexOf('6-7') != -1) {
+            if ('All tiebreaks' in mults) {return 1;}
+            else if ('TB won' in mults && match.wl == 'L') {return 1;}
+            else if ('TB lost' in mults && match.wl == 'W') {return 1;}
+            }
+        if (match.score.indexOf('7-5') != -1) {
+            if ('All 7-5' in mults) {return 1;}
+            else if ('7-5 won' in mults && match.wl == 'W') {return 1;}
+            else if ('7-5 lost' in mults && match.wl == 'L') {return 1;}
+            }
+        if (match.score.indexOf('5-7') != -1) {
+            if ('All 7-5' in mults) {return 1;}
+            else if ('7-5 won' in mults && match.wl == 'L') {return 1;}
+            else if ('7-5 lost' in mults && match.wl == 'W') {return 1;}
+            }  
+        if (match.score.indexOf('6-0') != -1) {
+            if ('All bagels' in mults) {return 1;}
+            else if ('6-0 won' in mults && match.wl == 'W') {return 1;}
+            else if ('6-0 lost' in mults && match.wl == 'L') {return 1;}
+            }
+        if (match.score.indexOf('0-6') != -1) {
+            if ('All bagels' in mults) {return 1;}
+            else if ('6-0 won' in mults && match.wl == 'L') {return 1;}
+            else if ('6-0 lost' in mults && match.wl == 'W') {return 1;}
+            }  
+        if (match.score.indexOf('6-1') != -1) {
+            if ('All 6-1' in mults) {return 1;}
+            else if ('6-1 won' in mults && match.wl == 'W') {return 1;}
+            else if ('6-1 lost' in mults && match.wl == 'L') {return 1;}
+            }
+        if (match.score.indexOf('1-6') != -1) {
+            if ('All 6-1' in mults) {return 1;}
+            else if ('6-1 won' in mults && match.wl == 'L') {return 1;}
+            else if ('6-1 lost' in mults && match.wl == 'W') {return 1;}
+            } 
+        return 0;                    
+        }
+    else if (fid == 'results') {
+        if (match.score == '') {return 0;}
+        if (match.score == 'W/O' || match.score == 'DEF') {
+            if ('W by W/O' in mults && match.wl == 'W') {return 1;}
+            else if ('L by W/O' in mults && match.wl == 'L') {return 1;}
+            else {return 0;}
+            } // only because later filters could not possibly include this
+        else if (match.score.slice(-3) == 'RET') {
+            if ('W by RET' in mults && match.wl == 'W') {return 1;}
+            else if ('Wins' in mults && match.wl == 'W') {return 1;}
+            else if ('L by RET' in mults && match.wl == 'L') {return 1;}
+            else if ('Losses' in mults && match.wl == 'L') {return 1;}
+            else {return 0;}
+            }        
+        if ('Wins' in mults && match.wl == 'W') {return 1;}
+        else if ('Losses' in mults && match.wl == 'L') {return 1;}
+        var sets = match.score.split(' ');
+        if (sets[1] == 'RET') {return 0;} // only because this is the last filter
+        var firstset = sets[0];
+        var a = parseInt(firstset[0]), b = parseInt(firstset[2]);
+        var wonfirst;
+        if (match.wl == 'W') {
+            if (a>b) {wonfirst=1;}
+            else {wonfirst=0;}
+            }
+        else {
+            if (a>b) {wonfirst=0;}
+            else {wonfirst=1;}
+            }
+        if ('Won 1st Set' in mults && wonfirst == 1) {return 1;}
+        else if ('Lost 1st Set' in mults && wonfirst == 0) {return 1;}
+        if (sets.length < 3) {return 0;} // limit to five-setters
+        else if (sets[2] == 'RET') {return 0;} // only because this is the last filter
+        var secondset = sets[1];
+        var a = parseInt(secondset[0]), b = parseInt(secondset[2]);
+        var wonsecond;
+        if (match.wl == 'W') {
+            if (a>b) {wonsecond=1;}
+            else {wonsecond=0;}
+            }
+        else {
+            if (a>b) {wonsecond=0;}
+            else {wonsecond=1;}
+            }
+        if ('Split 1&2' in mults && (wonfirst != wonsecond)) {return 1;}        
+        return 0;
+        }
+    else if (fid == 'tourney') {
+        if ('Tour Finals' in mults) {
+            if (match.tourn == 'Tour Finals' || match.tourn == 'Masters Cup') {return 1;}
+            }
+        else if ('Olympics' in mults) {
+            if (match.tourn.indexOf('Olympics') != -1) {return 1;}
+            }
+        else if ('Fed Cup' in mults) {
+            if (match.tourn.indexOf('Fed Cup') != -1) {return 1;}
+            else if (match.tourn.indexOf('BJK') != -1) {return 1;}
+            }
+        else if (match.tourn.slice(-2) == ' Q') {
+            if (match.tourn.slice(0,-2) in mults) {return 1;}
+            }
+        if (match.tourn in mults) {return 1;}
+        else if (match.tourn.slice(4) in mults) {return 1;}
+        return 0;
+        }
+    else if (fid == 'country') {
+        if (match.ocountry in mults) {return 1;}
+        return 0;
+        }
+    else if (fid == 'surface') {
+        if (match.surf in mults) {return 1;}
+        return 0;
+        }
+    else if (fid == 'h2h') {
+        if (match.opp in mults) {return 1;}
+        return 0;
+        }
+    else if (fid == 'not') {
+        if (match.opp in mults) {return 0;}
+        return 1;
+        }
+    }
+
+function genfilter(fid, first, match, att) {
+    // fid = filter id; first = default select; match = relevant match object; att = rel attribute
+    // find e.g. 'surfaceselected' text -- that's it
+    var selname = '.' + fid + 'selected';
+    var multselect = $(selname).text().split(fourspaces + fourspaces).slice(1); // list of selected for this filte
+    if (multselect[0] == undefined) { // ugly IE hack
+    	var multselect = $(selname).text().split("        ").slice(1);
+    	}
+    var mults = {};
+    for (var i=0; i<multselect.length; i++) {mults[multselect[i].replace(/ /g, ' ')] = 1;}  // make list into object, for 'in' searching
+    if ('All' in mults) {return 1;}
+    else if (filterDict(fid, match, mults) != 1) {return 0;} // this is where it gets messy
+    return 1;
+    }
+
+function hidePermalink() {
+    if ($(".perma").text() == 'Hide Permalink') { // generalize this, also add to other toggles that change permalink?
+        $(".perma").html('Table Permalink');
+        $("#permalink").remove();
+        }
+    }
+
+function getWinLossTiebreak(match) {
+    var tb = 0, tbwon = 0;
+    if (match.score.search('W/O') == -1 && match.score != '') {
+        if (match.wl == 'W') {match["wins"] = 1; match["losses"] = 0;}
+        else {match["losses"] = 1; match["wins"] = 0;}
+        }
+    else {match["wins"] = 0; match["losses"] = 0;}
+    // do some calculations
+    sets = match.score.split(' ');       
+    for (var i=0; i<sets.length; i++) {
+        // tb counting
+        if (sets[i].slice(0, 3) == '7-6') {
+            tb++;
+            if (match.wl == 'W') {tbwon++;}
+            }
+        else if (sets[i].slice(0, 3) == '6-7') {
+            tb++;
+            if (match.wl == 'L') {tbwon++;}
+            }
+        }
+    match["tiebreaks"] = tb;
+    match["tbwon"] = tbwon;
+    return match;
+    }
+
+function makeSplitStatRow(mt) {
+    var wl = mt["wins"] + '-' + mt["losses"] + ' (' + alignRound((mt["wins"]/(mt['wins'] + mt['losses'])), 0, 1) + ')';
+    var tbrecord = mt["tbwon"] + '-' + (mt["tiebreaks"]-mt["tbwon"]) + ' (' + alignRound((mt["tbwon"]/(mt["tiebreaks"])), 0, 1) + ')';
+    var acerate = alignRound((mt["aces"]/mt["pts"]), 1, 1);
+    var firstin = alignRound((mt["firsts"]/mt["pts"]), 1, 1);
+    var fwin = alignRound((mt.fwon/mt.firsts), 1, 1);
+    var swin = alignRound((mt.swon/(mt.pts-mt.firsts)), 1, 1);
+    var rpw = 1 - (mt.ofwon + mt.oswon)/mt.opts;
+    var rpwShow = alignRound(rpw, 1, 1)
+    var spl = 1 - (mt.fwon + mt.swon)/mt.pts;
+    var domratio = alignRound(rpw/spl, 2);
+    var statrow = [wl, tbrecord, acerate, firstin, fwin, swin, rpwShow, domratio];
+    return statrow;
+    }
+
+var matchhead = ["date","tourn","surf","level","wl","rank","seed","entry","round",
+                 "score","max","opp","orank","oseed","oentry","ohand","obday",
+                 "oht","ocountry","oactive","time","aces","dfs","pts","firsts","fwon",
+                 "swon",'games',"saved","chances","oaces","odfs","opts","ofirsts",
+                 "ofwon","oswon",'ogames',"osaved","ochances","obackhand","chartlink",
+                 "pslink","whserver","matchid"]
+
+var totals = {"aces": 0,"pts": 0,"firsts": 0,"fwon": 0, "swon": 0, "oaces": 0,"opts": 0,"ofirsts":0,"ofwon": 0,"oswon": 0,
+              "wins":0, "losses":0, "tiebreaks":0, "tbwon":0};
+var stats = ["aces","pts","firsts","fwon", "swon", "oaces","opts","ofirsts","ofwon","oswon",
+              "wins","losses", "tiebreaks", "tbwon"];
+              
+function isInt(value) {
+  return !isNaN(value) && (function(x) { return (x | 0) === x; })(parseFloat(value))
+}
+
+function addYearSplits() {
+    // remove/set aside bottom row?! need id tag for bottom row
+    var splitlist = [];
+    var splits = {'Career': $.extend(true, {}, totals)};
+    for (m=0; m<matchmx.length; m++) {
+        var match = {}
+        for (var x=0; x<matchmx[m].length; x++) {
+            match[matchhead[x]] = matchmx[m][x];
+            }
+        var msplits = ['Career'];  
+        //var match = matches[m];
+        var year = match.date.slice(0,4);
+        if (year in splits) {}
+        else {
+            splits[year] = $.extend(true, {}, totals);
+            splitlist.push(year);
+            }
+        msplits.push(year);
+        match = getWinLossTiebreak(match);   
+        for (u=0; u<stats.length; u++) {
+            t = stats[u];
+            for (i=0; i<msplits.length; i++) {
+                if (isInt(match[t])) {splits[msplits[i]][t] = splits[msplits[i]][t] + parseInt(match[t]);}
+                }
+            }
+        }
+    splitlist.sort();
+    splitlist.reverse();
+    splitlist.push('Career');
+    for (j=0; j<splitlist.length; j++) {
+        var idnum = j+1;
+        if (j == (splitlist.length-1)) {idnum = 0;}
+        var yearid = 'sA' + idnum;
+        var $row = $('<tr>').attr('class', 'yearsplits').attr('id', yearid);
+        var split = splitlist[j], mt = splits[split];
+        var statrow = makeSplitStatRow(mt);
+        var $splitspan = $('<span>').text(split + ' ');
+        //var $splitclick = $('<span>').text('(+)').attr('class', 'likelink splitclick');
+        $row.append($('<td>').append($splitspan)); //.append($splitclick)); 
+        var cells = [];
+        for (var i=0; i < statrow.length; i++) {           
+            $row.append($('<td>').text(statrow[i]).attr('align', 'right'));
+            }
+        $("#overall").append($row);
+        }
+    }
+
+var splitIds = {'Last 52': '',
+                'Hard': 'B0',
+                'Clay': 'B1',
+                'Grass': 'B2',
+                'Grand Slams': 'C0',
+                'vs Top 10': 'I0',
+                'vs Righties': 'K0',
+                'vs Lefties': 'K1',
+                'Best of 3': 'F2',
+                'Best of 5': 'F3',
+                'Deciding Sets': 'F5'
+                }
+
+function applyPrefilters() {
+    if (prefilters.length != 0) {
+        for (j=0; j<filterlist.length; j++) {
+            var filter = filterlist[j];
+            if (filter in prefilters) {
+                $("." + filter + "choice").removeClass("selected").removeClass(filter + "selected");
+                if (filter in alphaFilters) {
+                    var applylist = prefilters[filter].split(',');
+                    }
+                else {
+                    var applylist = prefilters[filter].split('i');
+                    }
+                for (k=0; k<applylist.length; k++) {
+                    // treat spanCustom separately
+                    if (applylist[k].slice(0,2) == 'cx' && filter != "stats") {
+                        $("#" + filter + 'Customqq').addClass("selected").addClass(filter + "selected");
+                        if (filter == 'span') {
+                            startdate = applylist[k].slice(2,10);
+                            enddate = applylist[k].slice(10,18);
+                            }
+                        else if (filter == 'rank') {
+                            lowrank = parseInt(applylist[k].slice(2,7)) - 10000;
+                            highrank = parseInt(applylist[k].slice(7,12)) - 10000;
+                            }
+                        }
+                    else if (applylist[k].slice(0,2) == 'cx' && filter == "stats") {  
+                        $("#" + filter + '0').addClass("selected").addClass(filter + "selected");
+                        var statparamstring = applylist[k].slice(2,-2);
+                        var statparams = statparamstring.split('-');
+                        statchoice = statparams[0].replace(/_/g," ");
+                        statoperatorchoice = statparams[1];
+                        statinput = statparams[2];
+                        }                    
+                    else {              
+                        $("#" + filter + applylist[k]).addClass("selected").addClass(filter + "selected");
+                        }
+                    if ($("#" + filter + "head").hasClass('closed')) {$("#" + filter + "head").addClass("selected");}
+                    }
+                }
+            }
+        }
+    if (opponent.length != 0) {
+        var opps = opponent.split(',');
+        for (i=0; i<opps.length; i++) {
+            var player = insertNameSpaces(opps[i]);
+            setPlayerFilter(player, 0);
+            }
+        for (i=0; i<opps.length; i++) {
+            var playerid = '#h2h' + opps[i];
+            $(playerid).addClass('selected').addClass('h2hselected');
+            }
+        $("#h2hhead").addClass("selected");
+        }
+    else {
+        $(".h2hchoice").removeClass("selected").removeClass("h2hselected");
+        $("#h2hdef").addClass("selected").addClass("h2hselected");
+        //$(".h2hchoice").toggle();
+        }
+    if (exclude.length != 0) {
+        var nots = exclude.split(',');
+        for (i=0; i<nots.length; i++) {
+            var player = insertNameSpaces(nots[i]);
+            setNotPlayerFilter(player, 0);
+            }
+        for (i=0; i<nots.length; i++) {
+            var playerid = '#not' + nots[i];
+            $(playerid).addClass('selected').addClass('notselected');
+            }
+        $("#nothead").addClass("selected");
+        }
+    else {
+        $(".notchoice").removeClass("selected").removeClass("notselected");
+        $("#notdef").addClass("selected").addClass("notselected");
+        //$(".notchoice").toggle();
+        }
+    }
+
+var spelled = {'A': '', 'D': '', 'N': '', 'I': '', 'T': ''};
+function newPrefilters(filterstring) {
+    var io = filterstring.indexOf('&q=');
+    if (io == -1) {opponent = '';}
+    else {
+        opponent = filterstring.slice(io+3);
+        filterstring = filterstring.slice(0, io);
+        }
+    var xo = filterstring.indexOf('&x=');
+    if (xo == -1) {exclude = '';}
+    else {
+        exclude = filterstring.slice(xo+3);
+        filterstring = filterstring.slice(0, xo);
+        }
+    prefilters = {};
+    filterstring += 'Z';
+    var start = 0;
+    if (filterstring[0] in spelled) {var go = 0;}
+    else {var go = 1;}
+    for (c=1; c<filterstring.length; c++) {
+        if (filterstring[c] == 'q' && filterstring[c-1] == 'q') {
+            if ((c+1)<filterstring.length && filterstring[c+1] == ',') {}
+            else {go = 1;}
+            }
+        else if (filterstring[c] in {'0': 1, '1': 1, '2': 1, '3': 1, '4': 1, '5': 1, '6': 1, '7': 1, '8': 1, '9': 1, 'i': 1, ',': 1} && go == 1) {}
+        else if (go == 1) {
+            var chunk = filterstring.slice(start, c);
+            var k = url2filter[chunk[0]];
+            var v = chunk.slice(1);
+            prefilters[k] = v;
+            start = c;
+            if (filterstring[0] in spelled) {go = 0;}
+            }
+        }
+    //alert(opponent);
+    resetFilters();
+    applyPrefilters();
+    makeMatchTable();
+    }
+
+function makeSplitsTable() {
+    var splitlist = ["Last 52", 'Hard', 'Clay', 'Grass', "Grand Slams", 'vs Top 10', 'vs Righties', 'vs Lefties',
+                     "Deciding Sets"];
+    var splits = {'Last 52': $.extend(true, {}, totals), // alternate w/ career 
+                  'Hard': $.extend(true, {}, totals),
+                  'Clay': $.extend(true, {}, totals),
+                  'Grass': $.extend(true, {}, totals),
+                  'Grand Slams': $.extend(true, {}, totals),
+                  'vs Top 10': $.extend(true, {}, totals),
+                  'vs Righties': $.extend(true, {}, totals),
+                  'vs Lefties': $.extend(true, {}, totals),
+                  //'Best of 3': $.extend(true, {}, totals),
+                  //'Best of 5': $.extend(true, {}, totals),
+                  'Deciding Sets': $.extend(true, {}, totals)
+                  };
+    // $.extend(true, {}, totals) -- deep copy of totals
+    for (m=0; m<matchmx.length; m++) {
+        var match = {}
+        for (var x=0; x<matchmx[m].length; x++) {
+            match[matchhead[x]] = matchmx[m][x];
+            }
+        var msplits = [];  
+        //var match = matches[m];
+        match = getWinLossTiebreak(match);
+        // get splits
+        var keyday;
+        if (active == 1) {keyday = today;}
+        else {keyday = lastdate;}
+        if (parseInt(match.date) <= keyday && parseInt(match.date) >= (keyday-10000)) {msplits.push('Last 52');}
+        else {continue;} // only counting matches in last 52
+        if (match.surf == "Hard") {msplits.push('Hard');}
+        if (match.surf == "Clay") {msplits.push('Clay');}
+        if (match.surf == "Grass") {msplits.push('Grass');}
+        if (match.level == "G") {msplits.push('Grand Slams');}
+        if (parseInt(match.orank) <= 10) {msplits.push('vs Top 10');}
+        if (match.ohand == "R") {msplits.push('vs Righties');}
+        if (match.ohand == "L") {msplits.push('vs Lefties');}
+        // if (match.max == "3") {msplits.push('Best of 3');}
+        // if (match.max == "5") {msplits.push('Best of 5');}
+        if (sets.length == match.max) {msplits.push('Deciding Sets');}
+        for (u=0; u<stats.length; u++) {
+            t = stats[u];
+            for (i=0; i<msplits.length; i++) {
+                //splits['All'][t] = splits['All'][t] + parseInt(match[t]);
+                if (isInt(match[t])) {splits[msplits[i]][t] = splits[msplits[i]][t] + parseInt(match[t]);}
+                }
+            }
+        }
+    var headerrow = ['TOTALS', 'Match', 'Tiebreak', 'Ace%', '1stIn', '1st%', '2nd%', 'RPW', 'DR'];
+    var $splittable = $('<table>');
+    var $splitchunk = $('<thead>');
+    var $splitrow = $('<tr>');
+    for (var i = 0; i < headerrow.length; i++) { 
+        if (i == 0) {var halign = 'left';}
+        else {var halign = 'right';}
+        var $hspan = $('<span>').text(headerrow[i])
+        if (headerrow[i] in titleTips) {$hspan.attr('title', titleTips[headerrow[i]]);}
+        var $headth = $('<th>').append($hspan).css('align', halign);
+        $splitrow.append($headth);
+        }
+    $splitchunk.append($splitrow);
+    $splittable.append($splitchunk);
+    var $splitchunk2  = $('<tbody>').attr('id', 'splitsbody');
+    for (j=0; j<splitlist.length; j++) {
+        var $splitrow = $('<tr>');
+        var $splitspan = $('<span>');
+        //var $splitclick = $('<span>');
+        var split = splitlist[j], mt = splits[split];
+        var statrow = makeSplitStatRow(mt);
+        if (split == 'Last 52' || split == 'Career') {$splitspan.html(split + ' ');}
+        else {$splitspan.html('&nbsp;&nbsp;' + split + ' ');}
+        //$splitclick.text('(+)').attr('class', 'likelink splitclick')
+        $splitrow.append($('<td>').append($splitspan)); //.append($splitclick));
+        for (var i = 0; i < statrow.length; i++) {
+            $splitrow.append($('<td>').text(statrow[i]).attr('align', 'right'));
+            }
+        if (j != 0) {$splitrow.attr('class', 'moresplits');}
+        $splitchunk2.append($splitrow.attr('id', 's' + splitIds[split]))
+        }
+    var $yearspan = $('<span>').attr('class', 'likelink').text('show yearly totals');
+    var $togglespan = $('<span>').attr('class', 'likelink').text('hide splits');
+    var $lastrow = $('<tr>').append($('<td>').attr('class', 'yeartoggle').append($yearspan));
+    $lastrow.append($('<td>').attr('class', 'splittoggle').append($togglespan));
+    for (j=2; j<headerrow.length; j++) {$lastrow.append($('<td>').text(''));}
+    $splitchunk2.append($lastrow);
+    $splittable.append($splitchunk2).attr('class', 'tablesorter').attr('id', 'overall');
+    $splittable.attr('width', '40%').attr('border', 0).attr('cellspacing', 0).attr('cellpadding', 4);
+    $("#wonloss").html($splittable);
+    }
+
+function getFilterParams() {
+    var params = '';
+    for (j=0; j<filterlist.length; j++) {
+        var filter = filterlist[j];
+        if (filter in alphaFilters) {var splitter = ',';}
+        else {var splitter = 'i';}
+        var fselected = '.' + filter + 'selected', fdef = filter + 'def';
+        var fkey = filter2url[filter]; // e.g. 'span' = 'A'
+        var selnum = '';
+        if ($(fselected).attr('id') != fdef) {
+            $(fselected).each(function (i) {
+                var selid = $(this).attr('id'), selname = selid.slice(filter.length);
+                if (selid == 'spanCustomqq') {selname = 'cx'+startdate+enddate+'qq';}
+                if (selid == 'rankCustomqq') {selname = 'cx'+(10000+lowrank)+(10000+highrank)+'qq';}
+                if (selid == 'stats0') {selname = 'cx'+statchoice.replace(/ /g,"_")+'-'+statoperatorchoice+'-'+statinput+'qq';}
+                if (selnum.length == 0) {
+                    selnum = selname;
+                    }
+                else {
+                    selnum = selnum + splitter + selname;
+                    }
+                });
+            params = params + fkey + selnum;
+            }
+        }
+    return params;
+    }
+
+function getPermalinkParams() {
+    startwith = getFilterParams();
+    var skey, sdown;
+    if ($('#matchheader').children(".headerSortDown").length == 0) {
+        skey = $('#matchheader').children(".headerSortUp")[0].cellIndex;
+        sdown = '1';
+        }
+    else {
+        skey = $('#matchheader').children(".headerSortDown")[0].cellIndex;
+        sdown = '0';
+        }
+    if (skey == '0' && sdown == '1') {}
+    else {startwith = startwith + 's' + skey + sdown;}
+    if ($(".revscore").text() == 'Standard Scores') {startwith += 'v1';}
+    if ($(".srclick").text() == 'Show Serve Stats') {startwith += 'r1';}
+    // insert opponents, separated by commas, into url
+    if ($('#h2hdef').hasClass('selected')) {}
+    else {
+        var oppstring = '';
+        var opps = $('.h2hselected').text().split(fourspaces + fourspaces).slice(1);
+        for (var i=0; i<opps.length; i++) {
+            //oppstring = oppstring + opps[i].replace(' ', '') + ',';
+            oppstring = oppstring + opps[i].replace(/ /g, '') + ',';  //.replace(/ /g, '')
+            }
+        startwith = startwith + '&q=' + oppstring.slice(0,-1);
+        }
+    // insert excludes, separated by commas, into url
+    if ($('#notdef').hasClass('selected')) {}
+    else {
+        var notstring = '';
+        var nots = $('.notselected').text().split(fourspaces + fourspaces).slice(1);
+        for (var i=0; i<nots.length; i++) {
+            //notstring = notstring + nots[i].replace(' ', '') + ',';
+            notstring = notstring + nots[i].replace(/ /g, '') + ',';  //.replace(/ /g, '')
+            }
+        startwith = startwith + '&x=' + notstring.slice(0,-1);
+        }
+    return startwith;
+    }
+
+function insertNameSpaces(opponent) {
+    var oppname = opponent[0];
+    for (var c=1; c<opponent.length; c++) {
+        if (opponent[c] == opponent[c].toUpperCase()) {
+            oppname = oppname + ' ' + opponent[c];
+            }
+        else {oppname += opponent[c];}
+        }
+    return oppname;
+    }
+
+function resetFilters() {
+    $(".inmenu").removeClass("selected");
+    $(".menudefault").addClass("selected");
+    $(".header").removeClass("selected");
+    for (i=0; i<filterlist.length; i++) {
+        var fname = filterlist[i];
+        var fchoice = '.' + fname + 'selected', fdef = '#' + fname + 'def';
+        $(fchoice).removeClass(fchoice.slice(1));
+        $(fdef).addClass(fchoice.slice(1));
+        }
+    }
+
+function makeMatchTable(options) {
+    var servestats, stdscores;
+    var rows = [], chunks = [];
+    var stx = $.trim($(".spanselected").text());
+    // checking to see whether we need to add more matches
+    
+    if ((matchmx.length <= shortlist && stx != 'Last 52') && (stx != '2011' && stx != '2012')) {
+        if (careerjs == 1) {matchmx = matchmx.concat(morematchmx);}   // some way to force this to load, even if waiting
+        };
+        
+    if ($(".srclick").text() == 'Show Return Stats') {servestats = true;}
+    else if ($(".srclick").text() == 'Show Serve Stats') {servestats = false;}
+    else if ('return' in prefilters) {
+        $(".srclick").html('Show Serve Stats');
+        servestats = false;
+        }
+    else {
+        $(".srclick").html('Show Return Stats');
+        servestats = true;
+        }
+    if ($(".revscore").text() == 'Reverse Loss Scores') {stdscores = true;}
+    else if ($(".revscore").text() == 'Standard Scores') {stdscores = false;}
+    else if ('reverse' in prefilters) {
+        $(".revscore").html('Standard Scores');
+        stdscores = false;
+        }
+    else {
+        $(".revscore").html('Reverse Loss Scores');
+        stdscores = true;
+        }
+    // hide permalink, if necessary
+    hidePermalink();   
+    var hdrs; 
+    if (servestats) {hdrs = hdrsServe;}
+    else {hdrs = hdrsReturn;}
+    var currentfilter = $.extend(true, {}, totals);
+    // decide now on table sorting
+    var slist = [[0,1], [3,1]];
+    if ($(".headerSortDown").length > 0 || $(".headerSortUp").length > 0) {  // not the first rendering of the table; keep previous sort
+        var skey, sdown;
+        if ($('#matchheader').children(".headerSortDown").length == 0) {
+            skey = $('#matchheader').children(".headerSortUp")[0].cellIndex;
+            sdown = '1';
+            }
+        else {
+            skey = $('#matchheader').children(".headerSortDown")[0].cellIndex;
+            sdown = '0';
+            }
+        if (skey == '0' && sdown == '1') {}
+        else {slist = [[skey, sdown]];}
+        }
+    else if ('sort' in prefilters) { // first rendering, use sort params from url
+        var col, down;
+        col = parseInt(prefilters['sort'].slice(0, -1));
+        down = parseInt(prefilters['sort'].slice(-1));
+        if (col == 0 && down == 1) {slist = [[0,1], [3,1]];}
+        else if (col == 6 || col == 7) {slist = [[0,1], [3,1]];} // unsortable columns ... eh
+        else {slist = [[col, down]];}
+        }
+    else {} // first rendering, no specified sort params
+    var $matchtable = $('<table>');
+    var $mthead = $('<thead>');
+    var $mtheaderrow = $('<tr>').attr('id', 'matchheader'); 
+    var $mtfoot = $('<tfoot>');
+    var $mtfooterrow = $('<tr>').attr('id', 'matchfooter').attr('background-color', '#FFF'); // color weirdness?  
+    var $mtbody = $('<tbody>');
+    var rightaligns = {4: '', 5: '', 8: '', 9: '', 10: '', 11: '', 12: '', 13: '', 14: '', 15: ''};
+    for (var s = 0; s < matchmx.length; s++) {   
+        if (s == 0) {
+            // header row
+            var cells = [];
+            for (var i = 0; i < hdrs.length; i++) {
+                //var $mthcell = $('<th>');
+                var $mthspan = $('<span>').text(hdrs[i]);
+                if (hdrs[i] in titleTips) {$mthspan.attr('title', titleTips[hdrs[i]]);}
+                var $mthcell = $('<th>').append($mthspan);
+                if (i in rightaligns) {$mthcell.attr('align', 'right');}
+                $mtheaderrow.append($mthcell);
+                }
+            $mthead.append($mtheaderrow);
+            $matchtable.append($mthead);
+            // footer row
+            var fcells = [];
+            for (var i = 0; i < hdrs.length; i++) {
+                //var $mftcell = $('<tr>'); // check
+                if (i == 1 && !$("#spanCareerqq").hasClass('selected')) { // && career is not selected
+                    var $mftspan = $('<span>').text('Show Career').attr('font-style', 'italic');
+                    $mftspan.attr('id', 'careerclick').attr('class', 'likelink');
+                    }
+                else {
+                    var $mftspan = $('<span>').text('');
+                    }
+                var $mftcell = $('<td>').append($mftspan);
+                $mtfooterrow.append($mftcell);
+                }
+            $mtfoot.append($mtfooterrow);
+            $matchtable.append($mtfoot);
+            }            
+        //var match = {} // old version
+        //for (var x=0; x<matchmx[s].length; x++) {
+          //  match[matchhead[x]] = matchmx[s][x];
+            //}
+            
+        // when adding a new column, esp. if just on some pages, add the header to 'matchhead' above
+        // this fills in the missing cells
+        var match = {}
+        for (var x=0; x<matchhead.length; x++) {
+            if (matchmx[s].length <= x) {match[matchhead[x]] = '';}
+            else {match[matchhead[x]] = matchmx[s][x];}
+            } 
+
+        // check if opponent has been selected
+        //if (opponent != '') {
+            // get name, filter out other opps, change span menu to career?          
+            //if (match.opp.replace(/ /g, '') != opponent) {continue;}
+            //}
+        if (genfilter('h2h', 'Head-to-Head', match, match.opp) != 1) {continue;}
+        if (genfilter('not', 'Exclude Opp', match, match.opp) != 1) {continue;} 
+        if (genfilter('span', 'Last 52', match, match.date) != 1) {continue;}  
+        if (genfilter('hand', 'vs Hand', match, match.ohand) != 1) {continue;}
+        if (genfilter('country', 'vs Country', match, match.ocountry) != 1) {continue;}
+        if (genfilter('age', 'vs Age', match, match.obday) != 1) {continue;}
+        if (genfilter('rank', 'vs Rank', match, match.orank) != 1) {continue;}
+        if (genfilter('asrank', 'as Rank', match, match.rank) != 1) {continue;}
+        if (genfilter('level', 'Level', match, match.level) != 1) {continue;}
+        if (genfilter('round', 'Round', match, match.round) != 1) {continue;}
+        if (genfilter('surface', 'Surface', match, match.surf) != 1) {continue;} 
+        if (genfilter('tourney', 'Event', match, match.tourn) != 1) {continue;} 
+        if (genfilter('entry', 'Entry', match, match.entry) != 1) {continue;} 
+        if (genfilter('oentry', 'vs Entry', match, match.oentry) != 1) {continue;} 
+        if (genfilter('height', 'vs Height', match, match.oht) != 1) {continue;}
+        if (genfilter('results', 'All', match, match.wl) != 1) {continue;}
+        if (genfilter('sets', 'All', match, match.max) != 1) {continue;} 
+        if (genfilter('scores', 'All', match, match.max) != 1) {continue;}  
+
+        var $mtrow = $('<tr>');        
+         // make row for presentation
+        var yyyy, mm, dd; // reformat date
+        yyyy = match.date.slice(0, 4);
+        mm = match.date.slice(4, 6);
+        dd = match.date.slice(6);
+        //var showdate = parseInt(dd,10) + '-' + months[mm] + '-' + yyyy;
+        // non-breaking dash: &#8209;
+        var showdate = parseInt(dd,10) + '‑' + months[mm] + '‑' + yyyy;
+        var $datecell = $('<td>').text(showdate).attr('class', 'tdate');
+        if (typeof dob === 'undefined') {}
+        else {
+            var dobStr = dob+'';
+            var dobObj  = new Date(dobStr.slice(0,4), dobStr.slice(4,6), dobStr.slice(6));
+            var tdObj  = new Date(yyyy, mm, dd);
+            var days = parseInt((tdObj.getTime() - dobObj.getTime())/one_day);
+            var years = parseInt(days/365);
+            var plusdays = days % 365;
+            if (plusdays < 10) {plusdays = '00'+plusdays;}
+            else if (plusdays < 100) {plusdays = '0'+plusdays;}
+            $datecell.attr('title', 'Age: '+years+'.'+plusdays);
+            }
+        $mtrow.append($datecell);
+        
+        if (match.tourn.indexOf('Fed C') != -1) {
+            $mtrow.append($('<td>').text(match.tourn));
+            }
+        else if (match.tourn.indexOf('BJK') != -1) {
+            $mtrow.append($('<td>').text(match.tourn));
+            }
+        else if (match.tourn.slice(0,3) == 'WTA' && (yyyy == '2026' | yyyy == '2025' || yyyy == '2024')) { // change after 1/1
+            $mtrow.append($('<td>').text(match.tourn.slice(4)));
+            }
+        else {
+            if (match.tourn.slice(-2) == ' Q') {
+                var showtourn = match.tourn.slice(0, -2);
+                var qtag = '&f=B8';
+                }
+            else {
+                var showtourn = match.tourn;
+                var qtag = '';}
+            var tlink = 'https://www.tennisabstract.com/cgi-bin/wtourney.cgi?t=W_' + yyyy + showtourn.replace(/ /g, '_').replace(/'/g, 'xx') + qtag;
+            $mtrow.append($('<td>').append($('<a>').text(match.tourn).attr('href', tlink)));
+            }
+        $mtrow.append($('<td>').text(match.surf));
+        $mtrow.append($('<td>').text(match.round));
+        $mtrow.append($('<td>').text(match.rank).attr('align', 'right'));;
+        $mtrow.append($('<td>').text(match.orank).attr('align', 'right'));;
+
+        var $pentry = $('<span>'), $pname = $('<span>'), $oppentry = $('<span>'), $opplink = $('<span>'), $oppcc = $('<span>')  // player entry
+        if (match.seed != '') {$pentry.text('(' + match.seed + ')')}
+        else if (match.entry != '') {$pentry.text('(' + match.entry + ')')}
+        else {$pentry.text('');}
+        $pname.text(lastname).css('font-weight', 'bold'); // player name
+        if (match.oseed != '') {$oppentry.text('(' + match.oseed + ')')} // opp entry
+        else if (match.oentry != '') {$oppentry.text('(' + match.oentry + ')')}
+        else {$oppentry.text('');}
+        var nlink = 'https://www.tennisabstract.com/cgi-bin/wplayer.cgi?p=' + match.opp.replace(/ /g, '') // opp link
+        var $olk = $('<a>').text(match.opp).attr('href', nlink);
+        $opplink.append($olk);
+        $oppcc.text(' [' + match.ocountry + ']'); // opp country
+        var $onespace = $('<span>').text(' ')
+        var $onespace2 = $('<span>').text(' ')
+        if (match.score == '' && (yyyy == '2025' | yyyy == '2026')) {var $deflink = $('<span>').text('vs');}
+        else {var $deflink = $('<span>').text('d.');}
+        if ($('#h2hdef').hasClass('selected')) {$deflink.attr('class', 'likelink h2hclick');}
+        var $matchcell = $('<td>').attr('class', match.opp.replace(/ /g, ''));
+        if (match.wl == "W" || match.wl == 'U') {
+            $matchcell.append($pentry).append($pname).append($onespace).append($deflink).append($onespace2).append($oppentry).append($opplink).append($oppcc);
+            }
+        else {
+            $matchcell.append($oppentry).append($opplink).append($oppcc).append($onespace).append($deflink).append($onespace2).append($pentry).append($pname);
+            }
+        $mtrow.append($matchcell);
+        if (match.score == 'DEF') {match.score = 'W/O';}
+        if (match.score == '' && (yyyy == '2025' | yyyy == '2026')) {
+            var $scorecell = $('<a>').text('Live Scores').attr('href', 'https://www.livescore.in/tennis/').attr('target', '_blank');
+            //$mtrow.append($('<td>').append($livelink));
+            }
+        else if (stdscores == true || match.score == 'W/O') {
+            if (match.whserver == '1' && match.whserver == 'magic') { // bring back if match.py ever works
+                var wlink = 'https://tennisabstract.com/cgi-bin/match.py?q=' + match.matchid + '/WTA/';
+                wlink = wlink + showtourn.replace(/ /g, '_') + '/' + match.round + '/';
+                if (match.wl == 'W') {
+                    wlink = wlink + fullname.replace(/ /g, '_') + '/vs/' + match.opp.replace(/ /g, '_') + '/1'
+                    }
+                else {
+                    wlink = wlink + match.opp.replace(/ /g, '_') + '/vs/' + fullname.replace(/ /g, '_') + '/0'
+                    }
+                var $scorecell = $('<a>').text(match.score).attr('href', wlink).attr('target', '_blank').attr('title', "Point-by-point stats for this match (new window)");                
+                }
+            else {
+                var $scorecell = $('<span>').text(match.score);
+                }
+            }
+        else if (match.wl == 'L') {
+            var sets = match.score.split(' '), newscore = '';
+            for (k=0; k<sets.length; k++) {
+                var st = sets[k];
+                if (st == 'RET') {newscore = newscore + 'RET ';}
+                else if (st[2] == '-') {newscore = newscore + st.slice(3) + '-' + st.slice(0, 2) + ' ';}
+                else {newscore = newscore + st[2] + st[1] + st[0] + st.slice(3) + ' ';}
+                // what about 70-68, 11-9, etc?
+                }
+            newscore = newscore.slice(0, -1);
+            var $scorecell = $('<span>').text(newscore);
+            //$mtrow.append($('<td>').text(newscore));
+            }
+        else {
+            var $scorecell = $('<span>').text(match.score);
+            }
+        if (match.chartlink != "") {
+            var clink = 'https://www.tennisabstract.com/charting/' + match.chartlink + '.html';
+            var $chartlink = $('<a>').text("(ch)").attr('href', clink).attr('target', '_blank').attr('title', "Charting-Based Stats (new window)");
+            //var $spanscore = $('<span>').text($scorecell);
+            var $onespace3 = $('<span>').text(' ');
+            if (match.pslink != "") {
+                var $onespace4 = $('<span>').text(' ');
+                var plink = 'https://www.tennisabstract.com/cgi-bin/slamWinProbability.py?m=' + match.pslink;
+                var $pslink = $('<a>').text("(wp)").attr('href', plink).attr('target', '_blank');
+                $mtrow.append($('<td>').append($scorecell).append($onespace3).append($chartlink).append($onespace4).append($pslink));
+                }
+            else {$mtrow.append($('<td>').append($scorecell).append($onespace3).append($chartlink));}
+            }
+        else if (match.pslink != "") {
+            var $onespace4 = $('<span>').text(' ');
+            var plink = 'https://www.tennisabstract.com/cgi-bin/slamWinProbability.py?m=' + match.pslink;
+            var $pslink = $('<a>').text("(wp)").attr('href', plink).attr('target', '_blank');
+            $mtrow.append($('<td>').append($scorecell).append($onespace4).append($pslink));
+            }
+        else {$mtrow.append($('<td>').append($scorecell));}
+        if (match.score == 'W/O' || match.pts == '') {  // matches with no stats, leave blank
+            var statrow = ['', '', '', '', '', ''], showtime = '', domratio = '';
+            }
+        else {
+            var rpw = 1 - (parseInt(match.ofwon) + parseInt(match.oswon))/match.opts; // dominance ratio:
+            var spl = 1 - ((parseInt(match.fwon) + parseInt(match.swon))/match.pts);
+            var num = rpw/spl, dec = 2;
+            var domratio = alignRound(rpw/spl, dec);
+            var matchtime = match.time;
+            if (matchtime == '') {var showtime = '';}
+            else {
+                var hours = parseInt(matchtime/60);
+                var minutes = matchtime % 60;
+                if (minutes < 10) {minutes = '0' + minutes;}
+                var showtime = hours + ':' + minutes;
+                }
+            if (servestats == 1) {
+                var acerate = alignRound((match.aces/match.pts), 1, 1);
+                var dfrate = alignRound((match.dfs/match.pts), 1, 1);
+                var firstin = alignRound((match.firsts/match.pts), 1, 1);
+                var fwin = alignRound((match.fwon/match.firsts), 1, 1);
+                var swin = alignRound((match.swon/(match.pts-match.firsts)), 1, 1);
+                var bksaved = alignRound((match.saved/match.chances), 1, 1) + ' (' + match.saved + '/' + match.chances + ')';
+                var statrow = [acerate, dfrate, firstin, fwin, swin, bksaved];
+                }
+            else {
+                var pointswon = parseInt(match.fwon) + parseInt(match.swon) + (match.opts - match.ofwon - match.oswon);
+                var tpw = alignRound((pointswon/(parseInt(match.pts) + parseInt(match.opts))), 1, 1);
+                var rpw = alignRound(1 - ((parseInt(match.ofwon) + parseInt(match.oswon))/match.opts), 1, 1);
+                var vace = alignRound((match.oaces/match.opts), 1, 1);
+                var r1pw = alignRound(1 - (match.ofwon/match.ofirsts), 1, 1);
+                var r2pw = alignRound(1 - (match.oswon/(match.opts-match.ofirsts)), 1, 1);
+                var bkconv = alignRound(1 - (match.osaved/match.ochances), 1, 1) + ' (' + (match.ochances - match.osaved) + '/' + match.ochances + ')';
+                var statrow = [tpw, rpw, vace, r1pw, r2pw, bkconv];
+                }  
+            }
+        $mtrow.append($('<td>').text(domratio).attr('align', 'right'));;
+        for (var i = 0; i < statrow.length; i++) {
+            $mtrow.append($('<td>').text(statrow[i]).attr('align', 'right'));
+            }
+        $mtrow.append($('<td>').text(showtime).attr('align', 'right'));
+        $mtbody.append($mtrow);
+        var matchnew = getWinLossTiebreak(match);
+        for (u=0; u<stats.length; u++) {
+            t = stats[u];
+            if (matchnew[t] != '') {currentfilter[t] = currentfilter[t] + parseInt(matchnew[t]);}
+            }
+        }
+
+    // back to match table
+    if ($mtbody.children().length == 0) {
+        if (!$("#spanCareerqq").hasClass('selected')) { // career is not selected
+            //var $mftspan = $('<span>').text('show career').attr('font-style', 'italic');
+            //$mftspan.attr('id', 'careerclick').attr('class', 'likelink');
+            var mft = '<span id="careerclick" class="likelink">Show career</span>, c';
+            }
+        else {var mft = 'C';}
+        pTable = '<p id="matches">&nbsp;<br/>&nbsp;<br/>Your filters returned no matches. ' + mft + 'hange a filter or two, or press the '
+        pTable = pTable + '<span class="menureset2 likelink">reset button</span>.</p>'
+        $("#matches").replaceWith(pTable);
+        }
+    else {
+        $matchtable.append($mtbody).attr('id', 'matches').attr('class', 'tablesorter');
+        $matchtable.attr('border', 0).attr('cellspacing', 0).attr('cellpadding', 4);
+        $("#stats").html($matchtable);
+        $("#matches").tablesorter( {sortList: slist,
+                                    headers: {0: {sorter:'dates'},
+                                              3: {sorter:'rounds'},
+                                              4: {sorter:'ranks'},
+                                              5: {sorter:'ranks'},
+                                              6: {sorter:false}, // matchup
+                                              7: {sorter:false} // score -- more I can do with this?
+                                              }
+                                   });
+        }
+    var currentParams = getFilterParams();
+    var opplist = [], notlist = [];
+    if ($('#h2hdef').hasClass('selected') && $('#notdef').hasClass('selected')) {var opplist = [];} // no h2hs or NOTs
+    else if (!$('#notdef').hasClass('selected')) {var notlist = $('.notselected').text().split(fourspaces + fourspaces).slice(1);}
+    else {var opplist = $('.h2hselected').text().split(fourspaces + fourspaces).slice(1);}
+    var statrow = makeSplitStatRow(currentfilter);
+    if ($mtbody.children().length == 0) {}
+    else if (currentParams == '' && (opplist.length == 0 && notlist.length == 0)) {}
+    else {
+        if (opplist.length == 0 && notlist.length == 0) {var rowid = '#f' + currentParams;}
+        else if (opplist.length == 0) {
+            var nots = $('.notselected').text().replace(/ /g, '');
+            var rowid = '#f' + currentParams + '-' + nots;
+            }
+        else {
+            var opps = $('.h2hselected').text().replace(/ /g, '');
+            var rowid = '#f' + currentParams + '-' + opps;
+            }
+        if ($(rowid).length > 0) {$(rowid).remove();} // if same filter is already present, delete
+        else if ($('.filtersplitrow').length == 5) {$('.filtersplitrow').last().remove();} // if 5 already, delete last
+
+        var $filtrow = $('<tr>').attr('class', 'filtersplitrow')
+        $filtrow.attr('id', rowid.slice(1));
+        var ftitle = '';
+        if (opplist.length == 0) {} // get label
+        else {
+            for (k=0; k<opplist.length; k++) {
+                //var oppname = insertNameSpaces(opplist[k]);
+                var ftitle = ftitle + 'Opponent: ' + opplist[k] + '; '; // need to parse this for initials? last name?
+                }
+            ftitle = ftitle.slice(0, -2); // delete final semi-colon and space
+            }
+        if (notlist.length == 0) {} // get label
+        else {
+            for (k=0; k<notlist.length; k++) {
+                //var oppname = insertNameSpaces(opplist[k]);
+                var ftitle = ftitle + 'Exclude: ' + notlist[k] + '; '; // need to parse this for initials? last name?
+                }
+            ftitle = ftitle.slice(0, -2); // delete final semi-colon and space
+            }        
+        var eightspaces = '        '
+        for (j=0; j<filterlist.length; j++) {
+            var filter = filterlist[j];
+            var fselected = '.' + filter + 'selected', fdef = filter + 'def';
+            if ($(fselected).attr('id') != fdef || j == 0) { // j == 0 so that time span (e.g. last 52) is always displayed
+                if (ftitle != '') {ftitle += '; ';}
+                if ($(fselected).attr('id') == 'spanCustomqq') {
+                    var showstart = startdate.slice(6) + '-' + months[startdate.slice(4,6)] + '-' + startdate.slice(0,4);
+                    var showend = enddate.slice(6) + '-' + months[enddate.slice(4,6)] + '-' + enddate.slice(0,4);
+                    ftitle = ftitle + filteropts[filter][0] + ': ' + showstart + ' to ' + showend + ' [custom]';
+                    }
+                else if ($(fselected).attr('id') == 'rankCustomqq') {
+                    ftitle = ftitle + filteropts[filter][0] + ': ' + lowrank + ' to ' + highrank + ' [custom]';
+                    }   
+                else if ($(fselected).attr('id') == 'stats0') {
+                    if (statchoice in statpercs) {var statdisp = statinput+'%';}
+                    else if (statchoice == 'Time') {
+                        var rem = (statinput % 60);
+                        if (rem < 10) {var mindisp = '0'+String(rem);}
+                        else {var mindisp = String(rem);}
+                        var statdisp = Math.floor(statinput/60) + ':' + mindisp;
+                        }
+                    else {var statdisp = statinput;}
+                    ftitle = ftitle + filteropts[filter][0] + ': ' + statchoice + ' ' + opdict[statoperatorchoice] + ' ' + statdisp + ' [custom]';
+                    //add percent sign as necessary?
+                    }             
+                else {ftitle = ftitle + filteropts[filter][0] + ': ' + $.trim($(fselected).text());}
+                ftitle = ftitle.replace(/        /g, ', ')
+                // add comma if more than one fselected?
+                }
+            }
+        var $nameital = ($('<span>').css('font-style', 'italic').attr('class', 'filterlabel'));
+        if (ftitle.length > 25) { // too long, replace end with ..., add title, etc.
+            $nameital.attr('title', ftitle.replace(/; /g, '\n')).css('cursor', 'pointer').text(' ' + ftitle.slice(0,22) + '... ');
+            }
+        else {$nameital.text(' ' + ftitle + ' ');}
+        
+        var $closebutton = ($('<span>').text("[x]").attr('class', 'rowcloser likelink')) // add button to close
+        //var $splitclick = $('<span>').text('(+)').attr('class', 'likelink splitclick');
+        
+        $filtrow.append($('<td>').append($closebutton).append($nameital)); //.append($splitclick));
+        for (var i = 0; i < statrow.length; i++) {
+            var $fcell = $('<td>').attr('align', 'right').text(statrow[i]);
+            $filtrow.append($fcell);
+            }
+        $("#splitsbody").prepend($filtrow)
+
+        $(".rowcloser").click(function () {// attach handler to .rowcloser
+            $(this).parent().parent().remove();
+            })
+        }
+        
+    // add title above matches
+    if (ftitle == "" || ftitle == undefined) {var ftitle = 'Last 52';}
+    else {var tabtitle = 'Matches: '+ftitle;} //.replace(/; /g, ' > ');}
+    var wlrec = '(' + statrow[0].slice(0,statrow[0].indexOf('(')-1) + ')';
+    $("#tablelabel").html('<b>Matches '+wlrec+' > '+ftitle+'</b>');
+    
+    // how to count filters applied?
+    if (currentParams == '' && (opplist.length == 0 && notlist.length == 0)) {}
+    else if ($mtbody.children().length == 0) {} // no matches -- keep this or not?
+    else {
+        var $bmatches = $('<span>').text('Apply filters to another player: ');
+        $bmatches.append($('<input>').attr('id', 'paramsearch'));
+        $('#matches').after($bmatches);
+        }
+    $(".h2hclick").click(function () {
+        opponent = $(this).parent().attr('class');
+        var withspaces = insertNameSpaces(opponent);
+        setPlayerFilter(withspaces, 1);
+        if ($("#h2hhead").hasClass("closed")) {
+            $("#h2hhead").removeClass("closed").addClass("open") //.addClass("selected");
+            $(".h2hchoice").toggle();
+            }
+        })
+    $(".menureset2").click(function () {
+        resetFilters();
+        // close open menus?
+        makeMatchTable({});
+        });
+    $("#careerclick").click(function () {
+        if ($("#spanhead").hasClass("closed")) {
+            $("#spanhead").removeClass("closed").addClass("open") //.addClass("selected");
+            $(".spanchoice").toggle();
+            }
+        $(".spanchoice").removeClass("selected").removeClass('spanselected');
+        $("#spanCareerqq").addClass('selected').addClass('spanselected');
+        makeMatchTable({});
+        })
+    $("#titleclick").click(function () {
+        // reset all other filters?
+        if ($("#spanhead").hasClass("closed")) {
+            $("#spanhead").removeClass("closed").addClass("open") //.addClass("selected");
+            $(".spanchoice").toggle();
+            }
+        $(".spanchoice").removeClass("selected").removeClass('spanselected');
+        $("#spanCareerqq").addClass('selected').addClass('spanselected');
+        if ($("#roundhead").hasClass("closed")) {
+            $("#roundhead").removeClass("closed").addClass("open") //.addClass("selected");
+            $(".roundchoice").toggle();
+            }
+        $(".roundchoice").removeClass("selected").removeClass('roundselected');
+        $("#round0").addClass('selected').addClass('roundselected');
+        makeMatchTable({});
+        })
+    var paramsearchbox = "Find player";		
+    $("#paramsearch").val(paramsearchbox);
+    $("#paramsearch").focus(function() {
+        if ($(this).val() == paramsearchbox) {$(this).val("");}
+        var urlparams = getPermalinkParams();
+        $( "#paramsearch" ).autocomplete({
+                source: playerlist,
+                minLength: 2,
+                select: function(e, ui) {
+                    var playerselect = ui.item.value;
+                    var player = playerselect.slice(4);
+                    var mw = playerselect.slice(1,2);
+                    if (mw == 'M') {
+                        var playerurl = 'https://www.tennisabstract.com/cgi-bin/player.cgi?p=' + player.replace(/ /g, '') + '&f=' + urlparams;
+                        }
+                    else {
+                        var playerurl = 'https://www.tennisabstract.com/cgi-bin/wplayer.cgi?p=' + player.replace(/ /g, '') + '&f=' + urlparams;
+                        }                        
+                    window.open(playerurl, "_self");
+                    }
+            });
+        });
+    if ($('#matchheader').length == 0) {var pparams = defParams;}
+    else {var pparams = getPermalinkParams();}
+    var new_path = 'https://www.tennisabstract.com/cgi-bin/wplayer-classic.cgi?p=' + fullname.replace(/ /g, '') + '&f=' + pparams;
+    if (pparams != defParams){
+        history.pushState( {
+            slug: pparams
+            }, null, new_path);
+        }
+    }
+
+function makeMenus() {
+    var $str = $('<table>').attr('class', 'menus');
+    // beginning of h2h menu
+    $str.append(
+                $('<tr>').attr('id', 'h2hhead').attr('class', 'header closed') 
+                        .append($('<th>').text(fourspaces + '  ' + 'Head-to-Head')
+                        )
+                )
+    $spanspaces = $('<span>').text(fourspaces + fourspaces);
+    $spaninput = $('<span>').append($('<input>').attr('id', 'h2hsearch').css('width', '80'));
+    $str.append(
+                $('<tr>').attr('id', 'h2hsearchrow').attr('class', 'h2hchoice inmenu') 
+                        .append($('<td>').append($spanspaces).append($spaninput)
+                        )
+                )
+    $str.append(
+                $('<tr>').attr('id', 'h2hdef').attr('class', 'h2hselected h2hchoice selected inmenu menudefault')
+                        .append($('<td>').text(fourspaces + fourspaces + 'All')
+                                         )
+                )
+    // beginning of 'not' menu
+    $str.append(
+                $('<tr>').attr('id', 'nothead').attr('class', 'header closed') 
+                        .append($('<th>').text(fourspaces + '  ' + 'Exclude Opp')
+                        )
+                )
+    $spanspaces = $('<span>').text(fourspaces + fourspaces);
+    $spaninput = $('<span>').append($('<input>').attr('id', 'notsearch').css('width', '80'));
+    $str.append(
+                $('<tr>').attr('id', 'notsearchrow').attr('class', 'notchoice inmenu') 
+                        .append($('<td>').append($spanspaces).append($spaninput)
+                        )
+                )
+    $str.append(
+                $('<tr>').attr('id', 'notdef').attr('class', 'notselected notchoice selected inmenu menudefault')
+                        .append($('<td>').text(fourspaces + fourspaces + 'None')
+                                         )
+                )
+    for (j=0; j<filterlist.length; j++) {
+        var filter = filterlist[j];
+        var ftitle = filteropts[filter][0];
+        var fhead = filter + 'head', fchoice = filter + 'choice', fselected = filter + 'selected';
+        $str.append(
+                    $('<tr>').attr('id', fhead).attr('class', 'header closed') 
+                            .append($('<th>').text(fourspaces + '  ' + ftitle)
+                            )
+                    )
+        $str.append(
+                    $('<tr>').attr('id', filter + 'def').attr('class', fselected + ' ' + fchoice + ' selected inmenu menudefault')
+                            .append($('<td>').text(fourspaces + fourspaces + filteropts[filter][1])
+                                             )
+                    )
+        var flist = filteropts[filter].slice(2);
+        for (i=0; i<flist.length; i++) {
+            var $ent = $('<tr>').attr('class', 'inmenu ' + fchoice)
+                                .append($('<td>').text(fourspaces + fourspaces + flist[i].replace(/ /g, ' '))
+                                                 );
+            if (filter in alphaFilters) {
+                var adjtext = flist[i].replace(/ /g, '_');
+                adjtext = adjtext.replace("'", 'xx');
+                adjtext = adjtext.replace("+", 'xpx');
+                $ent.attr('id', filter+adjtext+'qq');
+                }
+            else {$ent.attr('id', filter + i);}
+            $str.append($ent);
+            }
+        //attempt at custom date ranges
+        if (filter == 'span' || filter == 'rank') {
+            if (filter == 'span' && (typeof tdates === 'undefined')) {}
+            else if (filter == 'rank' && (typeof vranks === 'undefined')) {}
+            else {
+                var $ent = $('<tr>').attr('class', 'inmenu '+filter+'choice')
+                                .append($('<td>').text(fourspaces + fourspaces + 'Custom')
+                                                 );
+                $ent.attr('id', filter+'Customqq');
+                $str.append($ent);  
+                }        
+            }
+        }
+    $str.append($('<tr>').append($('<th>').append($('<span>').attr('class', 'menureset likelink').text('Reset'))))
+    $str.append($('<tr>').append($('<td>').append($('<span>').html('&nbsp;'))))
+    var filternote = '<i>Tip: Ctrl-Click to select multiple choices from the same menu.</i>'
+    $str.append($('<tr>').append($('<td>').append($('<span>').html(filternote))))
+    $('#footer').append($str);
+    }
+
+var alphaFilters = {'country': '', 'tourney': '', 'span': '', 'rank': ''};
+//var alphaFilters = {};
+
+function calculateAge(dobString) {
+    // Extract the year, month, and day from the dobString (yyyymmdd)
+    let year = parseInt(dobString.substring(0, 4), 10);
+    let month = parseInt(dobString.substring(4, 6), 10) - 1; // Months are 0-indexed in JS Date
+    let day = parseInt(dobString.substring(6, 8), 10);
+    let birthDate = new Date(year, month, day);
+    let today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    let hasHadBirthdayThisYear = (
+        today.getMonth() > birthDate.getMonth() || 
+        (today.getMonth() === birthDate.getMonth() && today.getDate() >= birthDate.getDate())
+    );
+    if (!hasHadBirthdayThisYear) {
+        age--;
+    }
+    return age;
+}
+
+var bhdict = {'1': 'one', '2': 'two'};
+
+function insertPictureBio() {
+    var plname = '<span style="fontsize:24px"><b>' + fullname + ' [' + country + ']</b></span>';
+    if (typeof dob === 'undefined') {var birthdate = '';}
+    else {
+        var bd = dob.toString();
+        //var birthdate = 'Date of birth: ' + bd.slice(6) + '-' + months[bd.slice(4, 6)] + '-' + bd.slice(0, 4);
+        var birthdate = 'Age: ' + calculateAge(bd).toString();
+        birthdate = birthdate + ' (' + bd.slice(6) + '-' + months[bd.slice(4, 6)] + '-' + bd.slice(0, 4) + ')';
+        }
+
+    var pic_src = 'https://www.tennisabstract.com/photos/' + fullname.toLowerCase().replace(/ /g, "_") + '-' + photog + '.jpg'
+    // background-color:d3d3d3; 
+    var biotable = '<p id="biog"><table style="border-spacing:0"><tr><td><img src="' + pic_src + '" height="225" width="150"></td>'
+    biotable = biotable + '<td>&nbsp;&nbsp;</td><td style="vertical-align:top">'
+    biotable = biotable + '<table cellpadding=2 cellspacing=1><tr><td>' + plname + fourspaces + fourspaces + '</td></tr>';  
+
+    if (typeof twitter != 'undefined' && twitter != "") {
+        var tline = '<a href="https://twitter.com/' + twitter + '" target="_blank">@' + twitter + '</a>';
+        biotable = biotable + '<tr><td>' + tline + '</td></tr>';
+        }
+    else {
+        biotable = biotable + '<tr><td>&nbsp;</td></tr>'; 
+        }
+
+    biotable = biotable + '<tr><td>' + birthdate + '</td></tr>';
+    var handed;
+    if (hand == 'R') {handed = 'Plays: Right-handed';}
+    else if (hand == 'L') {handed = 'Plays: Left-handed';}
+    else {handed = '';}
+    if (typeof backhand != 'undefined' && backhand != '') {handed = handed.slice(0,-7) + ' (' + bhdict[backhand] + '-handed backhand)';}
+    if (handed != '') {
+        biotable = biotable + '<tr><td>' + handed + '</td></tr>'; 
+        }
+
+    if (currentrank == '') {var crank = '';}
+    else {var crank = 'Current rank: <b>'+currentrank.toString()+'</b>'}; 
+    // if (typeof liverank != 'undefined' && liverank != '') {var lrank = '&nbsp;&nbsp;&nbsp;<a target="_blank" href="http://live-tennis.eu/en/wta-live-ranking"><i>Live: ' + liverank.toString() + '</i></a>';}
+    // else {var lrank = '';} 
+    var lrank = '';
+    if (crank != '') {
+        biotable = biotable + '<tr><td>' + crank + lrank + '</td></tr>'; 
+        }  
+
+    if (peakrank != 'UNR') {var prank = 'Peak rank: <b>' + peakrank.toString()+'</b>';}
+    else {var prank = '';}
+    if (peakfirst != '') {
+    	var pf = peakfirst.toString();
+    	prank = prank + ' (' + pf.slice(6) + '-' + months[pf.slice(4, 6)] + '-' + pf.slice(0, 4) + ')';
+    	}
+    if (prank != '') {
+        biotable = biotable + '<tr><td>' + prank + '</td></tr>'; 
+        } 
+
+    if (typeof elo_rating != 'undefined' && elo_rating != "") {
+        var elo_url = "https://tennisabstract.com/reports/wta_elo_ratings.html"
+        var elo_row = "Elo rank: <b>" + elo_rank + '</b> (<a href="' + elo_url + '">rating: ' + elo_rating + ')</a>';
+        //elo_row = '<tr><td>' + elo_row + '</td></tr>';
+        }    
+    else {var elo_row = "&nbsp;";}
+    biotable = biotable + '<tr><td>' + elo_row + '</td></tr>';  
+
+    var profiles = '';
+    // if (typeof wta_id != 'undefined' && wta_id != "") {
+    //     var wta_stem = "http://www.wtatennis.com/players/player/";
+    //     profiles = profiles + '<a href="' + wta_stem + wta_id + '/overview" target="_blank" title="Profile on wtatennis.com">WTA</a> | ';
+    //     }   
+    // if (typeof itf_id != 'undefined' && itf_id != "") {
+    //     var itf_stem = "http://www.itftennis.com/procircuit/players/player/profile.aspx?playerid=";
+    //     profiles = profiles + '<a href="' + itf_stem + itf_id + '" target="_blank" title="Profile at the ITF website">ITF</a> | ';
+    //     }
+    // if (typeof fc_id != 'undefined' && fc_id != "") {
+    //     var fc_stem = "http://www.fedcup.com/en/players/player.aspx?id=";
+    //     profiles = profiles + '<a href="' + fc_stem + fc_id + '" target="_blank" title="Profile at the Fed Cup website">FC</a> | ';
+    //     }
+    if (typeof wiki_id != 'undefined' && wiki_id != "") {
+        var wiki_stem = "https://en.wikipedia.org/wiki/";
+        profiles = profiles + '<a href="' + wiki_stem + wiki_id + '" target="_blank" title="Profile at Wikipedia">Wikipedia</a> | '  ;
+        }
+        
+    if (profiles != '') {
+        biotable = biotable + '<tr><td>Profile: ' + profiles.slice(0,-3) + '</td><td>&nbsp;</td></tr>';
+        } 
+    else {
+        biotable = biotable + '<tr><td>&nbsp;</td></tr>'; 
+        } 
+         
+    // if picture (and maybe in general) need to move ranking history link and titles/finals out of this box
+    //var rhlink = '<a href="https://tennisabstract.herokuapp.com/ATP/RankHistory/' + fullname.replace(/ /g, "_") + '/YearEndDate/Points/">Ranking history and highlights</a>';
+    var titlelink = '<span id="titleclick" class="likelink">Titles/Finals</span>';
+    biotable = biotable + '<tr><td>' + titlelink + '</td></tr>';
+
+    // in lieu of ranking history and highlights link
+    // biotable = biotable + '<tr><td>&nbsp;</td></tr>';
+
+    biotable = biotable + '<tr><td>' + '<i>Photo: <a target="_blank" href="' + photog_link + '">' + photog_credit + '</a></i></td></tr>';
+
+    $("#bio").html(biotable + '</table></td><td>&nbsp;&nbsp;</td></tr></table></p>');
+    }
+
+function insertBio() {
+    var plname = '<span style="fontsize:24px"><b>' + fullname + ' [' + country + ']</b></span>';
+    if (typeof dob === 'undefined') {var birthdate = '';}
+    else {
+        var bd = dob.toString();
+        //var birthdate = 'Date of birth: ' + bd.slice(6) + '-' + months[bd.slice(4, 6)] + '-' + bd.slice(0, 4);
+        var birthdate = 'Age: ' + calculateAge(bd).toString();
+        birthdate = birthdate + ' (' + bd.slice(6) + '-' + months[bd.slice(4, 6)] + '-' + bd.slice(0, 4) + ')';
+        }
+    var handed;
+    if (hand == 'R') {handed = 'Plays: Right-handed';}
+    else if (hand == 'L') {handed = 'Plays: Left-handed';}
+    else {handed = '';}
+    if (typeof backhand != 'undefined' && backhand != '') {handed = handed.slice(0,-7) + ' (' + bhdict[backhand] + '-handed backhand)';}
+    if (currentrank == '') {var crank = '';}
+    else {var crank = 'Current rank: <b>'+currentrank.toString()+'</b>'}; 
+    // if (typeof liverank != 'undefined' && liverank != '') {var lrank = '&nbsp;&nbsp;&nbsp;<a target="_blank" href="http://live-tennis.eu/wta-live-ranking.html"><i>Live: ' + liverank.toString() + '</i></a>';}
+    // else {var lrank = '';}
+    var lrank = '';
+    if (peakrank != 'UNR') {var prank = 'Peak rank: <b>' + peakrank.toString()+'</b>';}
+    else {var prank = '';}
+    if (peakfirst != '') {
+    	var pf = peakfirst.toString();
+    	prank = prank + ' (' + pf.slice(6) + '-' + months[pf.slice(4, 6)] + '-' + pf.slice(0, 4) + ')';
+    	}
+    //if (typeof twitter != 'undefined' && twitter != "") {var tline = 'Twitter: <a href="https://twitter.com/' + twitter + '" target="_blank">@' + twitter + '</a>';}
+    if (typeof twitter != 'undefined' && twitter != "") {var tline = '<a href="https://twitter.com/' + twitter + '" target="_blank">@' + twitter + '</a>';}
+    else {var tline = '';}
+    var biotable = '<p id="biog"><table cellpadding=1 cellspacing=1><tr><td>' + plname + fourspaces + fourspaces + '</td><td>' + tline + '</td></tr>';
+    if (birthdate != '') {var rowtwo = '<tr><td>' + birthdate + fourspaces + fourspaces + '</td><td>' + handed + '</td></tr>';}
+    else {var rowtwo = '<tr><td>' + handed + '</td><td>&nbsp;</td></tr>';}
+    if (crank != '') {var rowthree = '<tr><td>' + crank + lrank + '</td><td>' + prank + '</td></tr>';}
+    else {var rowthree = '<tr><td>' + prank + '</td><td>&nbsp;</td></tr>';}
+    var titlelink = '<span id="titleclick" class="likelink">Titles/Finals</span>'
+    var rowfive =  '<tr><td>' + titlelink + '</td><td>&nbsp;</td></tr>'; // ranking history link if extended to WTA
+    
+    var profiles = '';
+    // if (typeof wta_id != 'undefined' && wta_id != "") {
+    //     var wta_stem = "http://www.wtatennis.com/players/player/";
+    //     profiles = profiles + '<a href="' + wta_stem + wta_id + '/overview" target="_blank" title="Profile on wtatennis.com">WTA</a> | ';
+    //     }   
+    // if (typeof itf_id != 'undefined' && itf_id != "") {
+    //     var itf_stem = "http://www.itftennis.com/procircuit/players/player/profile.aspx?playerid=";
+    //     profiles = profiles + '<a href="' + itf_stem + itf_id + '" target="_blank" title="Profile at the ITF website">ITF</a> | ';
+    //     }
+    // if (typeof fc_id != 'undefined' && fc_id != "") {
+    //     var fc_stem = "http://www.fedcup.com/en/players/player.aspx?id=";
+    //     profiles = profiles + '<a href="' + fc_stem + fc_id + '" target="_blank" title="Profile at the Fed Cup website">FC</a> | ';
+    //     }
+    if (typeof wiki_id != 'undefined' && wiki_id != "") {
+        var wiki_stem = "https://en.wikipedia.org/wiki/";
+        profiles = profiles + '<a href="' + wiki_stem + wiki_id + '" target="_blank" title="Profile at Wikipedia">Wikipedia</a> | '  ;
+        }
+        
+    if (profiles != '') {
+        var profile_row = '<tr><td>Profile: ' + profiles.slice(0,-3) + '</td><td>&nbsp;</td></tr>';
+        } 
+    else {var profile_row = '';}
+    
+    if (typeof elo_rating != 'undefined' && elo_rating != "") {
+        var elo_url = "https://tennisabstract.com/reports/wta_elo_ratings.html"
+        var elo_row = "Elo rank: <b>" + elo_rank + '</b> (<a href="' + elo_url + '">rating: ' + elo_rating + ')</a>';
+        }    
+    else {var elo_row = "&nbsp;";}
+    var rowfour = '<tr><td>' + elo_row + '</td><td>&nbsp;</td></tr>';    
+    
+    $("#bio").html(biotable + rowtwo + rowthree + rowfour + profile_row + rowfive + '</table></p>');
+    }
+
+function choiceClick(choiceid, filt, ctrl) {
+    //var menudef = 0;
+    // if click is on default -- shift doesn't matter, presets don't matter; select default and deselect others
+    // (possible exception of 'span' menu?
+    if (choiceid.slice(-3) == 'def') {
+        $("." + filt + "choice").removeClass("selected").removeClass(filt + "selected");
+        $('#' + choiceid).addClass("selected").addClass(filt + "selected");
+        }
+    // if click on choice that is already selected [shift doesn't matter]
+    else if ($('#' + choiceid).hasClass('selected')) {
+        // - if it's the only one, go back to default
+        if ($('.' + filt + 'selected').length == 1) {
+            $('#' + filt + 'def').addClass("selected").addClass(filt + "selected");
+            }
+        $('#' + choiceid).removeClass("selected").removeClass(filt + "selected");
+        }
+    // if choice not already selected, and shift, then select new choice
+    else if (ctrl == 1) {
+        $('#' + choiceid).addClass("selected").addClass(filt + "selected");
+        }
+    // choice not already selected, not shift: take away all, make this selection
+    else {
+        $("." + filt + "choice").removeClass("selected").removeClass(filt + "selected");
+        $('#' + choiceid).addClass("selected").addClass(filt + "selected");
+        }
+    makeMatchTable({});
+    }
+
+function setPlayerFilter(player, make) {
+    $('.h2hchoice').removeClass('selected').removeClass('h2hselected');
+    var playerid = '#' + 'h2h' + player.replace(/ /g, '');
+    if ($(playerid).length == 0) { // new player to the list
+        $newcell = $('<td>').text(fourspaces + fourspaces + player.replace(/ /g, ' '));
+        $newrow = $('<tr>').attr('class', 'h2hselected h2hchoice selected inmenu').attr('id', playerid.slice(1));
+        $newrow.append($newcell);
+        $('#nothead').before($newrow);
+        if ($('#h2hhead').hasClass('open')) {$newrow.toggle();}
+        $(playerid).click(function () {
+            //var choiceid = $(this).attr('id')
+            if (event.ctrlKey) {var ctrl=1;}
+            else {var ctrl=0;}
+            choiceClick(playerid.slice(1), 'h2h', ctrl);
+            });
+        }
+    else {$(playerid).addClass('selected').addClass('h2hselected');}
+    //set time span to career
+    if (make==1) {makeMatchTable({});}
+    }
+
+function setNotPlayerFilter(player, make) {
+    $('.notchoice').removeClass('selected').removeClass('notselected');
+    var playerid = '#' + 'not' + player.replace(/ /g, '');
+    if ($(playerid).length == 0) { // new player to the list
+        $newcell = $('<td>').text(fourspaces + fourspaces + player.replace(/ /g, ' '));
+        $newrow = $('<tr>').attr('class', 'notselected notchoice selected inmenu').attr('id', playerid.slice(1));
+        $newrow.append($newcell);
+        $('#spanhead').before($newrow);
+        if ($('#nothead').hasClass('open')) {$newrow.toggle();}
+        $(playerid).click(function () {
+            //var choiceid = $(this).attr('id')
+            if (event.ctrlKey) {var ctrl=1;}
+            else {var ctrl=0;}
+            choiceClick(playerid.slice(1), 'not', ctrl);
+            });
+        }
+    else {$(playerid).addClass('selected').addClass('notselected');}
+    //set time span to career
+    if (make==1) {makeMatchTable({});}
+    }
+
+function fHeaderClick(choiceid) {
+    var filt = choiceid.slice(0, -4);
+    $("." + filt + "choice").toggle();
+    if ($("#" + filt + "head").hasClass("closed")) {$("#" + filt + "head").removeClass("closed").addClass("open");}
+    else {$("#" + filt + "head").removeClass("open").addClass("closed");}
+    if ($("." + filt + "choice").is(':visible') == false && $("#" + filt + "def").hasClass("selected") == false) {
+        // check if default is selected
+        $("#" + filt + "head").addClass("selected");
+        }
+    else {$("#" + filt + "head").removeClass("selected");}
+    }
+    
+var defParams = ''    
+window.onpopstate = function (event) {
+    if (event.state == null) {
+        var prefs = 0;
+        for (pf in prefilters) {prefs += 1;}
+        if (prefs == 0) {newPrefilters(defParams);}
+        }
+    else if (event.state.slug.indexOf('.cgi') != -1) {
+        newPrefilters(defParams);
+        }
+    else {
+        //alert('event state '+event.state.slug);
+        newPrefilters(event.state.slug);
+        }
+    };
+
+var startdate = '', enddate = '';
+var lowrank = '', highrank = '';
+var statchoice = '', statoperatorchoice = '', statinput = '';
+var statlist = ['Dom Ratio', 'Ace Perc', 'DF Perc', '1st In', '1st WPc', '2nd WPc', 'BP Svd Pc', 'BP Saved', 'BPC Faced',
+                    'Time', 'TPW', 'RPW', 'vAce Pc', 'v1st WPc', 'v2nd WPc', 'BP Cnv Pc', 'BP Conv', 'BP Chncs', 'Tot Pts',
+                    'Aces', 'DFs', 'Sv Pts', '1Sv Pts', '2Sv Pts', 'vAces'];
+var statpercs = {'Ace Perc': 1, 'DF Perc': 1, '1st In': 1, '1st WPc': 1, '2nd WPc': 1, 'BP Svd Pc': 1, 
+                     'TPW': 1, 'RPW': 1, 'vAce Pc': 1, 'v1st WPc': 1, 'v2nd WPc': 1, 'BP Cnv Pc': 1}
+
+
+$(document).ready(function() { 
+
+    if (typeof navbar !== 'undefined') {
+        $("#navbar").html(navbar);
+        } 
+        
+    if (typeof photog == 'undefined' || photog == '') {
+        insertBio();
+        }
+    else {
+        insertPictureBio();
+        }
+
+    // add chart agg link to span id="shotsHere"
+    if (typeof chartagg != 'undefined' && chartagg == 1) {
+        $ca_span = $('<span />').addClass('tablink').addClass('tabview');
+        $ca_span.css('background-color', '#e6EEEE').css('position', 'relative').css('top', '5px');
+        var ca_link = 'https://www.tennisabstract.com/charting/' + fullname.replace(/ /g, '') + '.html'
+        var ihtml = '&nbsp;<b><a href="' + ca_link + '" target="_blank" style="text-decoration:none">Shot-by-Shot Stats</a></b>&nbsp;';
+        $ca_span.html(ihtml);
+        $("#shotsHere").append($ca_span);
+        // $('<br />').insertBefore($ca_span); // only if there are other 'tab links' in row above
+        }
+
+    // player news & upcoming
+    // if (typeof playernews === 'undefined') {var pnewsrows = '';} //|| playernews == ''
+    // else if (playernews == '') {var pnewsrows = '';}
+    // else {
+    //     var pnewsrows = '';
+    //     for (j=0; j<playernews.length; j++) {
+    //         pnewsrows = pnewsrows + '<br/>' + playernews[j];
+    //         }
+    //     //pnewsrows = pnewsrows + '<br/>&nbsp;';
+    //     }
+    // if (typeof upcoming === 'undefined') {var upcomingrow = '';}
+    // else if (upcoming == '') {var upcomingrow = '';}
+    // else {
+    //     if (month < 10) {var udate = day + ' ' + months['0'+month+''];}
+    //     else {var udate = day + ' ' + months[month+''];}
+    //     var upcomingrow = '<br/><b>' + udate + '</b> Upcoming Tournaments: ' + upcoming;} // add date dynamically
+    //     //if (pnewsrows == '') {pnewsrows = '<br/>&nbsp;';}
+    // if (pnewsrows == '' && upcomingrow == '') {}
+    // else {
+    //     var newsanalysis = '<span style="background-color:#e6EEEE;"><b>News and Analysis</b></span>'
+    //     var yourlinkhere = '<i><a href="https://tennisabstract.com/main/sitesubmit.html">your link here?</a></i>'
+    //     var pnews = '&nbsp;<br/>' + newsanalysis + fourspaces + yourlinkhere + upcomingrow + pnewsrows;
+    //     $("#playernews").html(pnews);
+    //     }
+        
+    makeSplitsTable();
+    if (typeof photog != 'undefined' && photog != '') {
+        $(".moresplits").toggle();
+        }
+
+    makeMenus();
+    applyPrefilters();
+    $(".srclick").click(function () {
+        hidePermalink();
+        if ($(".srclick").text() == 'Show Return Stats') {
+            $(".srclick").html('<span class="likelink">Show Serve Stats</span>');
+            makeMatchTable({});
+            }
+        else {
+            $(".srclick").html('<span class="likelink">Show Return Stats</span>');
+            makeMatchTable({});
+            }
+        })
+    $(".revscore").click(function () {
+        hidePermalink();
+        if ($(".revscore").text() == 'Reverse Loss Scores') {
+            $(".revscore").html('Standard Scores');
+            makeMatchTable({});
+            }
+        else {
+            $(".revscore").html('Reverse Loss Scores');
+            makeMatchTable({});
+            }
+        })
+    if (careerjs == 1) {
+        if ('span' in prefilters && (prefilters['span'] != '1' && prefilters['span'] != '2')) {matchmx = matchmx.concat(morematchmx);}  // hacky; keep consistent with python code
+        else {
+            var careerurl = 'https://www.tennisabstract.com/jsmatches/' + nameparam + 'Career.js';
+            $.getScript(careerurl, function() {
+                matchmx = matchmx.concat(morematchmx);
+                })
+            }
+        }
+        /*
+    if (typeof dob === 'undefined') {}
+    else {
+        var dobStr = dob+'';
+        var dobObj  = new Date(dobStr.slice(0,4), dobStr.slice(4,6), dobStr.slice(6));
+        var one_day=1000*60*60*24;
+        }
+        */
+    makeMatchTable({});
+    $.getScript("https://www.tennisabstract.com/jquery.ui.core.js", function() {});
+    $.getScript("https://www.tennisabstract.com/jquery.ui.position.js", function() {});
+    $.getScript("https://www.tennisabstract.com/jquery.ui.widget.js", function() {});
+    $.getScript("https://www.tennisabstract.com/mwplayerlist.js", function() {}); // in jsplayers or jsmatches?
+    $.getScript("https://www.tennisabstract.com/jquery.ui.autocomplete.js", function() {});
+    $('#playersearch').append($('<input>').attr('id', 'tags'));
+    $("#h2hhead").click(function () {
+        var choiceid = $(this).attr('id');
+        fHeaderClick(choiceid);
+        });
+    $(".h2hchoice").click(function (event) {
+        if (event.ctrlKey) {var ctrl=1;}
+        else {var ctrl=0;}
+        var choiceid = $(this).attr('id')
+        if (choiceid != 'h2hsearchrow') {choiceClick(choiceid, 'h2h', ctrl);}
+        });
+    $("#nothead").click(function () {
+        var choiceid = $(this).attr('id');
+        fHeaderClick(choiceid);
+        });
+    $(".notchoice").click(function (event) {
+        if (event.ctrlKey) {var ctrl=1;}
+        else {var ctrl=0;}
+        var choiceid = $(this).attr('id')
+        if (choiceid != 'notsearchrow') {choiceClick(choiceid, 'not', ctrl);}
+        });
+    $("#spanhead").click(function () {
+        var choiceid = $(this).attr('id');
+        fHeaderClick(choiceid);
+        });
+    $(".spanchoice").click(function (event) {
+        if (event.ctrlKey) {var ctrl=1;}
+        else {var ctrl=0;}
+        var choiceid = $(this).attr('id')
+        choiceClick(choiceid, 'span', ctrl);
+        });
+    $("#surfacehead").click(function () {
+        var choiceid = $(this).attr('id');
+        fHeaderClick(choiceid);
+        });
+    $(".surfacechoice").click(function (event) {
+        if (event.ctrlKey) {var ctrl=1;}
+        else {var ctrl=0;}
+        var choiceid = $(this).attr('id')
+        choiceClick(choiceid, 'surface', ctrl);
+        });
+    $("#levelhead").click(function () {
+        var choiceid = $(this).attr('id');
+        fHeaderClick(choiceid);
+        });
+    $(".levelchoice").click(function (event) {
+        if (event.ctrlKey) {var ctrl=1;}
+        else {var ctrl=0;}
+        var choiceid = $(this).attr('id')
+        choiceClick(choiceid, 'level', ctrl);
+        });
+    $("#tourneyhead").click(function () {
+        var choiceid = $(this).attr('id');
+        fHeaderClick(choiceid);
+        });
+    $(".tourneychoice").click(function (event) {
+        if (event.ctrlKey) {var ctrl=1;}
+        else {var ctrl=0;}
+        var choiceid = $(this).attr('id')
+        choiceClick(choiceid, 'tourney', ctrl);
+        });
+    $("#roundhead").click(function () {
+        var choiceid = $(this).attr('id');
+        fHeaderClick(choiceid);
+        });
+    $(".roundchoice").click(function (event) {
+        if (event.ctrlKey) {var ctrl=1;}
+        else {var ctrl=0;}
+        var choiceid = $(this).attr('id')
+        choiceClick(choiceid, 'round', ctrl);
+        });
+    $("#entryhead").click(function () {
+        var choiceid = $(this).attr('id');
+        fHeaderClick(choiceid);
+        });
+    $(".entrychoice").click(function (event) {
+        if (event.ctrlKey) {var ctrl=1;}
+        else {var ctrl=0;}
+        var choiceid = $(this).attr('id')
+        choiceClick(choiceid, 'entry', ctrl);
+        });
+    $("#rankhead").click(function () {
+        var choiceid = $(this).attr('id');
+        fHeaderClick(choiceid);
+        });
+    $(".rankchoice").click(function (event) {
+        if (event.ctrlKey) {var ctrl=1;}
+        else {var ctrl=0;}
+        var choiceid = $(this).attr('id')
+        choiceClick(choiceid, 'rank', ctrl);
+        });
+    $("#oentryhead").click(function () {
+        var choiceid = $(this).attr('id');
+        fHeaderClick(choiceid);
+        });
+    $(".oentrychoice").click(function (event) {
+        if (event.ctrlKey) {var ctrl=1;}
+        else {var ctrl=0;}
+        var choiceid = $(this).attr('id')
+        choiceClick(choiceid, 'oentry', ctrl);
+        });
+    $("#handhead").click(function () {
+        var choiceid = $(this).attr('id');
+        fHeaderClick(choiceid);
+        });
+    $(".handchoice").click(function (event) {
+        if (event.ctrlKey) {var ctrl=1;}
+        else {var ctrl=0;}
+        var choiceid = $(this).attr('id')
+        choiceClick(choiceid, 'hand', ctrl);
+        });
+    $("#agehead").click(function () {
+        var choiceid = $(this).attr('id');
+        fHeaderClick(choiceid);
+        });
+    $(".agechoice").click(function (event) {
+        if (event.ctrlKey) {var ctrl=1;}
+        else {var ctrl=0;}
+        var choiceid = $(this).attr('id')
+        choiceClick(choiceid, 'age', ctrl);
+        });
+    $("#heighthead").click(function () {
+        var choiceid = $(this).attr('id');
+        fHeaderClick(choiceid);
+        });
+    $(".heightchoice").click(function (event) {
+        if (event.ctrlKey) {var ctrl=1;}
+        else {var ctrl=0;}
+        var choiceid = $(this).attr('id')
+        choiceClick(choiceid, 'height', ctrl);
+        });
+    $("#countryhead").click(function () {
+        var choiceid = $(this).attr('id');
+        fHeaderClick(choiceid);
+        });
+    $(".countrychoice").click(function (event) {
+        if (event.ctrlKey) {var ctrl=1;}
+        else {var ctrl=0;}
+        var choiceid = $(this).attr('id')
+        choiceClick(choiceid, 'country', ctrl);
+        });
+    $("#resultshead").click(function () {
+        var choiceid = $(this).attr('id');
+        fHeaderClick(choiceid);
+        });
+    $(".resultschoice").click(function (event) {
+        if (event.ctrlKey) {var ctrl=1;}
+        else {var ctrl=0;}
+        var choiceid = $(this).attr('id')
+        choiceClick(choiceid, 'results', ctrl);
+        });
+    $("#scoreshead").click(function () {
+        var choiceid = $(this).attr('id');
+        fHeaderClick(choiceid);
+        });
+    $(".scoreschoice").click(function (event) {
+        if (event.ctrlKey) {var ctrl=1;}
+        else {var ctrl=0;}
+        var choiceid = $(this).attr('id')
+        choiceClick(choiceid, 'scores', ctrl);
+        });
+    $("#setshead").click(function () {
+        var choiceid = $(this).attr('id');
+        fHeaderClick(choiceid);
+        });
+    $(".setschoice").click(function (event) {
+        if (event.ctrlKey) {var ctrl=1;}
+        else {var ctrl=0;}
+        var choiceid = $(this).attr('id')
+        choiceClick(choiceid, 'sets', ctrl);
+        });
+    $("#asrankhead").click(function () {
+        var choiceid = $(this).attr('id');
+        fHeaderClick(choiceid);
+        });
+    $(".asrankchoice").click(function (event) {
+        if (event.ctrlKey) {var ctrl=1;}
+        else {var ctrl=0;}
+        var choiceid = $(this).attr('id')
+        choiceClick(choiceid, 'asrank', ctrl);
+        });
+    $("#spanCustomqq").click(function (event) {
+        $("#spanstartrow").remove();
+        // smarter way -- check if it exists, then build if not?
+        var $s = $('<select />').attr('id', 'spanstart');
+        $('<option />', {value: 'default', text: 'Start'}).appendTo($s);
+        for (i=0; i<tdates.length; i++) {
+            var showdate = tdates[i].slice(6) + '-' + months[tdates[i].slice(4,6)] + '-' + tdates[i].slice(0,4);
+            $('<option />', {value: tdates[i], text: showdate}).appendTo($s);
+            }
+        $sspan = $('<span>').text(fourspaces + fourspaces);
+        $std = $('<td>').append($sspan).append($s)
+        $startrow = $('<tr>').attr('class', 'inmenu spanchoice').attr('id', 'spanstartrow').append($std);                                                     
+        $("#spanCustomqq").after($startrow);
+        $startrow.toggle();
+        $('#spanstart').change(function() {
+            $("#spanendrow").remove();
+            startdate = $("#spanstart option:selected").val();
+            var $t = $('<select />').attr('id', 'spanend');
+            $('<option />', {value: 'default', text: 'End'}).appendTo($t);
+            for (i=0; i<tdates.length; i++) {
+                if (tdates[i] < startdate) {}
+                else {
+                    var showdate = tdates[i].slice(6) + '-' + months[tdates[i].slice(4,6)] + '-' + tdates[i].slice(0,4);
+                    $('<option />', {value: tdates[i], text: showdate}).appendTo($t);
+                    }
+                }
+            $espan = $('<span>').text(fourspaces + fourspaces);
+            $etd = $('<td>').append($espan).append($t)    
+            $endrow = $('<tr>').attr('class', 'inmenu spanchoice').attr('id', 'spanendrow').append($etd);
+            $("#spanstartrow").after($endrow);
+            $endrow.toggle();  
+            $('#spanend').change(function() {
+                //alert('end is changed');
+                enddate = $("#spanend option:selected").val();
+                makeMatchTable({});
+                });      
+            });
+        });
+    $("#rankCustomqq").click(function (event) {
+        $("#rankstartrow").remove();
+        // smarter way -- check if it exists, then build if not?
+        var $s = $('<select />').attr('id', 'rankstart');
+        $('<option />', {value: 'default', text: 'Max'}).appendTo($s);
+        for (i=0; i<vranks.length; i++) {
+            $('<option />', {value: vranks[i], text: vranks[i]}).appendTo($s);
+            }
+        $srank = $('<rank>').text(fourspaces + fourspaces);
+        $srd = $('<td>').append($srank).append($s)
+        $lowrow = $('<tr>').attr('class', 'inmenu rankchoice').attr('id', 'rankstartrow').append($srd);                                                     
+        $("#rankCustomqq").after($lowrow);
+        $lowrow.toggle();
+        $('#rankstart').change(function() {
+            $("#rankendrow").remove();
+            lowrank = parseInt($("#rankstart option:selected").val());
+            var $t = $('<select />').attr('id', 'rankend');
+            $('<option />', {value: 'default', text: 'Min'}).appendTo($t);
+            for (i=0; i<vranks.length; i++) {
+                if (parseInt(vranks[i]) < lowrank) {}
+                else {
+                    $('<option />', {value: vranks[i], text: vranks[i]}).appendTo($t);
+                    }
+                }
+            $erank = $('<rank>').text(fourspaces + fourspaces);
+            $erd = $('<td>').append($erank).append($t)    
+            $highrow = $('<tr>').attr('class', 'inmenu rankchoice').attr('id', 'rankendrow').append($erd);
+            $("#rankstartrow").after($highrow);
+            $highrow.toggle();  
+            $('#rankend').change(function() {
+                //alert('end is changed');
+                highrank = parseInt($("#rankend option:selected").val());
+                makeMatchTable({});
+                });      
+            });
+        });
+    $(".menureset").click(function () {
+        resetFilters();
+        // close open menus?
+        makeMatchTable({});
+        });
+    $(".splittoggle").click(function () {
+        // close years if it's open and splits are opening
+        if ($(".splittoggle").text() == 'show splits' && $(".yeartoggle").text() == 'hide yearly totals') {
+            $(".yearsplits").toggle();
+            $(".yeartoggle").html('<span class="likelink">show yearly totals</span>');
+            }
+        $(".moresplits").toggle();
+        if ($(".splittoggle").text() == 'show splits') {
+            $(".splittoggle").html('<span class="likelink">hide splits</span>');
+            }
+        else {$(".splittoggle").html('<span class="likelink">show splits</span>');}
+        })
+    $(".yeartoggle").click(function () {
+        // close splits if it's open and years are opening
+        if ($(".yeartoggle").text() == 'show yearly totals' && $(".splittoggle").text() == 'hide splits') {
+            $(".moresplits").toggle();
+            $(".splittoggle").html('<span class="likelink">show splits</span>');
+            }
+        if ($(".yearsplits").length == 0) {addYearSplits();}
+        $(".yearsplits").toggle();
+        if ($(".yeartoggle").text() == 'show yearly totals') {
+            $(".yeartoggle").html('<span class="likelink">hide yearly totals</span>');
+            }
+        else {$(".yeartoggle").html('<span class="likelink">show yearly totals</span>');}
+        })
+    var searchbox = "Player Search";		
+    $("#tags").val(searchbox);
+    $("#tags").focus(function() {
+        if ($(this).val() == searchbox) {$(this).val("");}
+        $( "#tags" ).autocomplete({
+                source: playerlist,
+                minLength: 2,
+                select: function(e, ui) {
+                    var playerselect = ui.item.value;
+                    var player = playerselect.slice(4);
+                    var mw = playerselect.slice(1,2);
+                    if (mw == 'M') {
+                        var playerurl = 'https://www.tennisabstract.com/cgi-bin/player.cgi?p=' + player.replace(/ /g, '');
+                        }
+                    else {
+                        var playerurl = 'https://www.tennisabstract.com/cgi-bin/wplayer.cgi?p=' + player.replace(/ /g, '');
+                        }                        
+                    window.open(playerurl, "_self");
+                    }
+            });
+        }); 
+    var h2hsearchbox = "Add H2H";		
+    $("#h2hsearch").val(h2hsearchbox);
+    $("#h2hsearch").focus(function() {
+        if ($(this).val() != '') {$(this).val("");}
+        $( "#h2hsearch" ).autocomplete({
+                source: ochoices,
+                minLength: 2,
+                select: function(e, ui) {setPlayerFilter(ui.item.value, 1);}
+            }) 
+        });
+    var notsearchbox = "Add NOT";		
+    $("#notsearch").val(notsearchbox);
+    $("#notsearch").focus(function() {
+        if ($(this).val() != '') {$(this).val("");}
+        $( "#notsearch" ).autocomplete({
+                source: ochoices,
+                minLength: 2,
+                select: function(e, ui) {setNotPlayerFilter(ui.item.value, 1);}
+            }) 
+        });
+    })
+// test
+
+</script>
+</head>
+<body>
+
+<div id="header">
+
+<div id="navbar">
+</div>
+
+<table width=1240px>
+<tr><td>&nbsp;</td><td>&nbsp;</td>
+</tr>
+
+<tr>
+<td align="left" style="vertical-align:top"><span id="bio">&nbsp;</span>
+
+<span id="shotsHere">
+</span>
+
+</td>
+<td id="wonloss" align="right">&nbsp;</td>
+<tr>
+<td colspan=2 id="playernews">&nbsp;</td>
+</tr>
+</tr></table>
+</div>
+<div id="main">
+
+<table width="1240px" id="maintable">
+<tr id="tabletoggles">
+<td>&nbsp</td>
+<td id="tablelabel">&nbsp;</td>
+<td id="abovestats" class="abovestats" align="right">
+&nbsp;&nbsp;&nbsp;<span class="revscore likelink"></span>
+&nbsp;&nbsp;&nbsp;<span class="srclick likelink"></span>
+</td></tr>
+<tr>
+<td id="footer" class="footer">&nbsp;</td>
+<td colspan="2" id="stats" class="stats"><table id="matches"></table></td>
+</tr>
+<tr>
+<td id="belowmenus">&nbsp;<br/>&nbsp;<br/>&nbsp;<br/>&nbsp;<br/>&nbsp;</td>
+<td colspan="2" id="belowmatches">&nbsp;</td>
+</tr>
+</table></div>
+</div>
+
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"592714df19074b3b85668cfe8f554b86","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9e66a066ac56b143',t:'MTc3NTIwNDEzOA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+
