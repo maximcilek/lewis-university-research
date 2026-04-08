@@ -129,23 +129,11 @@ def split_rally_pattern(text):
         for c in g:
             desc = code_to_desc.get(c)
             details.append({"code": c, "description": desc})
+        print(details)
+        quit()
         decoded.append({"details": details, "shot_num": shotcount+1, "player_turn": player_turn})
         player_turn = 'returner' if player_turn == 'server' else 'server'
     
-    # ---- DETECT DOUBLE FAULT ----
-    """
-    double_fault = False
-    server_groups = [s for s in decoded if s["player_turn"] == "server"]
-    first_serve_codes = []
-    for sg in server_groups[:2]:  # first and second server groups
-        first_serve_codes.extend([sh["code"] for sh in sg["details"]])
-    if all(c in ["n", "w"] for c in first_serve_codes):
-        double_fault = True
-
-    # Attach double_fault flag to all shots
-    for s in decoded:
-        s["double_fault"] = double_fault
-    """
     return decoded
 
 def is_double_fault(decoded):
