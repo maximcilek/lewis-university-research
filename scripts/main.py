@@ -91,93 +91,96 @@ def load_players_df(players):
     players.set_index("url_parameter_name", inplace=True)
     return players
 
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+
 def analyze_players(players):
+    # --- Basic Info ---
     print("Missing values per column:")
     print(players.isna().sum())
 
-    """
-
-    # Hand Distribution
-    plt.figure(figsize=(6, 4))
-    sns.countplot(data=players, x='hand', order=players['hand'].value_counts().index)
-    plt.title("Distribution of Hand")
-    plt.xlabel("Hand")
-    plt.ylabel("Count")
-    plt.show()
-    """
-
+    # --- Feature Engineering ---
     players['age'] = (pd.Timestamp('today') - players['dob']).dt.days // 365
-    
-    # Player Distributions
-    fig, axes = plt.subplots(2, 3, figsize=(18, 10))
-    
-    # Gender Distribution
-    sns.countplot(data=players, x='gender', order=players['gender'].value_counts().index, ax=axes[0,0], palette=['skyblue', 'pink'])
-    axes[0,0].set_title("Gender Distribution")
-    axes[0,0].set_xlabel("Gender")
-    axes[0,0].set_ylabel("Count")
-    
-    # Hand Distribution by Gender
-    sns.countplot(data=players, x='hand', hue='gender', ax=axes[0,1], palette=['pink', 'skyblue'])
-    axes[0,1].set_title("Hand Distribution by Gender")
-    axes[0,1].set_xlabel("Hand")
-    axes[0,1].set_ylabel("Count")
-    
-    # Country Distribution by Gender
-    sns.countplot(data=players, y='country', hue='gender', ax=axes[0,2], palette=['pink', 'skyblue'], order=players['country'].value_counts().index[:20])  # Top 20 countries
-    axes[0,2].set_title("Top 20 Countries by Gender")
-    axes[0,2].set_xlabel("Count")
-    axes[0,2].set_ylabel("Country")
-    
-    # Male players age
+
+    # --- Styling ---
+    sns.set_style("whitegrid")
+
+    # --- Layout using GridSpec ---
+    fig = plt.figure(figsize=(20, 14))
+    gs = fig.add_gridspec(3, 3, hspace=0.3, wspace=0.3)
+
+    # Top row
+    ax_gender = fig.add_subplot(gs[0, 0])
+    ax_hand = fig.add_subplot(gs[0, 1])
+
+    # Middle row
+    ax_male_age = fig.add_subplot(gs[1, 0])
+    ax_female_age = fig.add_subplot(gs[1, 1])
+
+    # Right column (full height for countries)
+    ax_country = fig.add_subplot(gs[:, 2])
+
+    # --- Gender Distribution ---
+    sns.countplot(
+        data=players,
+        x='gender',
+        order=players['gender'].value_counts().index,
+        ax=ax_gender,
+        palette=['skyblue', 'pink']
+    )
+    ax_gender.set_title("Gender Distribution")
+    ax_gender.set_xlabel("Gender")
+    ax_gender.set_ylabel("Count")
+
+    # --- Hand Distribution by Gender ---
+    sns.countplot(
+        data=players,
+        x='hand',
+        hue='gender',
+        ax=ax_hand,
+        palette=['pink', 'skyblue']
+    )
+    ax_hand.set_title("Hand Distribution by Gender")
+    ax_hand.set_xlabel("Hand")
+    ax_hand.set_ylabel("Count")
+
+    # --- Country Distribution (Top 20) ---
+    top_countries = players['country'].value_counts().index[:20]
+
+    sns.countplot(
+        data=players,
+        y='country',
+        hue='gender',
+        order=top_countries,
+        ax=ax_country,
+        palette=['pink', 'skyblue']
+    )
+
+    ax_country.set_title("Top 20 Countries by Gender")
+    ax_country.set_xlabel("Count")
+    ax_country.set_ylabel("")  # remove clutter
+    ax_country.tick_params(axis='y', labelsize=9)
+
+    # --- Age Distributions ---
     male_data = players[players['gender'] == 'M']['age'].dropna()
-    sns.histplot(data=male_data, bins=20, kde=True, ax=axes[1,0], color='skyblue')
-    axes[1,0].set_title("Male Players - Age Distribution")
-    axes[1,0].set_xlabel("Age")
-    axes[1,0].set_ylabel("Count")
-    
-    # Female players age
     female_data = players[players['gender'] == 'F']['age'].dropna()
-    sns.histplot(data=female_data, bins=20, kde=True, ax=axes[1,1], color='pink')
-    axes[1,1].set_title("Female Players - Age Distribution")
-    axes[1,1].set_xlabel("Age")
-    
-    # Hide the empty subplot
-    axes[1,2].set_visible(False)
-    
+
+    sns.histplot(male_data, bins=20, kde=True, ax=ax_male_age, color='skyblue')
+    ax_male_age.set_title("Male Players - Age Distribution")
+    ax_male_age.set_xlabel("Age")
+    ax_male_age.set_ylabel("Count")
+
+    sns.histplot(female_data, bins=20, kde=True, ax=ax_female_age, color='pink')
+    ax_female_age.set_title("Female Players - Age Distribution")
+    ax_female_age.set_xlabel("Age")
+    ax_female_age.set_ylabel("Count")
+
+    # --- Final Layout ---
     plt.tight_layout()
     plt.show()
-
     quit()
-
-    # numeric_cols = ['ht', 'hand', 'gender', 'backhand']
-    # for col in numeric_cols:
-    #     plt.figure(figsize=(6, 4))
-    #     sns.histplot(players[col].dropna(), bins=20, kde=True)
-    #     plt.title(f"Distribution of {col}")
-    #     plt.xlabel(col)
-    #     plt.ylabel("Count")
-    #     plt.show()
-    
-    """
-    # ------------------------
-    # 3. Categorical distributions (backhand, country)
-    # ------------------------
-    categorical_cols = ['country']
-    for col in categorical_cols:
-        plt.figure(figsize=(8, 4))
-        sns.countplot(y=players[col], order=players[col].value_counts().index)
-        plt.title(f"Distribution of {col}")
-        plt.xlabel("Count")
-        plt.ylabel(col)
-        plt.show()
-
-    # ------------------------
-    # 4. Age distribution
-    # ------------------------
-    # Compute age from dob (assuming today as reference)
-    
-    """
 
 def load_matches_df(matches):
     matches = pd.json_normalize(tennisabstract_data.charting_matches)
@@ -189,6 +192,268 @@ def load_matches_df(matches):
     matches = matches.drop(columns=["player_1.profile_url", "player_2.profile_url"])
     return matches
 
+"""
+def plot_shot_timeline(df, target_point):
+    import pandas as pd
+    import matplotlib.pyplot as plt
+
+    # --- Filter to ONE point ---
+    df_point = df[df['point_number'].astype(int) == target_point]
+
+    if df_point.empty:
+        print(f"No data found for point {target_point}")
+        return
+
+    rows = []
+
+    for _, row in df_point.iterrows():
+        shots = row['shots']
+
+        if not isinstance(shots, list):
+            continue
+
+        for shot_idx, shot in enumerate(shots):
+            for d in shot.get('details', []):
+                rows.append({
+                    'shot_num': shot_idx + 1,
+                    'shot_type': d.get('description', 'Unknown'),
+                })
+
+    shots_df = pd.DataFrame(rows)
+
+    if shots_df.empty:
+        print("No shot data available")
+        return
+
+    # --- Plot ---
+    plt.figure(figsize=(10, 4))
+
+    # Convert shot_type to ordered categorical positions
+    shots_df['shot_type'] = shots_df['shot_type'].astype(str)
+
+    # Create numeric mapping for clean spacing
+    shot_order = {v: i for i, v in enumerate(shots_df['shot_type'].unique())}
+    shots_df['y'] = shots_df['shot_type'].map(shot_order)
+
+    plt.scatter(
+        shots_df['shot_num'],
+        shots_df['y'],
+        s=100
+    )
+
+    # Label each point with shot number
+    for _, row in shots_df.iterrows():
+        plt.text(
+            row['shot_num'],
+            row['y'],
+            str(row['shot_num']),
+            ha='center',
+            va='center',
+            fontsize=8,
+            color='white'
+        )
+
+    # Y-axis labels
+    plt.yticks(list(shot_order.values()), list(shot_order.keys()))
+
+    plt.title(f"Shot Sequence for Point {target_point}")
+    plt.xlabel("Shot Number")
+    plt.ylabel("Shot Type")
+
+    plt.grid(axis='x', linestyle='--', alpha=0.3)
+    plt.tight_layout()
+    plt.show()
+"""
+
+def plot_shot_timeline(df, match_id=None, target_point=None):
+    import pandas as pd
+    import matplotlib.pyplot as plt
+
+    # --- Filter by match if specified ---
+    if match_id is not None:
+        df = df[df['match_id'] == match_id]
+
+    # --- Sort by match/set/game/point for correct rally sequence ---
+    df = df.sort_values(by=['match_id','set_1','game_number','point_number']).reset_index(drop=True)
+
+    # --- Filter to a single point if specified ---
+    if target_point is not None:
+        df = df[df['point_number'].astype(int) == target_point]
+
+    if df.empty:
+        print("No data available for the specified point/match.")
+        return
+
+    rows = []
+    for _, row in df.iterrows():
+        shots = row['shots']
+        server = row['server_player_number']
+
+        if not isinstance(shots, list):
+            continue
+
+        for shot_idx, shot in enumerate(shots):
+            details = shot.get('details', [])
+            for d in details:
+                rows.append({
+                    'point_num': int(row['point_number']),
+                    'shot_num': shot_idx + 1,
+                    'shot_type': d.get('description','Unknown'),
+                    'server': server
+                })
+
+    shots_df = pd.DataFrame(rows)
+    if shots_df.empty:
+        print("No shot data available after flattening.")
+        return
+
+    # --- Ensure shots are sorted by rally sequence ---
+    shots_df = shots_df.sort_values(by=['point_num','shot_num']).reset_index(drop=True)
+
+    # --- Assign player_turn alternating starting with server ---
+    player_turns = []
+    current_point = None
+    counter = 0
+    for _, row in shots_df.iterrows():
+        if row['point_num'] != current_point:
+            current_point = row['point_num']
+            counter = 0
+        player_turns.append('Server' if counter % 2 == 0 else 'Returner')
+        counter += 1
+    shots_df['player_turn'] = player_turns
+
+    # --- Map shot_type to numeric y for plotting ---
+    shots_df['shot_type'] = shots_df['shot_type'].astype(str)
+    shot_order = {v:i for i,v in enumerate(shots_df['shot_type'].unique())}
+    shots_df['y'] = shots_df['shot_type'].map(shot_order)
+
+    # --- Colors ---
+    colors = {'Server':'skyblue', 'Returner':'salmon'}
+
+    # --- Plot ---
+    plt.figure(figsize=(12,6))
+    for turn in ['Server','Returner']:
+        subset = shots_df[shots_df['player_turn']==turn]
+        plt.scatter(
+            subset['shot_num'],
+            subset['y'],
+            s=100,
+            color=colors[turn],
+            label=turn,
+            alpha=0.8
+        )
+        for _, row in subset.iterrows():
+            plt.text(
+                row['shot_num'],
+                row['y'],
+                str(row['shot_num']),
+                ha='center',
+                va='center',
+                fontsize=8,
+                color='white'
+            )
+
+    plt.yticks(list(shot_order.values()), list(shot_order.keys()))
+    plt.xticks(range(1, shots_df['shot_num'].max()+1))
+    plt.xlabel("Shot Number in Rally")
+    plt.ylabel("Shot Type")
+    title = "Shot Sequence"
+    if match_id: title += f" - Match {match_id}"
+    if target_point: title += f" - Point {target_point}"
+    plt.title(title + " (Server vs Returner)")
+    plt.grid(axis='x', linestyle='--', alpha=0.3)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+    
+def plot_first_point_rally(df):
+    import pandas as pd
+    import matplotlib.pyplot as plt
+
+    # --- Pick first match ---
+    first_match = df['match_id'].iloc[0]
+    df_match = df[df['match_id'] == first_match]
+
+    # --- Sort by set, game, point for proper rally order ---
+    df_match = df_match.sort_values(by=['set_1', 'game_number', 'point_number']).reset_index(drop=True)
+
+    # --- Pick first point ---
+    first_point = int(df_match['point_number'].iloc[0])
+    df_point = df_match[df_match['point_number'].astype(int) == first_point]
+
+    if df_point.empty:
+        print("No shots found for the first point of this match.")
+        return
+
+    # --- Flatten shots ---
+    rows = []
+    for _, row in df_point.iterrows():
+        shots = row['shots']
+        server = row['server_player_number']
+
+        if not isinstance(shots, list):
+            continue
+
+        for shot_idx, shot in enumerate(shots):
+            details = shot.get('details', [])
+            for d in details:
+                rows.append({
+                    'shot_num': shot_idx + 1,
+                    'shot_type': d.get('description', 'Unknown')
+                })
+
+    shots_df = pd.DataFrame(rows)
+    if shots_df.empty:
+        print("No shot details available for this point.")
+        return
+
+    # --- Ensure shots are in rally order ---
+    shots_df = shots_df.sort_values(by='shot_num').reset_index(drop=True)
+
+    # --- Assign player_turn alternating starting with server ---
+    player_turns = ['Server' if i % 2 == 0 else 'Returner' for i in range(len(shots_df))]
+    shots_df['player_turn'] = player_turns
+
+    # --- Map shot_type to numeric y for plotting ---
+    shots_df['shot_type'] = shots_df['shot_type'].astype(str)
+    shot_order = {v: i for i, v in enumerate(shots_df['shot_type'].unique())}
+    shots_df['y'] = shots_df['shot_type'].map(shot_order)
+
+    # --- Colors ---
+    colors = {'Server':'skyblue', 'Returner':'salmon'}
+
+    # --- Plot ---
+    plt.figure(figsize=(12,6))
+    for turn in ['Server','Returner']:
+        subset = shots_df[shots_df['player_turn'] == turn]
+        plt.scatter(
+            subset['shot_num'],
+            subset['y'],
+            s=100,
+            color=colors[turn],
+            label=turn,
+            alpha=0.8
+        )
+        for _, row in subset.iterrows():
+            plt.text(
+                row['shot_num'],
+                row['y'],
+                str(row['shot_num']),
+                ha='center',
+                va='center',
+                fontsize=8,
+                color='white'
+            )
+
+    plt.yticks(list(shot_order.values()), list(shot_order.keys()))
+    plt.xticks(range(1, shots_df['shot_num'].max() + 1))
+    plt.xlabel("Shot Number in Rally")
+    plt.ylabel("Shot Type")
+    plt.title(f"Rally Visualization - Match {first_match}, Point {first_point} (Server vs Returner)")
+    plt.grid(axis='x', linestyle='--', alpha=0.3)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
 # round_dict = {"R16": 9, "W": 14, "F": 13, "RR": 8, "R64": 6, "R128": 5, "QF": 10, "SF": 11, "R32": 7, 'Q1': 1, 'Q2': 2, 'Q3': 3, 'Q4': 4, "": 0, "BR": 12}
 # hand_dict = {'1': 'Left', '2': 'Right', '': 'Unknown'}
 if __name__ == "__main__":
@@ -200,14 +465,14 @@ if __name__ == "__main__":
         "data/canonical/tennisabstract/charting_shots.parquet"
     )
 
-    players = load_players_df(tennisabstract_data.players)
-    print(players.info())
-    print(players.head())
-    analyze_players(players)
-    quit()
-    matches = load_matches_df(tennisabstract_data.charting_matches)
-    print(matches.info())
-    print(matches.head())
+    #players = load_players_df(tennisabstract_data.players)
+    #print(players.info())
+    #print(players.head())
+    #analyze_players(players)
+    #quit()
+    #matches = load_matches_df(tennisabstract_data.charting_matches)
+    #print(matches.info())
+    #print(matches.head())
 
     parquet_file = pq.ParquetFile(tennisabstract_data.charting_points_file_path)
     total_points = parquet_file.metadata.num_rows
@@ -230,6 +495,8 @@ if __name__ == "__main__":
             # Do analysis on this chunk
             print(df_chunk.info())
             print(df_chunk.head())
+            # plot_shot_timeline(df_chunk, 1)
+            plot_first_point_rally(df_chunk)
             quit()
             chunk = []
     # Process remaining rows
