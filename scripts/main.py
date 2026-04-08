@@ -495,22 +495,40 @@ if __name__ == "__main__":
             LOGGER.info("Processed %d / %d points (%.2f%%)", i, total_points, percent)
             df_chunk = pd.DataFrame(chunk)
             # Do analysis on this chunk
-            print(df_chunk.info())
-            print(df_chunk.head())
+            #print(df_chunk.info())
+            #print(df_chunk.head())
+
+            # Assuming df_chunk is your DataFrame chunk
+
+            # Explode shots per point
             df_exploded = df_chunk.explode('shots').reset_index(drop=True)
 
-            # Step 2: normalize the 'shots' dicts into separate columns
+            # Normalize shots dictionaries
             shots_flat = pd.json_normalize(df_exploded['shots'])
 
-            df_exploded_details = shots_flat.explode('details').reset_index(drop=True)
+            # Explode details within each shot
+            df_details_exploded = shots_flat.explode('details').reset_index(drop=True)
 
-            # Step 2: normalize the dictionaries in 'details' into separate columns
-            details_flat = pd.json_normalize(df_exploded_details['details'])
+            # Normalize the details dictionaries
+            details_flat = pd.json_normalize(df_details_exploded['details'])
 
-            # Step 3: combine with the rest of the DataFrame
-            df_flat = pd.concat([df_exploded_details.drop(columns=['details']), details_flat], axis=1)
-            print("\n==================================\n")
-            print(df_flat.head(10))
+            # Combine with shot-level info (point_number, shot_num, player_turn, etc.)
+            df_flat = pd.concat([df_details_exploded.drop(columns=['details']), details_flat], axis=1)
+            df_final = pd.concat([df_exploded, df_flat], axis=1)
+            print(df_flat.info())
+            print(df_flat.head())
+            print(df_final.info())
+            print(df_final.head())
+            # Now aggregate descriptions **per point_number and shot_num**
+            df_agg = df_final.groupby(
+                ['match_id', 'point_number', 'shot_num', 'player_turn'],
+                as_index=False
+            ).agg({
+                'code': lambda x: ' '.join(dict.fromkeys(x))  # removes duplicates, keeps order
+            })
+
+            print(df_agg.info())
+            print(df_agg.head(30))
             # plot_first_point_rally(df_chunk)
             quit()
             chunk = []
