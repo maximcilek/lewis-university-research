@@ -263,7 +263,6 @@ def plot_shot_timeline(df, target_point):
     plt.grid(axis='x', linestyle='--', alpha=0.3)
     plt.tight_layout()
     plt.show()
-"""
 
 def plot_shot_timeline(df, match_id=None, target_point=None):
     import pandas as pd
@@ -454,6 +453,9 @@ def plot_first_point_rally(df):
     plt.legend()
     plt.tight_layout()
     plt.show()
+"""
+
+
 # round_dict = {"R16": 9, "W": 14, "F": 13, "RR": 8, "R64": 6, "R128": 5, "QF": 10, "SF": 11, "R32": 7, 'Q1': 1, 'Q2': 2, 'Q3': 3, 'Q4': 4, "": 0, "BR": 12}
 # hand_dict = {'1': 'Left', '2': 'Right', '': 'Unknown'}
 if __name__ == "__main__":
@@ -465,14 +467,14 @@ if __name__ == "__main__":
         "data/canonical/tennisabstract/charting_shots.parquet"
     )
 
-    #players = load_players_df(tennisabstract_data.players)
-    #print(players.info())
-    #print(players.head())
-    #analyze_players(players)
+    players = load_players_df(tennisabstract_data.players)
+    print(players.info())
+    print(players.head())
+    # analyze_players(players)
     #quit()
-    #matches = load_matches_df(tennisabstract_data.charting_matches)
-    #print(matches.info())
-    #print(matches.head())
+    matches = load_matches_df(tennisabstract_data.charting_matches)
+    print(matches.info())
+    print(matches.head())
 
     parquet_file = pq.ParquetFile(tennisabstract_data.charting_points_file_path)
     total_points = parquet_file.metadata.num_rows
@@ -495,8 +497,21 @@ if __name__ == "__main__":
             # Do analysis on this chunk
             print(df_chunk.info())
             print(df_chunk.head())
-            # plot_shot_timeline(df_chunk, 1)
-            plot_first_point_rally(df_chunk)
+            df_exploded = df_chunk.explode('shots').reset_index(drop=True)
+
+            # Step 2: normalize the 'shots' dicts into separate columns
+            shots_flat = pd.json_normalize(df_exploded['shots'])
+
+            df_exploded_details = shots_flat.explode('details').reset_index(drop=True)
+
+            # Step 2: normalize the dictionaries in 'details' into separate columns
+            details_flat = pd.json_normalize(df_exploded_details['details'])
+
+            # Step 3: combine with the rest of the DataFrame
+            df_flat = pd.concat([df_exploded_details.drop(columns=['details']), details_flat], axis=1)
+            print("\n==================================\n")
+            print(df_flat.head(10))
+            # plot_first_point_rally(df_chunk)
             quit()
             chunk = []
     # Process remaining rows
