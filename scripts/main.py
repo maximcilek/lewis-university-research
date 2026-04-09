@@ -458,29 +458,65 @@ def plot_first_point_rally(df):
 
 # round_dict = {"R16": 9, "W": 14, "F": 13, "RR": 8, "R64": 6, "R128": 5, "QF": 10, "SF": 11, "R32": 7, 'Q1': 1, 'Q2': 2, 'Q3': 3, 'Q4': 4, "": 0, "BR": 12}
 # hand_dict = {'1': 'Left', '2': 'Right', '': 'Unknown'}
+
+def build_dict(seq, key):
+    return dict((d[key], dict(d, index=index)) for (index, d) in enumerate(seq))
+
 if __name__ == "__main__":
     LOGGER.info("Loading TennisAbstract Data")
 
     tennisabstract_data = models.tennisabstract_data.TennisAbstractData(
         "data/canonical/tennisabstract/players.parquet",
         "data/canonical/tennisabstract/charting_matches.parquet",
-        "data/canonical/tennisabstract/charting_shots.parquet"
+        "data/canonical/tennisabstract/charting_points.csv"
     )
 
-    players = load_players_df(tennisabstract_data.players)
-    print(players.info())
-    print(players.head())
-    # analyze_players(players)
-    #quit()
-    matches = load_matches_df(tennisabstract_data.charting_matches)
-    print(matches.info())
-    print(matches.head())
+    all_matches = []
+    for match in tennisabstract_data.charting_matches:
+        match_batch = match.to_pylist()
+        for m in match_batch:
+            player1 = m.get("player_1")
+            player2 = m.get("player_2")
+            del m["player_1"]
+            del m["player_2"]
+            m["player_1_id"] = player1.get("profile_url").split("?p=")[1]
+            m["player_2_id"] = player2.get("profile_url").split("?p=")[1]
+            if player1.get("won"):
+                m["winner"] = 1
+            elif player2.get("won"):
+                m["winner"] = 2
+            else:
+                m["winner"] = None
 
-    parquet_file = pq.ParquetFile(tennisabstract_data.charting_points_file_path)
-    total_points = parquet_file.metadata.num_rows
-    chunk_size = 10_000
-    chunk = []
-    for i, point in enumerate(tennisabstract_data.charting_points, 1):
+            all_matches.append(m)
+
+    print(f"Matches: {len(all_matches)} ({type(all_matches)}) - {type(all_matches[0])}")
+    LOGGER.debug(f"Match: {all_matches[0]}")
+    matches_by_id = build_dict(all_matches, key="match_id")
+    print(matches_by_id.get("20260322-W-Miami-R32-Iva_Jovic-Talia_Gibson"))
+
+    for players_batch in tennisabstract_data.players:
+        for p in players_batch.to_pylist():
+            p["player_id"] = p.get("url_parameter_name")
+            del p["url_parameter_name"]
+            if p["nameparam"] not in [None, ""] and p["nameparam"] != p["player_id"]:
+
+                LOGGER.info("Paramname and player_id do not match: %s | %s", str(p["nameparam"]) ,str(p["player_id"]))
+                
+                # print(p.keys())
+                quit()
+
+
+
+
+
+    # parquet_file = pq.ParquetFile(tennisabstract_data.charting_points_file_path)
+    # total_points = parquet_file.metadata.num_rows
+    # chunk_size = 10_000
+    # chunk = []
+    # for i, point in enumerate(tennisabstract_data.charting_points, 1):
+    #     print(point)
+    #     quit()
         # # feature engineering per chunk
         # # normalize numerical values
         # # convert categorical → embeddings or one-hot
@@ -488,67 +524,13 @@ if __name__ == "__main__":
         # Batch sequences for training.
         
         
-        chunk.append(point)
-        # Log progress every chunk
-        if i % chunk_size == 0 or i == total_points:
-            percent = (i / total_points) * 100
-            LOGGER.info("Processed %d / %d points (%.2f%%)", i, total_points, percent)
-            df_chunk = pd.DataFrame(chunk)
-            # Do analysis on this chunk
-            #print(df_chunk.info())
-            #print(df_chunk.head())
-
-            # Assuming df_chunk is your DataFrame chunk
-
-            # Explode shots per point
-            df_exploded = df_chunk.explode('shots').reset_index(drop=True)
-
-            # Normalize shots dictionaries
-            shots_flat = pd.json_normalize(df_exploded['shots'])
-
-            # Explode details within each shot
-            df_details_exploded = shots_flat.explode('details').reset_index(drop=True)
-
-            # Normalize the details dictionaries
-            details_flat = pd.json_normalize(df_details_exploded['details'])
-
-            # Combine with shot-level info (point_number, shot_num, player_turn, etc.)
-            df_flat = pd.concat([df_details_exploded.drop(columns=['details']), details_flat], axis=1)
-            df_final = pd.concat([df_exploded, df_flat], axis=1)
-            print(df_flat.info())
-            print(df_flat.head())
-            print(df_final.info())
-            print(df_final.head())
-            # Now aggregate descriptions **per point_number and shot_num**
-            df_agg = df_final.groupby(
-                ['match_id', 'point_number', 'shot_num', 'player_turn'],
-                as_index=False
-            ).agg({
-                'code': lambda x: ' '.join(dict.fromkeys(x))  # removes duplicates, keeps order
-            })
-
-            print(df_agg.info())
-            print(df_agg.head(30))
-            # plot_first_point_rally(df_chunk)
-            quit()
-            chunk = []
-    # Process remaining rows
-    if chunk:
-        df_chunk = pd.DataFrame(chunk)
-        LOGGER.info("Processed remaining %d points", len(chunk))
-        print(df_chunk.head())
+        
     
     quit()
 
     #players = pd.DataFrame(tennisabstract_data.players)
     #matches = pd.DataFrame(tennisabstract_data.charting_matches)
     #points = pd.DataFrame(tennisabstract_data.charting_points)
-
-    print(players.info())
-    print("---------------------------------")
-    print(matches.info())
-    print("---------------------------------")
-    # print(points.info())
 
     # df_matches = build_matches_dataframe(df_matches)
     # agg = aggregate_matches_by_year_gender(df_matches)
@@ -622,4 +604,56 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.savefig("player_age_distribution.png")
     LOGGER.info("Saved split gender distribution to player_age_distribution_split.png")
+"""
+
+"""
+chunk.append(point)
+        # Log progress every chunk
+        if i % chunk_size == 0 or i == total_points:
+            percent = (i / total_points) * 100
+            LOGGER.info("Processed %d / %d points (%.2f%%)", i, total_points, percent)
+            df_chunk = pd.DataFrame(chunk)
+            # Do analysis on this chunk
+            #print(df_chunk.info())
+            #print(df_chunk.head())
+
+            # Assuming df_chunk is your DataFrame chunk
+
+            # Explode shots per point
+            df_exploded = df_chunk.explode('shots').reset_index(drop=True)
+
+            # Normalize shots dictionaries
+            shots_flat = pd.json_normalize(df_exploded['shots'])
+
+            # Explode details within each shot
+            df_details_exploded = shots_flat.explode('details').reset_index(drop=True)
+
+            # Normalize the details dictionaries
+            details_flat = pd.json_normalize(df_details_exploded['details'])
+
+            # Combine with shot-level info (point_number, shot_num, player_turn, etc.)
+            df_flat = pd.concat([df_details_exploded.drop(columns=['details']), details_flat], axis=1)
+            df_final = pd.concat([df_exploded, df_flat], axis=1)
+            print(df_flat.info())
+            print(df_flat.head())
+            print(df_final.info())
+            print(df_final.head())
+            # Now aggregate descriptions **per point_number and shot_num**
+            df_agg = df_final.groupby(
+                ['match_id', 'point_number', 'shot_num', 'player_turn'],
+                as_index=False
+            ).agg({
+                'code': lambda x: ' '.join(dict.fromkeys(x))  # removes duplicates, keeps order
+            })
+
+            print(df_agg.info())
+            print(df_agg.head(30))
+            # plot_first_point_rally(df_chunk)
+            quit()
+            chunk = []
+    # Process remaining rows
+    if chunk:
+        df_chunk = pd.DataFrame(chunk)
+        LOGGER.info("Processed remaining %d points", len(chunk))
+        print(df_chunk.head())
 """

@@ -79,7 +79,6 @@ class TennisAbstractData:
         return self._charting_points.data  # iterator from Parquet/JSONL object
 
     def _load_players(self) -> T:
-        logger.info("Loading players from file: %s", self.players_file_path)
         try:
             obj = data_objects.DataObjectFactory.create(self.players_file_path)
             if isinstance(obj, data_objects.ParquetDataObject):
@@ -87,14 +86,13 @@ class TennisAbstractData:
                 total_rows = parquet_file.metadata.num_rows
                 logger.info("Successfully loaded %d players (streaming)", total_rows)
             else:
-                logger.info("Successfully loaded %d players", len(obj.data))
+                logger.info("Successfully loaded players as %s", type(obj))
             return obj
         except Exception as e:
             logger.exception("Failed to load players: %s", e)
             raise
     
     def _load_charting_matches(self) -> T:
-        logger.info("Loading charting matches from file: %s", self.charting_matches_file_path)
         try:
             obj = data_objects.DataObjectFactory.create(self.charting_matches_file_path)
             if isinstance(obj, data_objects.ParquetDataObject):
@@ -102,7 +100,7 @@ class TennisAbstractData:
                 total_rows = parquet_file.metadata.num_rows
                 logger.info("Charting matches ready for streaming (%d rows)", total_rows)
             else:
-                logger.info("Successfully loaded %d matches", len(obj.data))
+                logger.info("Successfully loaded matches as %s", type(obj))
             return obj
         except Exception as e:
             logger.exception("Failed to load charting matches: %s", e)
