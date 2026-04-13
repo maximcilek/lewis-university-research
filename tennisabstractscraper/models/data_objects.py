@@ -7,6 +7,7 @@ __author__ = "maximcilek@gmail.com (Maxim Cilek)"
 import abc
 import csv
 import dataclasses
+import gzip
 import json
 import logging
 import pathlib
@@ -79,7 +80,6 @@ class JsonDataObject(AbstractDataObject[T]):
     """
     def _load(self) -> T:
         path = self.file_path
-        logger.info("Loading JSON file: %s", path)
         with path.open("r", encoding="utf-8") as f:
             data = json.load(f)
         if isinstance(data, list):
@@ -112,7 +112,6 @@ class JsonlDataObject(AbstractDataObject[list]):
     """
     def _load(self) -> list[dict]:
         path = pathlib.Path(self.file_path)
-        logger.info("Loading JSONL file: %s", path)
         with path.open("r", encoding="utf-8") as f:
             data = [json.loads(line) for line in f if line.strip()]
         logger.info("Loaded %d records from JSONL file: %s", len(data), path)
@@ -135,7 +134,6 @@ class CsvDataObject(AbstractDataObject[list]):
         with path.open("r", encoding="utf-8", newline="") as f:
             reader = csv.DictReader(f)
             data = [{k: v.strip() if isinstance(v, str) else v for k, v in row.items()} for row in reader if any(row.values())]
-        logger.info("Loaded %d records from CSV file: %s", len(data), path.name)
         return data
   
 class CsvDataObjectStream(AbstractDataObjectStream[T]):
@@ -166,19 +164,38 @@ class ParquetDataObjectStream(AbstractDataObjectStream[T]):
         for batch in parquet_file.iter_batches(batch_size=self.batch_size):
             yield batch
 
+class RawTextDataObject(AbstractDataObject[str]):
+    """
+    Loads a file as raw text. Supports gzip-compressed files.
+    """
+    def _load(self) -> str:
+        # Detect gzip via magic bytes
+        with self.file_path.open("rb") as f:
+            magic = f.read(2)
+        is_gzip = magic == b"\x1f\x8b"
+        if is_gzip:
+            with gzip.open(self.file_path, "rt", encoding="utf-8") as f:
+                content = f.read()
+        else:
+            with self.file_path.open("r", encoding="utf-8") as f:
+                content = f.read()
+        return content
+
 class DataObjectFactory:
     @staticmethod
     def create(path: str) -> T:
         path = pathlib.Path(path)
         should_stream = path.stat().st_size > STREAM_THRESHOLD
 
-        logger.info("Loading data from file (stream = %s): %s", should_stream, path.name)
+        # logger.info("Loading data from file (stream = %s): %s", should_stream, path.name)
 
         if path.suffix == ".jsonl":
+            logger.info("Loading JSONL file: %s", path.name)
             if should_stream:
                 raise NotImplementedError("Streaming JSONL not yet supported")
             return JsonlDataObject(path)
-        if path.suffix == ".json":
+        elif path.suffix == ".json":
+            logger.info("Loading JSON file: %s", path.name)
             if should_stream:
                 raise NotImplementedError("Streaming JSON not yet supported")
             return JsonDataObject(path)
@@ -186,7 +203,12 @@ class DataObjectFactory:
             logger.info("Loading CSV file: %s", path.name)
             return CsvDataObjectStream(path) if should_stream else CsvDataObject(path)
         elif path.suffix == ".parquet":
+            logger.info("Loading Parquet file: %s", path.name)
             return ParquetDataObjectStream(path) if not should_stream else ParquetDataObject(path)
+        elif path.suffix in {".html", ".htm", ".js", ".mjs", ".cjs"} or path.name.endswith(".js.gz"):
+            if should_stream:
+                logger.warning("Streaming not supported, loading as Raw Text: %s", path.name)
+            return RawTextDataObject(path)
         else:
             logger.warning("Unknown file type for path: %s", path)
             raise ValueError(f"Unsupported file type: {path}")

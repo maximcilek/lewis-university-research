@@ -4,7 +4,7 @@ from pathlib import Path
 import pathlib
 import sys
 
-import statsmodels.api as sm
+from sklearn.linear_model import LogisticRegression
 
 sys.path.append(str(pathlib.Path(__file__).resolve().parent.parent.parent))
 
@@ -40,17 +40,17 @@ def assign_state(score_state):
 
 
 # =========================================================
-# 2. BUILD DATASET
+# 2. DATASET BUILDER (WITH FIXED EFFECTS)
 # =========================================================
-def build_dataset(points_by_match, matches_by_id):
+def build_dataset(points_by_match, charted_matches_by_id):
 
     rows = []
 
     for match_id, points in points_by_match.items():
 
-        meta = matches_by_id.get(match_id, {})
-        p1_id = meta.get("player_1_id")
-        p2_id = meta.get("player_2_id")
+        match_meta = charted_matches_by_id.get(match_id, {})
+        p1_id = match_meta.get("player_1_id")
+        p2_id = match_meta.get("player_2_id")
 
         for p in points:
 
@@ -59,11 +59,13 @@ def build_dataset(points_by_match, matches_by_id):
                 continue
 
             is_double = int(p.get("is_double") or 0)
+
             gender = p.get("gender")
             if gender is None:
                 continue
 
             gender_bin = 1 if gender in ["W", "women", "WTA"] else 0
+
             p1_is_server = int(p["server_player_number"]) == 1
 
             rows.append({
@@ -71,71 +73,98 @@ def build_dataset(points_by_match, matches_by_id):
                 "pressure": state,
                 "gender": gender_bin,
                 "p1_is_server": int(p1_is_server),
+
+                # =========================
+                # FIXED EFFECTS
+                # =========================
                 "p1_id": p1_id,
                 "p2_id": p2_id,
             })
 
     df = pd.DataFrame(rows)
 
-    # interaction term (core hypothesis test)
+    # interaction term
     df["pressure_gender"] = df["pressure"] * df["gender"]
 
     return df
 
 
 # =========================================================
-# 3. STATS MODELS LOGIT WITH FIXED EFFECTS
+# 3. MODEL (WITH FIXED EFFECTS VIA DUMMIES)
 # =========================================================
 def run_logit(df):
 
-    # -----------------------------
-    # FIXED EFFECTS (DUMMIES)
-    # -----------------------------
-    df_fe = pd.get_dummies(
-        df,
-        columns=["p1_id", "p2_id"],
-        drop_first=True
-    )
-
-    y = df_fe["double_fault"]
+    # One-hot encode fixed effects
+    df_fe = pd.get_dummies(df, columns=["p1_id", "p2_id"], drop_first=True)
 
     X = df_fe.drop(columns=["double_fault"])
+    y = df_fe["double_fault"]
 
-    # add intercept (IMPORTANT for statsmodels)
-    X = sm.add_constant(X)
-
-    model = sm.Logit(y, X)
-
-    result = model.fit(
-        maxiter=2000,
-        disp=True
+    model = LogisticRegression(
+        solver="saga",          # required for large sparse FE models
+        max_iter=200,
+        n_jobs=-1,
+        class_weight="balanced"
     )
 
-    return result, X
+    model.fit(X, y)
+
+    return model, df_fe
 
 
 # =========================================================
-# 4. RESULTS (ACADEMIC OUTPUT)
+# 4. INTERPRETATION
 # =========================================================
-def print_results(result, X):
+def print_results(model, df, df_fe):
 
-    print("\n================ LOGISTIC REGRESSION (STATS MODELS) ================\n")
+    coef = model.coef_[0]
 
-    print(result.summary())
+    feature_names = df_fe.drop(columns=["double_fault"]).columns
 
-    # odds ratios
-    params = result.params
-    conf = result.conf_int()
+    print("\n================ DOUBLE FAULT MODEL (WITH FIXED EFFECTS) ================\n")
 
-    print("\n================ ODDS RATIOS =================\n")
+    # Extract main structural coefficients
+    def get(name):
+        idx = list(feature_names).index(name)
+        return coef[idx]
 
-    for name in ["pressure", "gender", "pressure_gender", "p1_is_server"]:
-        if name in params.index:
-            or_val = np.exp(params[name])
-            ci_low = np.exp(conf.loc[name][0])
-            ci_high = np.exp(conf.loc[name][1])
+    print("CORE EFFECTS (LOG-ODDS):")
+    print(f"  Pressure effect:        {get('pressure'):.4f}")
+    print(f"  Gender effect:          {get('gender'):.4f}")
+    print(f"  Pressure × Gender:      {get('pressure_gender'):.4f}")
+    print(f"  Serve effect:           {get('p1_is_server'):.4f}")
 
-            print(f"{name}: OR={or_val:.4f}  CI=[{ci_low:.4f}, {ci_high:.4f}]")
+    print("\nODDS RATIOS:")
+    print(f"  Pressure OR:            {np.exp(get('pressure')):.4f}")
+    print(f"  Gender OR:              {np.exp(get('gender')):.4f}")
+    print(f"  Interaction OR:         {np.exp(get('pressure_gender')):.4f}")
+    print(f"  Serve OR:               {np.exp(get('p1_is_server')):.4f}")
+
+    print("\n================ INTERPRETATION =================\n")
+
+    print("""
+    FIXED EFFECTS INCLUDED:
+    - Player identity controls (p1_id, p2_id)
+
+    WHY THIS MATTERS:
+    - Removes bias from inherently 'bad servers'
+    - Controls for elite players vs weaker players
+    - Isolates true pressure & gender effects
+
+    INTERPRETATION RULES:
+
+    1. Gender coefficient:
+       baseline DF difference (women vs men)
+
+    2. Pressure coefficient:
+       average psychological pressure effect
+
+    3. Interaction term:
+       differential pressure sensitivity by gender
+
+    4. Fixed effects:
+       all player-specific tendencies absorbed → cleaner causal estimate
+    """)
 
 
 # =========================================================
@@ -157,18 +186,18 @@ if __name__ == "__main__":
         METADATA_DIR / "rally_codes.json"
     )
 
-    matches = data_objects.JsonlDataObject(
+    CHARTED_MATCHES = data_objects.JsonlDataObject(
         DATA_DIR / "dev/tennisabstract/charting_matches.jsonl"
     ).data
 
-    matches_by_id = build_dict(matches, "match_id")
+    CHARTED_MATCHES_BY_ID = build_dict(CHARTED_MATCHES, "match_id")
 
-    points_by_match, count_points = points_object.load_points(matches_by_id)
+    points_by_match, count_points = points_object.load_points(CHARTED_MATCHES_BY_ID)
 
     print(f"Loaded Points ({count_points}): {len(points_by_match)}")
 
-    df = build_dataset(points_by_match, matches_by_id)
+    df = build_dataset(points_by_match, CHARTED_MATCHES_BY_ID)
 
-    result, X = run_logit(df)
+    model, df_fe = run_logit(df)
 
-    print_results(result, X)
+    print_results(model, df, df_fe)

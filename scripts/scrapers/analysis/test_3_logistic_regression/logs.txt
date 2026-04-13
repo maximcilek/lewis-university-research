@@ -1,0 +1,91 @@
+Loaded Points (1754262): 10967
+
+================ LOGISTIC REGRESSION RESULTS ================
+
+Coefficients:
+  Pressure effect (log-odds): 0.0071
+  Serve effect (log-odds):    0.9726
+  Intercept:                  -0.4760
+
+Odds Ratios:
+  Pressure OR: 1.0071
+  Serve OR:    2.6448
+
+Classification report:
+              precision    recall  f1-score   support
+
+           0       0.62      0.61      0.61    843017
+           1       0.62      0.62      0.62    860100
+
+    accuracy                           0.62   1703117
+   macro avg       0.62      0.62      0.62   1703117
+weighted avg       0.62      0.62      0.62   1703117
+
+
+
+
+### Model ###
+Logistic Regression: P(P1 wins point) = f(Pressure state, P1 serving)
+
+So:
+
+Dependent variable: P1 wins point (1/0)
+Predictors:
+  1. Pressure (0 = neutral, 1 = pressure)
+  2. Serve indicator (1 = P1 serving)
+Estimating:
+  1. psychological / situational pressure effects
+  1. structural serve advantage
+
+
+### Results ###
+Main results (translated into plain language)
+  1. Pressure effect (log-odds = 0.0071)
+      - Odds Ratio = 1.0071
+      - Pressure has essentially no meaningful effect on P1’s probability of winning a point.
+      - Even though it is slightly positive, this is extremely close to 1.0 and practically negligible
+    
+    Conclusion: After controlling for serve, there is no evidence that pressure scenarios (as defined here) systematically change point outcomes for P1.
+
+  2. Serve effect (log-odds = 0.9726)
+      - Odds Ratio = 2.6448
+      - When P1 is serving, P1 is approximately 2.64 times more likely to win the point compared to when returning.
+    
+    Conclusion (IMPORTANT): Serving has a large and highly dominant effect on point outcomes, dwarfing any pressure effect.
+
+  3. Intercept (-0.4760)
+      - This represents baseline probability when: P1 is NOT serving & NEUTRAL state
+      - Converted: P = 1 / (1+e**0.476) ≈ 0.38
+      - On return in neutral situations, P1 wins only ~38% of points. *This is consistent with elite tennis norms (server advantage).*
+
+  4. Model performance
+      - Accuracy = 0.62 ---> The model correctly predicts point outcome about 62% of the time
+      - This is modest predictive power and expected for tennis point-level data (high randomness)
+    
+    Class balance:
+        Class 0: 843,017 losses
+        Class 1: 860,100 wins
+
+
+  5. This result is only valid under your current definition of pressure:
+
+    “pressure” variable is: score-based, not outcome-contingent, not player-specific, not match-context aware
+    Question: “Does scoreline state alone change win probability?”
+    NOT: psychological choking, player-specific clutch ability, break-point performance, high-leverage tennis
+
+
+There are 3 likely reasons:
+
+  1. Aggregation destroys signal
+
+      - Pooled: all players, all surfaces, all levels
+      - Pressure effects often only appear in: elite players, break points, late set contexts
+
+  2. Your pressure definition is symmetric
+      - You treat: 0–30 same type of pressure as 40–AD
+      - But these are not equivalent psychologically or strategically
+
+  3. Serve already encodes pressure
+
+      - Serve is highly correlated with: controlling points, “escaping pressure”, avoiding break points
+      - So pressure effect gets absorbed by serve variable.

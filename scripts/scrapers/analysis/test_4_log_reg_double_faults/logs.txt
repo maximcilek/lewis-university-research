@@ -1,0 +1,18 @@
+Loaded Points (1754262): 10967
+
+================ DOUBLE FAULT ANALYSIS ================
+
+Observed probabilities:
+  P(DF | Neutral):  0.037113
+  P(DF | Pressure): 0.038393
+
+Pressure lift (ratio): 1.035
+
+Logistic regression results:
+  Pressure effect (log-odds): 0.0353
+  Serve effect (log-odds):    -0.0207
+  Intercept:                  -0.0123
+
+Odds Ratios:
+  Pressure OR: 1.0359
+  Serve OR:    0.9795

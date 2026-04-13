@@ -1,0 +1,111 @@
+Loaded Points (1754262): 10967
+defaultdict(<function analyze_points.<locals>.<lambda> at 0x7287a51093a0>, {'CASE_1': {'total': 415357, 'p1_wins': 207349, 'p1_losses': 208008, 'server_wins': 0, 'server_losses': 415357}, 'CASE_3': {'total': 611733, 'p1_wins': 308331, 'p1_losses': 303402, 'server_wins': 378648, 'server_losses': 233085}, 'CASE_2': {'total': 676027, 'p1_wins': 344420, 'p1_losses': 331607, 'server_wins': 676027, 'server_losses': 0}})
+Case Counts: Counter({'CASE_2': 676027, 'CASE_3': 611733, 'CASE_1': 415357})
+
+================ CASE DISTRIBUTION ================
+
+CASE_1: 415357 (24.39% of all analyzed points)
+No description available.
+------------------------------------
+CASE_3: 611733 (35.92% of all analyzed points)
+Neutral or balanced points where neither player has a clear advantage.
+Examples include: 0-0, 15-15, 30-30, 40-40 (deuce-like situations).
+------------------------------------
+CASE_2: 676027 (39.69% of all analyzed points)
+No description available.
+------------------------------------
+
+================ PERFORMANCE =======================
+
+
+CASE_1
+--------------------------------------------------
+Total points analyzed in this category: 415357
+
+Player 1 (P1) performance:
+  - Win rate:  0.4992
+  - Loss rate: 0.5008
+
+Server performance:
+  - Server win rate:  0.0000
+  - Server loss rate: 1.0000
+
+Interpretation:
+  This section compares how often the player wins the point and how often the server holds serve in this situation.
+------------------------------------
+
+CASE_3
+--------------------------------------------------
+Total points analyzed in this category: 611733
+
+Player 1 (P1) performance:
+  - Win rate:  0.5040
+  - Loss rate: 0.4960
+
+Server performance:
+  - Server win rate:  0.6190
+  - Server loss rate: 0.3810
+
+Interpretation:
+  This section compares how often the player wins the point and how often the server holds serve in this situation.
+------------------------------------
+
+CASE_2
+--------------------------------------------------
+Total points analyzed in this category: 676027
+
+Player 1 (P1) performance:
+  - Win rate:  0.5095
+  - Loss rate: 0.4905
+
+Server performance:
+  - Server win rate:  1.0000
+  - Server loss rate: 0.0000
+
+Interpretation:
+  This section compares how often the player wins the point and how often the server holds serve in this situation.
+------------------------------------
+
+
+
+
+Conclusions:
+
+P1 win rate does NOT dramatically change under pressure states vs neutral states
+no evidence of “collapse under pressure” for P1 at aggregate level
+
+
+- Server dominance is state-dependent (VERY important)
+| Case   | Server Win Rate |
+| ------ | --------------- |
+| CASE_1 | 0.00            |
+| CASE_3 | 0.619           |
+| CASE_2 | 1.00            |
+
+CASE_2 and CASE_1 are structurally biased by definition of how cases are constructed, not necessarily performance differences
+
+CASE_1 / CASE_2 are NOT symmetric performance categories they are 
+deterministic partitions based on P1 outcome × server identity
+
+So:
+
+CASE_1: always implies server loses in your definition → hence 0 server wins
+CASE_2: always implies server wins → hence 1.0 server win rate
+
+Cannot conclude: “servers never win CASE_1” or “servers always win CASE_2”
+
+Because: we literally defined CASE using server + outcome logic
+
+1. Pressure states are extremely common (~64%)
+- So pressure is not rare — it's the default environment in tennis scoring
+- tennis is statistically “pressure-heavy” most of the time
+
+2. Pressure vs neutral DOES NOT strongly affect P1 win rate
+- P1 win rate is ~50% in all regimes
+- no strong evidence of “clutch collapse” at population level
+
+
+IMPORTANT
+Pressure prevalence: Approximately 64% of all points occur in pressure-like score states, indicating that “high-pressure” situations dominate tennis match play.
+Stability of P1 performance: Player 1 win rate remains approximately constant across neutral and pressure states (~0.50–0.51), suggesting limited aggregate evidence for pressure-induced performance degradation.
+Structural limitation of server analysis: Server performance metrics are not independently estimable in CASE_1/CASE_2 due to deterministic coupling between scoring state and classification logic.

@@ -1,0 +1,34 @@
+Loaded Points (1754262): 10967
+
+================ STATE DISTRIBUTION ================
+
+PRESSURE: 1091384 (64.08%)
+NEUTRAL: 611733 (35.92%)
+
+================ EFFECT ESTIMATES ===================
+
+P1 win rate (NEUTRAL):  0.5040
+P1 win rate (PRESSURE): 0.5056
+
+Pressure effect (ratio): 1.003
+
+================ SERVER EFFECT =====================
+
+Server win rate (NEUTRAL):  0.6190
+Server win rate (PRESSURE): 0.6194
+
+
+
+
+1. Pressure prevalence: fraction of points in pressure states
+2. Pressure effect on winning probability P(Win | Pressure) vs P(Win | Neutral)
+3. Server effect independent of pressure P(ServerWin | Pressure) vs P(ServerWin | Neutral)
+
+BEFORE
+  - CASE_1/CASE_2 were mathematically entangled with outcome
+  - server stats were structurally forced
+  - interpretability was invalid
+AFTER
+- clean observational comparison
+- no embedded outcome bias
+- interpretable effect sizes

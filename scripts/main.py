@@ -471,6 +471,25 @@ if __name__ == "__main__":
         "data/canonical/tennisabstract/charting_points.csv"
     )
 
+    all_players = []
+    for players_batch in tennisabstract_data.players:
+        for p in players_batch.to_pylist():
+            p["player_id"] = p.get("url_parameter_name")
+            del p["url_parameter_name"]
+            del p["elo_rank"]
+            del p["elo_rating"]
+            del p["dob_approx"]
+            del p["lastdate"]
+            if p["nameparam"] in [None, ""]:
+                p["nameparam"] = p["player_id"]
+            
+            all_players.append(p)
+    print(f"Players: {len(all_players)} ({type(all_players)}) - {(all_players[0].keys())}")
+    players_by_id = build_dict(all_players, key="player_id")
+
+
+
+
     all_matches = []
     for match in tennisabstract_data.charting_matches:
         match_batch = match.to_pylist()
@@ -488,23 +507,18 @@ if __name__ == "__main__":
             else:
                 m["winner"] = None
 
+            print(players_by_id.get(m.get("player_1_id")))
+            print(players_by_id.get(m.get("player_2_id")))
+            print(m)
+            quit()
+
             all_matches.append(m)
 
     print(f"Matches: {len(all_matches)} ({type(all_matches)}) - {type(all_matches[0])}")
     LOGGER.debug(f"Match: {all_matches[0]}")
     matches_by_id = build_dict(all_matches, key="match_id")
-    print(matches_by_id.get("20260322-W-Miami-R32-Iva_Jovic-Talia_Gibson"))
-
-    for players_batch in tennisabstract_data.players:
-        for p in players_batch.to_pylist():
-            p["player_id"] = p.get("url_parameter_name")
-            del p["url_parameter_name"]
-            if p["nameparam"] not in [None, ""] and p["nameparam"] != p["player_id"]:
-
-                LOGGER.info("Paramname and player_id do not match: %s | %s", str(p["nameparam"]) ,str(p["player_id"]))
-                
-                # print(p.keys())
-                quit()
+    # print(matches_by_id.get("20260322-W-Miami-R32-Iva_Jovic-Talia_Gibson"))
+    
 
 
 

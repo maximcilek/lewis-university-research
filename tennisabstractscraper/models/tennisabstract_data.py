@@ -26,19 +26,109 @@ ENDING = set("@#*")                  # unforced, forced, winner
 SERVE_PATTERN = re.compile(r'^(c*)([4560]?)([nwde!]?)([\*#]?)(\+?)')
 RALLY_PATTERN = re.compile(r'^([fbvzosuplhijktq][1230]?([789])?)+([nwde!]?[@#])?$')
 
-normal_score_table = {
-    "0-0": {"server": "15-0", "returner": "0-15"},
-    "15-0": {"server": "30-0", "returner": "15-15"},
-    "30-0": {"server": "40-0", "returner": "30-15"},
-    "40-0": {"server": "G-0", "returner": "40-15"},
-    "40-15": {"server": "G-15", "returner": "40-30"},
-    "40-30": {"server": "G-30", "returner": "40-40"},
-    "40-40": {"server": "Ad-40", "returner": "40-Ad"},
-    "Ad-40": {"server": "G", "returner": "40-40"},
-    "40-Ad": {"server": "40-40", "returner": "G"},
-}
-
 tiebreak_score_table = {}
+
+unique_scores = []
+def parse_score(x):
+  return int(x) if x.isdigit() else x
+def next_score(p1_pts, p2_pts, p1_games, p2_games, p1_sets, p2_sets,
+               point_winner, tiebreak=False):
+
+    score_map = [0, 15, 30, 40]
+
+    # --- NORMALIZE INPUT (handle "AD") ---
+    def to_index(x):
+        if x == "AD":
+            return 4
+        if x in score_map:
+            return score_map.index(x)
+        return x  # for tiebreak integers
+
+    def from_index(i, opponent_i):
+        # Deuce case
+        if i >= 3 and opponent_i >= 3:
+            if i == opponent_i:
+                return 40
+            elif i == opponent_i + 1:
+                return "AD"
+            elif opponent_i == i + 1:
+                return 40
+        return score_map[i] if i < 4 else "AD"
+
+    # --- TIEBREAK ---
+    if tiebreak:
+        if point_winner == 1:
+            p1_pts += 1
+        else:
+            p2_pts += 1
+
+        if (p1_pts >= 7 or p2_pts >= 7) and abs(p1_pts - p2_pts) >= 2:
+            if p1_pts > p2_pts:
+                p1_sets += 1
+            else:
+                p2_sets += 1
+            return 0, 0, 0, 0, p1_sets, p2_sets, False
+
+        return p1_pts, p2_pts, p1_games, p2_games, p1_sets, p2_sets, True
+
+    # --- NORMAL GAME ---
+    p1 = to_index(p1_pts)
+    p2 = to_index(p2_pts)
+
+    # Add point
+    if point_winner == 1:
+        p1 += 1
+    else:
+        p2 += 1
+
+    # --- GAME WIN LOGIC ---
+    if p1 >= 3 and p2 >= 3:
+        if p1 >= p2 + 2:
+            p1_games += 1
+            p1, p2 = 0, 0
+        elif p2 >= p1 + 2:
+            p2_games += 1
+            p1, p2 = 0, 0
+        else:
+            return (
+                from_index(p1, p2),
+                from_index(p2, p1),
+                p1_games,
+                p2_games,
+                p1_sets,
+                p2_sets,
+                False
+            )
+    elif p1 >= 4:
+        p1_games += 1
+        p1, p2 = 0, 0
+    elif p2 >= 4:
+        p2_games += 1
+        p1, p2 = 0, 0
+    else:
+        return (
+            from_index(p1, p2),
+            from_index(p2, p1),
+            p1_games,
+            p2_games,
+            p1_sets,
+            p2_sets,
+            False
+        )
+
+    # --- SET WIN ---
+    if (p1_games >= 6 or p2_games >= 6) and abs(p1_games - p2_games) >= 2:
+        if p1_games > p2_games:
+            p1_sets += 1
+        else:
+            p2_sets += 1
+        return 0, 0, 0, 0, p1_sets, p2_sets, False
+
+    # --- TIEBREAK TRIGGER ---
+    if p1_games == 6 and p2_games == 6:
+        return 0, 0, p1_games, p2_games, p1_sets, p2_sets, True
+
+    return 0, 0, p1_games, p2_games, p1_sets, p2_sets, False
 
 @dataclasses.dataclass
 class TennisAbstractData:
@@ -158,203 +248,54 @@ class TennisAbstractPointsData:
                 raise
         return self._rally_codes
     
-    """def _parse_serve(self, serve_code):
-        \"""
-        Parses a serve code like '6*', '4n', '5+', 'S', 'R', 'P', 'Q'.
-        Returns a dict following the JSON schema for a shot.
-        \"""
-        if not serve_code:
-            return None
+    def next_tiebreak_score(self, score, is_server_winner):
+        a, b = map(int, score.split("-"))
         
-        serve = {"player": "server", "shot_type": "serve", "result": "normal"}
-        
-        # Edge cases
-        if serve_code in ["S", "R", "P", "Q"]:
-            serve["shot_type"] = serve_code
-            serve["result"] = "normal"
-            return serve
-        
-        # Direction
-        if serve_code[0] in "0456":
-            serve["direction"] = serve_code[0]
-            remainder = serve_code[1:]
+        if is_server_winner:
+            a += 1
         else:
-            serve["direction"] = "0"
-            remainder = serve_code
+            b += 1
         
-        # Check for modifiers +, *, #, @
-        serve["modifiers"] = []
-        serve["forced"] = None
-        serve["error_type"] = None
-        
-        for c in remainder:
-            if c == "+":
-                serve["modifiers"].append("+")
-            elif c == "*":
-                serve["result"] = "winner"
-            elif c == "#":
-                serve["result"] = "error"
-                serve["forced"] = True
-            elif c == "@":
-                serve["result"] = "error"
-                serve["forced"] = False
-            elif c in "nwdxg!Ve":
-                serve["error_type"] = c
-        
-        return serve"""
+        if (max(a, b) >= 7) and (abs(a - b) >= 2):
+            return f"0-0"
+            
+        return f"{a}-{b}"
+    def next_game_score(self, a, b, server_wins):
+        if server_wins:
+            a += 1
+        else:
+            b += 1
 
-    def _parse_serve(self, serve_code: str, serve_code_2: str, point: dict) -> dict:
-        """
-        Parses a single serve code into a structured dictionary.
-        Handles direction, faults, modifiers, and point-ending symbols (ace, unreturnable, unforced error).
-        """
-        serve = {
-            "player": "server",
-            "shot_type": "serve",
-            "result": "normal",
-            "direction": "0",
-            "modifiers": [],
-            "forced": None,
-            "error_type": None
-        }
+        # convert raw points to tennis display
+        def fmt(x):
+            return {0:"0",1:"15",2:"30",3:"40"}.get(x, "40")
 
-        shots = []
-        shot = {}
-        serve_pattern = []
-        c = 0
-        char = serve_code[c]
-        while c < len(serve_code) and serve_code[c].lower() == "c":
-            serve_pattern.append("let")
-            c += 1
+        # deuce logic
+        if a >= 3 and b >= 3:
+            if a == b:
+                return "40-40"
+            if a == b + 1:
+                return "ad-40"
+            if b == a + 1:
+                return "40-ad"
 
-        modifiers = serve_code[c:]
-        # print(f"Original = {serve_code} | After = {modifiers}")
-        has_direction = False
-        for m in modifiers:
-            if m.isdigit() and not has_direction:
-                serve_pattern.append({"direction": int(m)})
-                has_direction = True
-            elif m.isdigit() and has_direction == True:
-                print(f"Already Has Direction: {point}")
-                quit()
-            else:
-                if m == "f":
-                    serve_pattern.append({"shot_type": "forehand"})
-                elif m == "x":
-                    serve_pattern.append({"depth": "wide_and_deep"})
-                elif m == "w":
-                    serve_pattern.append({"shot_depth": "wide"})
-                elif m == "n":
-                    serve_pattern.append({"fault_type": "net"})
-                elif m == "e":
-                    serve_pattern.append({"fault_type": "unknown"})
-                elif m == ";":
-                    serve_pattern.append({"extras": "clipped_net_cord"})
-        print(f"{point['first_serve_rally']} - {serve_pattern}")
-                # quit()
-        #if len(serve_code) > 5 and (point["notes"] is not None and ("challenge" in point["notes"] or "replay" in point["notes"])):
-        #    pass
-            # print(serve_code, serve_code_2, point)
-        #else:
-        #    print(serve_code)
-
-        #if "*" in serve_code[:4] and len(serve_code) > 4: # "*" in serve_code and serve_code[-1] != "*":
-        #    print(f"Serve: {serve_code}")
-        #    return {"result":"ace"}
-
-        # for count, char in enumerate(serve_code):
-        #     if char.isdigit():
-        #         num = int(char)
-        #         if count == 0:
-        #             shot["serve_direction"] = num
-        #     else:
-        #         if len(serve_code) < 4:
-        #             print("Error", serve_code)
-
-        # if serve_code[0].isdigit():
-        #     num = int(serve_code[0])
-        #     if num == 0:
-        #         print(f"Rally: {serve_code}")
-        #         quit()
-        #     return int(serve_code[0])
-        # else:
-        #     print(f"Rally: {serve_code}")
-        #     return serve
-
-        # Special cases: server wins or penalties
-        #if serve_code in ["S", "R", "P", "Q"]:
-        #    serve["shot_type"] = serve_code
-        #    return serve
-
-        """# Extract direction if present
-        if serve_code and serve_code[0] in ["0", "4", "5", "6"]:
-            serve["direction"] = serve_code[0]
-
-        # Detect point-ending symbols
-        if "*" in serve_code:
-            serve["result"] = "ace"
-            serve_code = serve_code.replace("*", "")
-        elif "#" in serve_code:
-            serve["result"] = "unreturnable"
-            serve_code = serve_code.replace("#", "")
-        elif "@" in serve_code:
-            serve["result"] = "unforced_error"
-            serve_code = serve_code.replace("@", "")
-
-        # Detect optional modifiers (serve-and-volley)
-        if "+" in serve_code:
-            serve["modifiers"].append("serve_and_volley")
-            serve_code = serve_code.replace("+", "")
-
-        # Detect faults
-        faults = {"n", "w", "d", "x", "g", "e", "!"}
-        for f in faults:
-            if f in serve_code:
-                serve["error_type"] = f
-                break  # only one fault type per serve"""
-
-        return serve
-
-    def _is_serve_in(self, serve_code: str) -> bool:
-        """
-        Determines if the serve is considered "in" based on the serve code.
-
-        Serve codes:
-        - 4, 5, 6 => valid serves in wide/body/T
-        - c => let (replay, serve not counted as in yet)
-        - lowercase letters n, w, d, x, g, e => faults
-        - !, V => shank or time violation (faults)
-        - + => serve-and-volley attempt (does not affect "in" status)
-
-        Args:
-            serve_code (str): The code for the serve, e.g., "6", "5d", "cc4", "4+"
-
-        Returns:
-            bool: True if the serve is in, False if it was a fault
-        """
-        if not serve_code:
-            return False
-
-        # Remove all let ('c') prefixes
-        serve_code = serve_code.lstrip('c')
-
-        # Remove optional serve-and-volley '+'
-        serve_code = serve_code.replace('+', '')
-
-        if not serve_code:
-            # Only lets remain
-            return False
-
-        # First character determines the main serve type
-        first_char = serve_code[0]
-
-        # In serves are digits 4,5,6
-        return first_char in {'1', '2', '3', '4', '5', '6', '7', '9'}
-    
-    def load_points(self):
-        unums = []
+        return f"{fmt(a)}-{fmt(b)}"
+    def load_points(self, charted_matches_by_id):
+        count_points = 0
+        skipped = 0
+        prev_point = {}
+        prev_result = {}
+        points = {}
+        all_points = []
         for count, batch in enumerate(self.data_object):
             for point in batch:
+                if not (charted_matches_by_id[point.get("match_id")].get("best_of")) or point.get("tiebreaker_set") in [None, ""]:
+                    skipped += 1
+                    continue
+
+                if point["match_id"] not in points:
+                    points[point["match_id"]] = []
+                
                 shots = []
                 first = point.get("first_serve_rally").replace(")*", "0*").replace("&*", "0*").replace("?", "0")
                 second = point.get("second_serve_rally")
@@ -362,27 +303,35 @@ class TennisAbstractPointsData:
                 first_no_let = first.replace("c", "")
                 second_no_let = second.replace("c", "")
 
+                if point.get("game_1") in [None, ""]:
+                    point["game_1"] = prev_point["game_1"]
+                if point.get("game_2") in [None, ""]:
+                    point["game_2"] = prev_point["game_2"]
+
                 if point.get("tiebreaker_set") == "t":
                     tb_set = 1
                 elif point.get("tiebreaker_set") == "f":
                     tb_set = 0
                 else:
                     tb_set = None
-                # tb_set = 1 if point.get("tiebreaker_set") == "t" or (point.get("game_1") + point.get("game_2") + 1) < BEST_OF else 0
-                tb_point_flag = 1 if point.get("game_1") == 6 and point.get("game_2") == 6 and tb_set == 1 else 0
-                if tb_point_flag:
-                    if point_score == "0-0":
+                    raise ValueError("Unexpected tiebreaker_set value, expected 't' or 'f' but got '%s': %s", point.get("tiebreaker_set"), point)
+
+                # "20191124-M-Davis_Cup_Finals-F-Rafael_Nadal-Denis_Shapovalov"
+                tb_point_flag = 1 if int(point.get("game_1")) == 6 and int(point.get("game_2")) == 6 and tb_set == 1 else 0
+                # tb_active = (tb_set == 1 and int(point["game_1"]) == 6 and int(point["game_2"]) == 6)
+                if tb_point_flag == 1:
+                    if point["game_score"] == "0-0":
                         tb_point_number = 1
                     else:
-                        tb_point_number = prev_tb_point_number + 1
-                    prev_tb_point_number = tb_point_number
+                        tb_point_number = prev_result["tb_point_number"] + 1
+                    prev_result["tb_point_number"] = tb_point_number
                 else:
-                    tb_point_number = None
-                    prev_tb_point_number = 0  # reset for next tiebreak
+                    tb_point_number = 0
+                    prev_result["tb_point_number"] = 0
 
                 # 1st Rally In
                 """
-                =IF(N18="","",IF(LEN(N18)=1,"",IF(ISERROR(FIND(MID(Q18,2,1),"wdnxgeVPQRS"))=TRUE(),1,0)))
+                =IF(N18="","",IF(LEN(FIRST_SERVE_RALLY_PATTERN)=1,"",IF(ISERROR(FIND(MID(FIRST_SERVE_RALLY_PATTERN_NO_LETS,2,1),"wdnxgeVPQRS"))=TRUE(),1,0)))
                 """
                 if not first_no_let or len(first_no_let) == 1:
                     first_in = None
@@ -391,7 +340,7 @@ class TennisAbstractPointsData:
                 
                 # 2nd Rally In
                 """
-                =IF(O18="","",IF(ISERROR(FIND(MID(R18,2,1),"wdnxgeVPQRS"))=TRUE(),1,0))
+                =IF(SECOND_SERVE_RALLY_PATTERN="","",IF(ISERROR(FIND(MID(SECOND_SERVE_RALLY_PATTERN_NO_LETS,2,1),"wdnxgeVPQRS"))=TRUE(),1,0))
                 """
                 if not second_no_let or len(second_no_let) == 1:
                     second_in = None
@@ -535,6 +484,15 @@ class TennisAbstractPointsData:
                     rally_len = len(rally_no_direction)
 
                 # PointWinner
+                if int(point.get("server_player_number")) == 1:
+                    server_player_number = 1
+                    returner_player_number = 2
+                elif int(point.get("server_player_number")) == 2:
+                    server_player_number = 2
+                    returner_player_number = 1
+                else:
+                    raise ValueError("Expected server_player_number to be non-empty: %s", point)
+                    quit()
                 """
                 =IF(OR(N18="P",N18="R"),L18,IF(OR(N18="Q",N18="S"),K18,IF(AND(Y18="",OR(Z18=FALSE(),Z18=""),OR(AA18=FALSE(),AA18=""),OR(AE18=FALSE(),AE18="")),"",IF(OR(Z18=TRUE(),AA18=TRUE(),AND((MOD(AI18,2)=0),AB18=TRUE()),AND((MOD(AI18,2)=1),OR(AC18=TRUE(),AD18=TRUE()))),K18,L18))))
                 """
@@ -543,53 +501,55 @@ class TennisAbstractPointsData:
                     point_winner = "server"
                 elif first_code in ["Q", "S"]:
                     point_winner = "returner"
-                elif rally_part is None and not any([is_ace, is_unret, is_rally_winner, is_forced, is_unforced]):
-                    point_winner = None
                 else:
-                    if (
-                        is_ace
-                        or is_unret
-                        or (rally_len is not None and rally_len % 2 == 0 and is_rally_winner)
-                        or (rally_len is not None and rally_len % 2 == 1 and (is_forced or is_unforced))
-                    ):
+                    if int(point.get("point_winner_player_number")) == server_player_number:
                         point_winner = "server"
-                    else:
+                    elif int(point.get("point_winner_player_number")) == returner_player_number:
                         point_winner = "returner"
+                    else:
+                        print(server_player_number, returner_player_number, point.get("point_winner_player_number"))
+                        raise ValueError(f"Expected point_winner_player_number to be non-empty: {point}")
+                        quit()
 
                 # isServerWinner
                 """
                 =IF(AJ18="","",IF(AJ18=K18,1,0))
                 """
                 if point_winner is None:
-                    is_server_winner = None
+                    raise ValueError(f"Expected point winner to be defined: {point}")
+                    quit()
                 else:
                     is_server_winner = 1 if point_winner == "server" else 0
 
                 # PointsAfter
                 """
-                =IF(AJ18="","",IF(I18=0,IF(AK18=1,VLOOKUP(F18,$Tables.A$1:C$18,2,FALSE()),VLOOKUP(F18,$Tables.A$1:C$18,3,FALSE())),IF(AK18=1,VLOOKUP(F18,$Tables.H$1:J$95,2,FALSE()),VLOOKUP(F18,$Tables.H$1:J$95,3,FALSE()))))
+                =IF(POINT_WINNER="","",IF(IS_TIEBREAKER_POINT=0,IF(IS_SERVER_WINNER=1,VLOOKUP(GAME_SCORE,$Tables.P1_NAME:PLAYER_2_SET_SCORE,2,FALSE()),VLOOKUP(GAME_SCORE,$Tables.PLAYER_1_NAME:PLAYER_2_SET_SCORE,3,FALSE())),IF(IS_SERVER_WINNER=1,VLOOKUP(GAME_SCORE,$Tables.IS_TIEBREAKER_SET:IS_TIEBREAKER_POINT,2,FALSE()),VLOOKUP(GAME_SCORE,$Tables.IS_TIEBREAKER_SET:IS_TIEBREAKER_POINT,3,FALSE()))))
                 """
+
+                current_score = point.get("game_score")
+                if current_score not in unique_scores:
+                    unique_scores.append(current_score)
                 
-                """current_score = point.get("game_score")   # F18
-                tiebreak = point.get("tiebreaker_set")   # I18 (likely 0/1 or "t"/"f")
-
-                # normalize tiebreak
-                is_tiebreak = str(tiebreak).lower() in ["1", "t", "true"]
-
-                if point_winner is None:
-                    points_after = None
-
-                else:
-                    # choose correct table
-                    table = tiebreak_score_table if is_tiebreak else normal_score_table
-
-                    # choose column
-                    if is_server_winner == 1:
-                        points_after = table.get(current_score, {}).get("server")
-                    else:
-                        points_after = table.get(current_score, {}).get("returner")"""
+                # current_scores = current_score.split("-")
+                # p1 = parse_score(current_scores[1])
+                # p2 = parse_score(current_scores[0])
 
                 result = {
+                  "match_id": point.get("match_id"),
+                  "point_number": point.get("point_number"),
+                  "set_1": point.get("set_1"),
+                  "set_2": point.get("set_2"),
+                  "game_1": point.get("game_1"),
+                  "game_2": point.get("game_2"),
+                  "game_score": point.get("game_score"),
+                  "game_number": point.get("game_number"),
+                  "is_tiebreaker_set": point.get("is_tiebreaker_set"),
+                  "server_player_number": point.get("server_player_number"),
+                  "first_serve_rally": point.get("first_serve_rally"),
+                  "second_serve_rally": point.get("second_serve_rally"),
+                  "point_winner_player_number": point.get("point_winner_player_number"),
+                  
+                  
                   "1stNoLet": first_no_let,
                   "2ndNoLet": second_no_let,
                   "1stIn": first_in,
@@ -611,12 +571,39 @@ class TennisAbstractPointsData:
                   "rally_length": rally_len,
                   "point_winner": point_winner,
                   "is_server_winner": is_server_winner,
-                  "points_after": points_after,
                   "tb_set": tb_set,
                   "tb_point": tb_point_flag,
                   "tb_point_number": tb_point_number,
+                  "player_1_id": charted_matches_by_id[point["match_id"]].get("player_1_id"),
+                  "player_2_id": charted_matches_by_id[point["match_id"]].get("player_2_id"),
+                  "gender": charted_matches_by_id[point["match_id"]].get("gender")
                 }
 
-                if tb_point_flag == 1: # count > 10:
-                    print(result)
-                    quit()
+                prev_point = point
+                prev_result = result
+                count_points += 1
+                points[point["match_id"]].append(result)
+                #if result not in all_points:
+                #    all_points.append(result)
+        return points, count_points
+
+def assign_case(score_state, server, point_winner, p1_server=True):
+
+    p1_wins = (point_winner == "server" and p1_server) or \
+              (point_winner == "returner" and not p1_server)
+
+    p1_loses = not p1_wins
+
+    # CASE 3: draws
+    if score_state in ["0-0", "15-15", "30-30", "40-40"]:
+        return "CASE_3"
+
+    # CASE 1
+    if (p1_loses and p1_server) or (p1_wins and not p1_server):
+        return "CASE_1"
+
+    # CASE 2
+    if (p1_wins and p1_server) or (p1_loses and not p1_server):
+        return "CASE_2"
+
+    return None

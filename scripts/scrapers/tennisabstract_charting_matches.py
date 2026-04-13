@@ -88,11 +88,11 @@ async def main():
     print("-------------------------------------")
     print("SCRAPING TENNISABSTRACT CHARTING DATA")
     print("-------------------------------------")
-    data_directory = Path(__file__).resolve().parent.parent.parent / "data" / "dev"
+    data_directory = Path(__file__).resolve().parent.parent.parent / "data"
 
-    urls_fp = data_directory / "charting_matches_urls.txt"    
-    matches_fp = data_directory / "charting_matches.jsonl"
-    players_fp = data_directory / "charting_players.txt"
+    urls_fp = data_directory / "raw/tennisabstract/scraper/charting_matches_urls.txt"    
+    matches_fp = data_directory / "raw/tennisabstract/charting_matches.jsonl"
+    players_output = data_directory / "raw/tennisabstract/charting_players_urls.txt"
 
     urls = load_urls(urls_fp) # [:100]
     print(f"FOUND {len(urls)} URLs (Charting Matches)")
@@ -103,7 +103,7 @@ async def main():
             tasks = [fetch(session, url, limiter, matches_file) for url in urls]
             await asyncio.gather(*tasks, return_exceptions=True)
 
-    with open(players_fp, "w", encoding="utf-8") as f:
+    with open(players_output, "w", encoding="utf-8") as f:
         for p in tennisabstract_players:
             f.write(p + "\n")
 
