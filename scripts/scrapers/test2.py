@@ -301,6 +301,20 @@ def run(players_dir: pathlib.Path):
 
     all_players = PlayerFactory.all()
     print(f"Successfully Scraped {len(all_players)} Players")
+
+    matches = data_objects.JsonlDataObject(
+        DATA_DIR / "dev/tennisabstract/charting_matches.jsonl"
+    ).data
+
+    matches_by_id = build_dict(matches, "match_id")
+
+    for p in all_players:
+        if p.matches is not None and len(p.matches) > 0:
+            for m in p.matches:
+                print(f"Match: {m}")
+                quit()
+
+
     print(len(all_players[0].matches))
     print(len(all_players[1].matches))
     write_players_jsonl(all_players, DATA_DIR / "dev/tennisabstract/players_all.jsonl")

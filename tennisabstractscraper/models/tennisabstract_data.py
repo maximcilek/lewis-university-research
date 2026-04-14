@@ -7,8 +7,12 @@ import typing
 import re
 import json
 import pyarrow.parquet as pq
+import pathlib
 
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger(__name__)
+
+DATA_DIR = pathlib.Path(__file__).resolve().parent.parent.parent / "data"
 
 T = typing.TypeVar("T")
 # Serve direction, faults, and outcomes
@@ -280,6 +284,69 @@ class TennisAbstractPointsData:
                 return "40-ad"
 
         return f"{fmt(a)}-{fmt(b)}"
+    
+    
+    def _is_serve_in(self, clean_rally_pattern):
+      # 1st Rally In: =IF(N18="","",IF(LEN(FIRST_SERVE_RALLY_PATTERN)=1,"",IF(ISERROR(FIND(MID(FIRST_SERVE_RALLY_PATTERN_NO_LETS,2,1),"wdnxgeVPQRS"))=TRUE(),1,0)))
+      if not clean_rally_pattern or len(clean_rally_pattern) == 1:
+          is_in = None
+      else:
+          is_in = 1 if clean_rally_pattern[1] not in "wdnxgeVPQRS" else 0
+      return is_in
+
+    def _remove_lets_from_rally_pattern(self, pattern):
+        return pattern.replace("c", "")
+
+    def _ensure_player_games_won(self, point, prev_point):
+        def parse(value, fallback):
+            def normalize(v):
+                if v is None:
+                    return ""
+                return str(v).strip()
+            value = normalize(value)
+            fallback = normalize(fallback)
+            if value.isdigit():
+                return int(value)
+            if fallback.isdigit():
+                return int(fallback)
+            return None
+
+        game_1 = parse(point.get("game_1"), prev_point.get("game_1"))
+        game_2 = parse(point.get("game_2"), prev_point.get("game_2"))
+        
+        if game_1 not in [None, ""] and game_2 not in [None, ""]:
+            point["game_1"] = game_1
+            point["game_2"] = game_2
+            return point
+        print(game_1)
+        print(game_2, prev_point.get("game_2"))
+        logger.fatal("missing a player's number of games won in the match: %s | %s", point.get("game_1"), point.get("game_2"))
+        raise ValueError("Invalid match state: missing games won values")
+
+    def _is_point_in_tiebreaker_set(self, tiebreaker_str):
+        if tiebreaker_str == "t":
+            return True
+        elif tiebreaker_str == "f":
+            return False
+        else:
+            raise ValueError("Unexpected tiebreaker_set value, expected 't' or 'f' but got: %s", tiebreaker_str)
+            return
+
+    def _update_tiebreak_point_flag(self, point, prev_point, tb_set):
+        tb_point_flag = 1 if point.get("game_1") == 6 and point.get("game_2") == 6 and tb_set == 1 else 0
+        point["tb_point_flag"] = tb_point_flag
+        if tb_point_flag == 1:
+            if point["game_score"] == "0-0":
+                tb_point_number = 1
+            else:
+                tb_point_number = prev_point["tb_point_number"] + 1
+            prev_point["tb_point_number"] = tb_point_number
+        else:
+            tb_point_number = 0
+            prev_point["tb_point_number"] = 0
+        point["tb_point_number"] = tb_point_number
+        return point, prev_point
+        
     def load_points(self, charted_matches_by_id):
         count_points = 0
         skipped = 0
@@ -287,304 +354,158 @@ class TennisAbstractPointsData:
         prev_result = {}
         points = {}
         all_points = []
-        for count, batch in enumerate(self.data_object):
-            for point in batch:
-                if not (charted_matches_by_id[point.get("match_id")].get("best_of")) or point.get("tiebreaker_set") in [None, ""]:
-                    skipped += 1
-                    continue
+        with open(DATA_DIR / "dev/tennisabstract/charting_points.jsonl", "w", encoding="utf-8") as f:
+            for count, batch in enumerate(self.data_object):
+                for point in batch:
+                    if charted_matches_by_id.get(point.get("match_id")) is None or point.get("tiebreaker_set") in [None, ""]:
+                        skipped += 1
+                        continue
 
-                if point["match_id"] not in points:
-                    points[point["match_id"]] = []
-                
-                shots = []
-                first = point.get("first_serve_rally").replace(")*", "0*").replace("&*", "0*").replace("?", "0")
-                second = point.get("second_serve_rally")
+                    charted_match = charted_matches_by_id.get(point.get("match_id"))
 
-                first_no_let = first.replace("c", "")
-                second_no_let = second.replace("c", "")
+                    if point["match_id"] not in points:
+                        points[point["match_id"]] = []
+                    
+                    shots = []
+                    first = point.get("first_serve_rally").replace(")*", "0*").replace("&*", "0*").replace("?", "0")
+                    second = point.get("second_serve_rally")
 
-                if point.get("game_1") in [None, ""]:
-                    point["game_1"] = prev_point["game_1"]
-                if point.get("game_2") in [None, ""]:
-                    point["game_2"] = prev_point["game_2"]
+                    first_no_let = self._remove_lets_from_rally_pattern(first)
+                    second_no_let = self._remove_lets_from_rally_pattern(second)
+                    first_in = self._is_serve_in(first_no_let)
+                    second_in = self._is_serve_in(second_no_let)
 
-                if point.get("tiebreaker_set") == "t":
-                    tb_set = 1
-                elif point.get("tiebreaker_set") == "f":
-                    tb_set = 0
-                else:
-                    tb_set = None
-                    raise ValueError("Unexpected tiebreaker_set value, expected 't' or 'f' but got '%s': %s", point.get("tiebreaker_set"), point)
 
-                # "20191124-M-Davis_Cup_Finals-F-Rafael_Nadal-Denis_Shapovalov"
-                tb_point_flag = 1 if int(point.get("game_1")) == 6 and int(point.get("game_2")) == 6 and tb_set == 1 else 0
-                # tb_active = (tb_set == 1 and int(point["game_1"]) == 6 and int(point["game_2"]) == 6)
-                if tb_point_flag == 1:
-                    if point["game_score"] == "0-0":
-                        tb_point_number = 1
+                    point = self._ensure_player_games_won(point, prev_point)
+                    tb_set = self._is_point_in_tiebreaker_set(point.get("tiebreaker_set"))
+                    point, prev_point = self._update_tiebreak_point_flag(point, prev_point, tb_set)
+                    
+                    # IsRally1st =IF(N18="","",IF(S18=0,0,IF(LEN(Q18)>2,1,0)))
+                    is_rally_first = 0 if first_in == 0 else int(len(first_no_let) > 2)
+                    is_rally_second = 0 if second_in == 0 else int(len(second_no_let) > 2)
+
+                    # Serve{1,2}: =IF(N18="","",IF(U18=0,Q18,LEFT(Q18,1)))
+                    serve1 = first_no_let if is_rally_first == 0 else first_no_let[0]
+                    serve2 = second_no_let if is_rally_second == 0 else second_no_let[0]
+
+                    # Rally
+                    """
+                    =IF(N18="","",IF(U18=1,RIGHT(Q18,(LEN(Q18)-1)),IF(V18=1,RIGHT(R18,(LEN(R18)-1)),"")))
+                    """
+                    if is_rally_first == 1:
+                        rally_part = first_no_let[1:]
+                    elif is_rally_second == 1:
+                        rally_part = second_no_let[1:]
                     else:
-                        tb_point_number = prev_result["tb_point_number"] + 1
-                    prev_result["tb_point_number"] = tb_point_number
-                else:
-                    tb_point_number = 0
-                    prev_result["tb_point_number"] = 0
+                        rally_part = None
 
-                # 1st Rally In
-                """
-                =IF(N18="","",IF(LEN(FIRST_SERVE_RALLY_PATTERN)=1,"",IF(ISERROR(FIND(MID(FIRST_SERVE_RALLY_PATTERN_NO_LETS,2,1),"wdnxgeVPQRS"))=TRUE(),1,0)))
-                """
-                if not first_no_let or len(first_no_let) == 1:
-                    first_in = None
-                else:
-                    first_in = 1 if first_no_let[1] not in "wdnxgeVPQRS" else 0
-                
-                # 2nd Rally In
-                """
-                =IF(SECOND_SERVE_RALLY_PATTERN="","",IF(ISERROR(FIND(MID(SECOND_SERVE_RALLY_PATTERN_NO_LETS,2,1),"wdnxgeVPQRS"))=TRUE(),1,0))
-                """
-                if not second_no_let or len(second_no_let) == 1:
-                    second_in = None
-                else:
-                    second_in = 1 if second_no_let[1] not in "wdnxgeVPQRS" else 0
-                
-                
-                # IsRally1st
-                """
-                =IF(N18="","",IF(S18=0,0,IF(LEN(Q18)>2,1,0)))
-                """
-                if first_in and first_in == 0:
-                    is_rally_first = 0
-                else:
-                    is_rally_first = 1 if len(first_no_let) > 2 else 0
+                    # isAce: =IF(N18="","",IF(U18=1,RIGHT(Q18,(LEN(Q18)-1)),IF(V18=1,RIGHT(R18,(LEN(R18)-1)),"")))
+                    # isUnret: =IF(W18="","",OR(IF(ISERR(FIND("#",W18)),FALSE(),TRUE()), IF(ISERR(FIND("#",X18)),FALSE(),TRUE())))
+                    is_unret = "#" in serve1 if serve2 in [None, ""] else "#" in serve2
 
-                # IsRally2nd
-                """
-                =IF(N18="","",IF(T18=0,0,IF(LEN(R18)>2,1,0)))
-                """
-                if second_in and second_in == 0:
-                    is_rally_second = 0
-                else:
-                    is_rally_second = 1 if len(second_no_let) > 2 else 0
+                    # isRallyWinner: =IF(W18="","",IF(ISERR(FIND("*",Y18)),FALSE(),TRUE()))
+                    is_rally_winner = "*" in rally_part if rally_part else False
+                    # isForced: =IF(W18="","",IF(ISERR(FIND("#",Y18)),FALSE(),TRUE())) 
+                    is_forced = "#" in rally_part if rally_part else False
+                    # isUnforced: =IF(W18="","",IF(ISERR(FIND("@",Y18)),FALSE(),TRUE()))
+                    is_unforced = "@" in rally_part if rally_part else False
+                    # isDouble: =IF(N18="","",IF(AND(S18=0,T18=0),TRUE(),FALSE()))
+                    is_double = None if (first_in is None or second_in is None) else int(first_in == 0 and second_in == 0)                # rallyNoSpec: =SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(Y18, "-", ""), "=", ""), "@", ""), "#", ""), "*", ""), ";", ""), "+", "")
+                    rally_no_spec = rally_part.translate(str.maketrans("", "", "-=@#*;+")) if rally_part else None
+                    # RallyNoError: =SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(RALLY_NO_SPEC, "d", ""), "w", ""), "x", ""), "e", ""), "n", "")
+                    rally_no_error = rally_no_spec.translate(str.maketrans("", "", "dwxen")) if rally_no_spec else None
+                    # RallyNoDirection: =SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(RALLY_NO_ERROR, "1", ""), "2", ""), "3", ""), "7", ""), "8", ""), "9", "")
+                    rally_no_direction = rally_no_error.translate(str.maketrans("", "", "123789")) if rally_no_error else None
+                    # RallyLen: =IF(N18="","",LEN(RALLY_NO_DIRECTION))
+                    rally_len = None if rally_no_direction is None else len(rally_no_direction)
 
-                # Serve1
-                """
-                =IF(N18="","",IF(U18=0,Q18,LEFT(Q18,1)))
-                """
-                if is_rally_first == 0:
-                  serve1 = first_no_let
-                else:
-                  serve1 = first_no_let[0]
-                
-                # Serve2
-                """
-                =IF(N18="","",IF(V18=0,R18,LEFT(R18,1)))
-                """
-                if is_rally_second == 0:
-                  serve2 = second_no_let
-                else:
-                  serve2 = second_no_let[0]
-
-                # Rally
-                """
-                =IF(N18="","",IF(U18=1,RIGHT(Q18,(LEN(Q18)-1)),IF(V18=1,RIGHT(R18,(LEN(R18)-1)),"")))
-                """
-                if is_rally_first == 1:
-                    rally_part = first_no_let[1:]
-                elif is_rally_second == 1:
-                    rally_part = second_no_let[1:]
-                else:
-                    rally_part = None
-
-                # isAce
-                """
-                =IF(N18="","",IF(U18=1,RIGHT(Q18,(LEN(Q18)-1)),IF(V18=1,RIGHT(R18,(LEN(R18)-1)),"")))
-                """
-                if serve2 in [None, ""]:
-                    is_ace = "*" in serve1
-                else:
-                    is_ace = "*" in serve2
-
-                # isUnret
-                """
-                =IF(W18="","",OR(IF(ISERR(FIND("#",W18)),FALSE(),TRUE()), IF(ISERR(FIND("#",X18)),FALSE(),TRUE())))
-                """
-                if serve2 in [None, ""]:
-                    is_unret = "#" in serve1
-                else:
-                    is_unret = "#" in serve2
-
-                # isRallyWinner
-                """
-                =IF(W18="","",IF(ISERR(FIND("*",Y18)),FALSE(),TRUE()))
-                """
-                is_rally_winner = "*" in rally_part if rally_part else False
-
-                # isForced
-                """
-                =IF(W18="","",IF(ISERR(FIND("#",Y18)),FALSE(),TRUE()))
-                """
-                is_forced = "#" in rally_part if rally_part else False
-
-                # isUnforced
-                """
-                =IF(W18="","",IF(ISERR(FIND("@",Y18)),FALSE(),TRUE()))
-                """
-                is_unforced = "@" in rally_part if rally_part else False
-
-                # isDouble
-                """
-                =IF(N18="","",IF(AND(S18=0,T18=0),TRUE(),FALSE()))
-                """
-                if first_in is None or second_in is None:
-                    is_double = None
-                else:
-                    is_double = (first_in == 0 and second_in == 0)
-
-                # rallyNoSpec
-                """
-                =SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(Y18, "-", ""), "=", ""), "@", ""), "#", ""), "*", ""), ";", ""), "+", "")
-                """
-                if rally_part:
-                    remove_chars = "-=@#*;+"
-                    rally_no_spec = rally_part.translate(str.maketrans("", "", remove_chars))
-                else:
-                    rally_no_spec = None
-
-                # RallyNoError
-                """
-                =SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(RALLY_NO_SPEC, "d", ""), "w", ""), "x", ""), "e", ""), "n", "")
-                """
-                if rally_no_spec:
-                    remove_error_chars = "dwxen"
-                    rally_no_error = rally_no_spec.translate(
-                        str.maketrans("", "", remove_error_chars)
-                    )
-                else:
-                    rally_no_error = None
-
-                # RallyNoDirection
-                """
-                =SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(RALLY_NO_ERROR, "1", ""), "2", ""), "3", ""), "7", ""), "8", ""), "9", "")
-                """
-                if rally_no_error:
-                    remove_direction_chars = "123789"
-                    rally_no_direction = rally_no_error.translate(
-                        str.maketrans("", "", remove_direction_chars)
-                    )
-                else:
-                    rally_no_direction = None
-
-                # RallyLen
-                """
-                =IF(N18="","",LEN(RALLY_NO_DIRECTION))
-                """
-                if rally_no_direction is None:
-                    rally_len = None
-                else:
-                    rally_len = len(rally_no_direction)
-
-                # PointWinner
-                if int(point.get("server_player_number")) == 1:
-                    server_player_number = 1
-                    returner_player_number = 2
-                elif int(point.get("server_player_number")) == 2:
-                    server_player_number = 2
-                    returner_player_number = 1
-                else:
-                    raise ValueError("Expected server_player_number to be non-empty: %s", point)
-                    quit()
-                """
-                =IF(OR(N18="P",N18="R"),L18,IF(OR(N18="Q",N18="S"),K18,IF(AND(Y18="",OR(Z18=FALSE(),Z18=""),OR(AA18=FALSE(),AA18=""),OR(AE18=FALSE(),AE18="")),"",IF(OR(Z18=TRUE(),AA18=TRUE(),AND((MOD(AI18,2)=0),AB18=TRUE()),AND((MOD(AI18,2)=1),OR(AC18=TRUE(),AD18=TRUE()))),K18,L18))))
-                """
-                first_code = point.get("first_serve_rally")
-                if first_code in ["P", "R"]:
-                    point_winner = "server"
-                elif first_code in ["Q", "S"]:
-                    point_winner = "returner"
-                else:
-                    if int(point.get("point_winner_player_number")) == server_player_number:
+                    # PointWinner: =IF(OR(N18="P",N18="R"),L18,IF(OR(N18="Q",N18="S"),K18,IF(AND(Y18="",OR(Z18=FALSE(),Z18=""),OR(AA18=FALSE(),AA18=""),OR(AE18=FALSE(),AE18="")),"",IF(OR(Z18=TRUE(),AA18=TRUE(),AND((MOD(AI18,2)=0),AB18=TRUE()),AND((MOD(AI18,2)=1),OR(AC18=TRUE(),AD18=TRUE()))),K18,L18))))
+                    server = int(point["server_player_number"])
+                    returner = 2 if server == 1 else 1
+                    first_code = point.get("first_serve_rally")
+                    if first_code in ["P", "R"]:
                         point_winner = "server"
-                    elif int(point.get("point_winner_player_number")) == returner_player_number:
+                    elif first_code in ["Q", "S"]:
                         point_winner = "returner"
                     else:
-                        print(server_player_number, returner_player_number, point.get("point_winner_player_number"))
-                        raise ValueError(f"Expected point_winner_player_number to be non-empty: {point}")
+                        winner = int(point["point_winner_player_number"])
+
+                        if winner not in (server, returner):
+                            raise ValueError(f"Invalid point_winner_player_number: {point}")
+                            quit()
+
+                        point_winner = "server" if winner == server else "returner"
+
+                    # isServerWinner: =IF(AJ18="","",IF(AJ18=K18,1,0))
+                    if point_winner is None:
+                        raise ValueError(f"Expected point winner to be defined: {point}")
                         quit()
+                    else:
+                        is_server_winner = 1 if point_winner == "server" else 0
 
-                # isServerWinner
-                """
-                =IF(AJ18="","",IF(AJ18=K18,1,0))
-                """
-                if point_winner is None:
-                    raise ValueError(f"Expected point winner to be defined: {point}")
-                    quit()
-                else:
-                    is_server_winner = 1 if point_winner == "server" else 0
-
-                # PointsAfter
-                """
-                =IF(POINT_WINNER="","",IF(IS_TIEBREAKER_POINT=0,IF(IS_SERVER_WINNER=1,VLOOKUP(GAME_SCORE,$Tables.P1_NAME:PLAYER_2_SET_SCORE,2,FALSE()),VLOOKUP(GAME_SCORE,$Tables.PLAYER_1_NAME:PLAYER_2_SET_SCORE,3,FALSE())),IF(IS_SERVER_WINNER=1,VLOOKUP(GAME_SCORE,$Tables.IS_TIEBREAKER_SET:IS_TIEBREAKER_POINT,2,FALSE()),VLOOKUP(GAME_SCORE,$Tables.IS_TIEBREAKER_SET:IS_TIEBREAKER_POINT,3,FALSE()))))
-                """
-
-                current_score = point.get("game_score")
-                if current_score not in unique_scores:
-                    unique_scores.append(current_score)
-                
-                # current_scores = current_score.split("-")
-                # p1 = parse_score(current_scores[1])
-                # p2 = parse_score(current_scores[0])
-
-                result = {
-                  "match_id": point.get("match_id"),
-                  "point_number": point.get("point_number"),
-                  "set_1": point.get("set_1"),
-                  "set_2": point.get("set_2"),
-                  "game_1": point.get("game_1"),
-                  "game_2": point.get("game_2"),
-                  "game_score": point.get("game_score"),
-                  "game_number": point.get("game_number"),
-                  "is_tiebreaker_set": point.get("is_tiebreaker_set"),
-                  "server_player_number": point.get("server_player_number"),
-                  "first_serve_rally": point.get("first_serve_rally"),
-                  "second_serve_rally": point.get("second_serve_rally"),
-                  "point_winner_player_number": point.get("point_winner_player_number"),
+                    # PointsAfter: =IF(POINT_WINNER="","",IF(IS_TIEBREAKER_POINT=0,IF(IS_SERVER_WINNER=1,VLOOKUP(GAME_SCORE,$Tables.P1_NAME:PLAYER_2_SET_SCORE,2,FALSE()),VLOOKUP(GAME_SCORE,$Tables.PLAYER_1_NAME:PLAYER_2_SET_SCORE,3,FALSE())),IF(IS_SERVER_WINNER=1,VLOOKUP(GAME_SCORE,$Tables.IS_TIEBREAKER_SET:IS_TIEBREAKER_POINT,2,FALSE()),VLOOKUP(GAME_SCORE,$Tables.IS_TIEBREAKER_SET:IS_TIEBREAKER_POINT,3,FALSE()))))
                   
-                  
-                  "1stNoLet": first_no_let,
-                  "2ndNoLet": second_no_let,
-                  "1stIn": first_in,
-                  "2ndIn": second_in,
-                  "isRally1st": is_rally_first,
-                  "isRally2nd": is_rally_second,
-                  "serve1": serve1,
-                  "serve2": serve2,
-                  "rally": rally_part,
-                  "is_ace": is_ace,
-                  "is_unret": is_unret,
-                  "is_rally_winner": is_rally_winner,
-                  "is_forced_error": is_forced,
-                  "is_unforced_error": is_unforced,
-                  "is_double": is_double,
-                  "rally_no_spec": rally_no_spec,
-                  "rally_no_error": rally_no_error,
-                  "rally_no_direction": rally_no_direction,
-                  "rally_length": rally_len,
-                  "point_winner": point_winner,
-                  "is_server_winner": is_server_winner,
-                  "tb_set": tb_set,
-                  "tb_point": tb_point_flag,
-                  "tb_point_number": tb_point_number,
-                  "player_1_id": charted_matches_by_id[point["match_id"]].get("player_1_id"),
-                  "player_2_id": charted_matches_by_id[point["match_id"]].get("player_2_id"),
-                  "gender": charted_matches_by_id[point["match_id"]].get("gender")
-                }
+                    result = {
+                      "match_id": point.get("match_id"),
+                      "match_date": point.get("match_date"),
+                      "surface": charted_matches_by_id[point["match_id"]].get("surface"),
+                      "match_duration": charted_matches_by_id[point["match_id"]].get("time"),
+                      "level": charted_matches_by_id[point["match_id"]].get("level"),
+                      "player_1_id": charted_matches_by_id[point["match_id"]].get("player_1_id"),
+                      "player_2_id": charted_matches_by_id[point["match_id"]].get("player_2_id"),
+                      "player_1_hand": charted_matches_by_id[point["match_id"]].get("player_1_hand"),
+                      "player_2_hand": charted_matches_by_id[point["match_id"]].get("player_2_hand"),
+                      "player_1_rank": charted_matches_by_id[point["match_id"]].get("player_1_rank"),
+                      "player_1_seed": charted_matches_by_id[point["match_id"]].get("player_1_seed"),
+                      "player_1_entry": charted_matches_by_id[point["match_id"]].get("player_1_entry"),
+                      "player_2_rank": charted_matches_by_id[point["match_id"]].get("player_2_rank"),
+                      "player_2_seed": charted_matches_by_id[point["match_id"]].get("player_2_seed"),
+                      "player_2_entry": charted_matches_by_id[point["match_id"]].get("player_2_entry"),
+                      "point_number": point.get("point_number"),
+                      "set_1": point.get("set_1"),
+                      "set_2": point.get("set_2"),
+                      "game_1": point.get("game_1"),
+                      "game_2": point.get("game_2"),
+                      "game_score": point.get("game_score"),
+                      "game_number": point.get("game_number"),
+                      "is_tiebreaker_set": tb_set,
+                      "tb_point_number": point.get("tb_point_number"),
+                      "tb_point": point.get("tb_point_flag"),
+                      "server_player_number": point.get("server_player_number"),
+                      "first_serve_rally": point.get("first_serve_rally"),
+                      "second_serve_rally": point.get("second_serve_rally"),
+                      "point_winner_player_number": point.get("point_winner_player_number"),
+                      "point_winner": point_winner,
+                      "is_server_winner": is_server_winner,
+                      # "1stNoLet": first_no_let,
+                      # "2ndNoLet": second_no_let,
+                      "first_serve_in_play": first_in,
+                      "second_serve_in_play": second_in,
+                      #"isRally1st": is_rally_first,
+                      #"isRally2nd": is_rally_second,
+                      #"serve1": serve1,
+                      #"serve2": serve2,
+                      "rally": rally_part,
+                      "is_ace": "*" in serve1 if serve2 in [None, ""] else "*" in serve2,
+                      "is_unret": is_unret,
+                      "is_rally_winner": is_rally_winner,
+                      "is_forced_error": is_forced,
+                      "is_unforced_error": is_unforced,
+                      "is_double": is_double,
+                      #"rally_no_spec": rally_no_spec,
+                      #"rally_no_error": rally_no_error,
+                      #"rally_no_direction": rally_no_direction,
+                      "rally_length": rally_len,
+                      "gender": charted_matches_by_id[point["match_id"]].get("gender")
+                    }
+                    f.write(json.dumps(result, ensure_ascii=False) + "\n")
 
-                prev_point = point
-                prev_result = result
-                count_points += 1
-                points[point["match_id"]].append(result)
-                #if result not in all_points:
-                #    all_points.append(result)
+                    prev_point = point
+                    prev_result = result
+                    count_points += 1
+                    points[point["match_id"]].append(result)
+                    #if result not in all_points:
+                    #    all_points.append(result)
         return points, count_points
 
 def assign_case(score_state, server, point_winner, p1_server=True):

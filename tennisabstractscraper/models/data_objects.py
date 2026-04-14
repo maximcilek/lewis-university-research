@@ -124,6 +124,43 @@ class JsonlDataObject(AbstractDataObject[list]):
             self._data = self._load()
         return self._data
 
+class JsonlDataObjectStream(AbstractDataObjectStream[dict]):
+    """
+    Streams JSONL file line-by-line (memory safe).
+    Yields dict per row or batches if batch_size > 1.
+    """
+
+    def __iter__(self) -> typing.Iterator[dict]:
+        path = pathlib.Path(self.file_path)
+
+        logger.info("Streaming JSONL file: %s", path)
+
+        batch: list[dict] = []
+
+        with path.open("r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+
+                try:
+                    obj = json.loads(line)
+                except json.JSONDecodeError as e:
+                    logger.error("Bad JSON line skipped: %s | %s", e, line[:200])
+                    continue
+
+                # stream single dicts (NOT batches) by default
+                if self.batch_size <= 1:
+                    yield obj
+                else:
+                    batch.append(obj)
+                    if len(batch) >= self.batch_size:
+                        yield batch
+                        batch = []
+
+        if self.batch_size > 1 and batch:
+            yield batch
+
 class CsvDataObject(AbstractDataObject[list]):
     """
     Loads data from a CSV file and maps headers to row values.
@@ -191,9 +228,7 @@ class DataObjectFactory:
 
         if path.suffix == ".jsonl":
             logger.info("Loading JSONL file: %s", path.name)
-            if should_stream:
-                raise NotImplementedError("Streaming JSONL not yet supported")
-            return JsonlDataObject(path)
+            return JsonlDataObjectStream(path) if should_stream else JsonlDataObject(path)
         elif path.suffix == ".json":
             logger.info("Loading JSON file: %s", path.name)
             if should_stream:

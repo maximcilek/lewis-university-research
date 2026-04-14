@@ -1,0 +1,131 @@
+
+
+
+\section*{Temporal Clustering Features for Double Faults}
+
+We model double fault (DF) events as temporally dependent occurrences within a match sequence. To quantify clustering behavior, we construct multi-scale lag features across point, game, and set levels.
+
+\subsection*{Point-Level Lag}
+\begin{equation}
+L_p(t) = p_t - p_{t-1}^{DF}
+\end{equation}
+where $p_t$ is the current point number and $p_{t-1}^{DF}$ is the point number of the most recent double fault prior to time $t$.
+
+\subsection*{Game-Level Lag}
+\begin{equation}
+L_g(t) = g_t - g_{t-1}^{DF}
+\end{equation}
+where $g_t$ denotes the current game number and $g_{t-1}^{DF}$ is the game number of the last double fault event.
+
+\subsection*{Set-Level Lag}
+\begin{equation}
+L_s(t) = s_t - s_{t-1}^{DF}
+\end{equation}
+where $s_t$ represents the current set and $s_{t-1}^{DF}$ is the set in which the previous double fault occurred.
+
+\subsection*{Double Fault Indicator}
+\begin{equation}
+D(t) =
+\begin{cases}
+1, & \text{if a double fault occurs at time } t \\
+0, & \text{otherwise}
+\end{cases}
+\end{equation}
+
+\subsection*{Clustering Intensity Score}
+To quantify local clustering of double faults, we define:
+\begin{equation}
+C(t) = \frac{1}{1 + L_p(t)}
+\end{equation}
+where higher values indicate stronger temporal clustering of double faults.
+
+\subsection*{Rolling Double Fault Pressure}
+We define a rolling window measure of service instability:
+\begin{equation}
+P(t) = \sum_{i=t-k}^{t} D(i)
+\end{equation}
+where $k$ is the window size over recent points.
+
+
+
+=====================================================================
+
+\section*{Temporal Clustering of Double Faults}
+
+We model double fault (DF) events as temporally dependent occurrences within a match sequence. To capture instability in serving behavior, we construct multi-scale lag features across point, game, and set levels.
+
+\subsection*{Temporal Lag Features}
+
+\begin{equation}
+L_p(t) = p_t - p_{t-1}^{DF}
+\end{equation}
+
+\begin{equation}
+L_g(t) = g_t - g_{t-1}^{DF}
+\end{equation}
+
+\begin{equation}
+L_s(t) = s_t - s_{t-1}^{DF}
+\end{equation}
+
+where $p_t$, $g_t$, and $s_t$ represent the current point, game, and set indices respectively, and $t-1^{DF}$ denotes the most recent prior double fault event at each level.
+
+\subsection*{Double Fault Indicator}
+
+\begin{equation}
+D(t) =
+\begin{cases}
+1, & \text{if a double fault occurs at time } t \\
+0, & \text{otherwise}
+\end{cases}
+\end{equation}
+
+\subsection*{Clustering Intensity}
+
+\begin{equation}
+C(t) = \frac{1}{1 + L_p(t)}
+\end{equation}
+
+This score captures local temporal clustering of double faults, where smaller lag values indicate higher instability.
+
+\subsection*{Rolling Pressure Metric}
+
+\begin{equation}
+P(t) = \sum_{i=t-k}^{t} D(i)
+\end{equation}
+
+where $k$ defines a rolling window over recent points.
+
+\subsection*{Interpretation}
+
+This formulation transforms raw match events into a hierarchical temporal process, enabling the detection of:
+
+\begin{itemize}
+    \item Micro-level clustering (point spacing)
+    \item Meso-level structure (game-level instability)
+    \item Macro-level trends (set-level breakdowns)
+\end{itemize}
+
+---
+
+\subsection*{Figure 1: Temporal DF Timeline}
+
+\textit{Caption:} Double fault events plotted across match progression. Each point represents a rally outcome, with highlighted markers indicating DF occurrences. Clustering is observed as compressed regions along the timeline.
+
+---
+
+\subsection*{Figure 2: Clustering Heatmap by Game State}
+
+\textit{Caption:} Heatmap showing density of double faults across games and sets. Darker regions indicate higher concentration of DF events, suggesting pressure-induced instability.
+
+---
+
+\subsection*{Figure 3: Distance-from-Last-DF Signal}
+
+\textit{Caption:} Temporal spacing between successive double faults. Lower values indicate rapid recurrence and increased serving instability.
+
+---
+
+\subsection*{Key Insight}
+
+Double faults exhibit non-uniform temporal clustering, suggesting that serving errors are not independent events but instead occur in bursts influenced by match context and pressure dynamics.

@@ -42,45 +42,31 @@ def assign_state(score_state):
 # =========================================================
 # 2. BUILD DATASET
 # =========================================================
-def build_dataset(points_by_match, matches_by_id):
+def build_dataset(points_by_match):
 
     rows = []
 
-    for match_id, points in points_by_match.items():
-
-        meta = matches_by_id.get(match_id, {})
-        p1_id = meta.get("player_1_id")
-        p2_id = meta.get("player_2_id")
-
+    for _, points in points_by_match.items():
         for p in points:
 
             state = assign_state(p.get("game_score"))
             if state is None:
                 continue
 
-            is_double = int(p.get("is_double") or 0)
-            gender = p.get("gender")
-            if gender is None:
-                continue
+            is_double_fault = int(p.get("is_double") or 0)
 
-            gender_bin = 1 if gender in ["W", "women", "WTA"] else 0
-            p1_is_server = int(p["server_player_number"]) == 1
+            server_is_p1 = int(p["server_player_number"]) == 1
+            server_id = p["player_1_id"] if server_is_p1 else p["player_2_id"]
 
             rows.append({
-                "double_fault": is_double,
+                "double_fault": is_double_fault,
                 "pressure": state,
-                "gender": gender_bin,
-                "p1_is_server": int(p1_is_server),
-                "p1_id": p1_id,
-                "p2_id": p2_id,
+                "gender": 1 if p.get("gender") == "W" else 0,
+                "p1_is_server": int(server_is_p1),
+                "server_id": server_id
             })
 
-    df = pd.DataFrame(rows)
-
-    # interaction term (core hypothesis test)
-    df["pressure_gender"] = df["pressure"] * df["gender"]
-
-    return df
+    return pd.DataFrame(rows)
 
 
 # =========================================================
@@ -107,7 +93,7 @@ def run_logit(df):
     model = sm.Logit(y, X)
 
     result = model.fit(
-        maxiter=2000,
+        maxiter=200,
         disp=True
     )
 
@@ -121,10 +107,12 @@ def print_results(result, X):
 
     print("\n================ LOGISTIC REGRESSION (STATS MODELS) ================\n")
 
-    print(result.summary())
+    print(result.score)
 
     # odds ratios
-    params = result.params
+    params = result.get_params()
+    print(result.__dir__())
+    quit()
     conf = result.conf_int()
 
     print("\n================ ODDS RATIOS =================\n")
@@ -144,13 +132,39 @@ def print_results(result, X):
 def build_dict(seq, key):
     return {d[key]: dict(d, index=i) for i, d in enumerate(seq)}
 
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import OneHotEncoder
+from scipy.sparse import hstack
 
+def run_logit_sparse(df):
+    print(df.columns)
+
+    # Base features
+    X_base = df[["pressure", "p1_is_server", "gender"]].values
+
+    # Player fixed effects (sparse)
+    encoder = OneHotEncoder(handle_unknown="ignore", sparse_output=True)
+    X_players = encoder.fit_transform(df[["server_id"]])
+
+    # Combine
+    X = hstack([X_base, X_players])
+
+    y = df["double_fault"].values
+
+    model = LogisticRegression(
+        max_iter=1000,
+        class_weight="balanced"
+    )
+
+    model.fit(X, y)
+
+    return model, encoder
 # =========================================================
 # 6. MAIN
 # =========================================================
 if __name__ == "__main__":
 
-    input_csv = DATA_DIR / "canonical/tennisabstract/charting_points.csv"
+    input_csv = DATA_DIR / "prod/charting_points.jsonl"
 
     points_object = TennisAbstractPointsData(
         input_csv,
@@ -158,7 +172,7 @@ if __name__ == "__main__":
     )
 
     matches = data_objects.JsonlDataObject(
-        DATA_DIR / "dev/tennisabstract/charting_matches.jsonl"
+        DATA_DIR / "prod/charting_matches.jsonl"
     ).data
 
     matches_by_id = build_dict(matches, "match_id")
@@ -167,8 +181,8 @@ if __name__ == "__main__":
 
     print(f"Loaded Points ({count_points}): {len(points_by_match)}")
 
-    df = build_dataset(points_by_match, matches_by_id)
+    """df = build_dataset(points_by_match)
 
-    result, X = run_logit(df)
+    result, X = run_logit_sparse(df)
 
-    print_results(result, X)
+    print_results(result, X)"""
