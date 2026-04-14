@@ -11,6 +11,115 @@ METADATA_DIR = DATA_DIR / "canonical/tennisabstract/_meta"
 def build_dict(seq, key):
     return {d[key]: dict(d, index=i) for i, d in enumerate(seq)}
 
+def parse_score(server_game_score, returner_game_score, is_tb_point):
+        if not server_game_score or not returner_game_score:
+            return None, None
+        # Detect tiebreak safely
+        is_tb = p.get("tb_point") == 1
+        # also fallback: both are numeric
+        if not is_tb:
+            if server_game_score.isdigit() and returner_game_score.isdigit():
+                is_tb = True
+        # CASE 1: TIEBREAK
+        if is_tb:
+            s = int(server_game_score)
+            r = int(returner_game_score)
+            return s, r  # already server-relative
+        # CASE 2: NORMAL GAME
+        score_map = {"0": 0, "15": 1, "30": 2, "40": 3, "AD": 4}
+        s = score_map.get(server_game_score)
+        r = score_map.get(returner_game_score)
+        # safety fallback
+        if s is None or r is None:
+            return None, None
+        return s, r
+
+def update_point_player_data(point, server_player_number, returner_player_number):
+    server_player_data = PLAYERS_BY_ID.get(p.get(f"player_{server_player_number}_id"))
+    returner_player_data = PLAYERS_BY_ID.get(p.get(f"player_{returner_player_number}_id"))
+    point["server_country"] = server_player_data.get("country")
+    point["server_dob"] = server_player_data.get("dob")
+    point["server_hand"] = server_player_data.get("hand")
+    point["server_backhand"] = server_player_data.get("backhand")
+    point["server_country"] = server_player_data.get("country")
+    point["server_player_id"] = point.get(f"player_{server_player_number}_id")
+    point["server_player_rank"] = int(point.get(f"player_{server_player_number}_rank") or None)
+    point["server_player_seed"] = point.get(f"player_{server_player_number}_seed")
+    point["server_player_entry"] = point.get(f"player_{server_player_number}_entry")
+    point["returner_country"] = returner_player_data.get("country")
+    point["returner_dob"] = returner_player_data.get("dob")
+    point["returner_hand"] = returner_player_data.get("hand")
+    point["returner_backhand"] = returner_player_data.get("backhand")
+    point["returner_country"] = returner_player_data.get("country")
+    point["returner_player_id"] = point.get(f"player_{returner_player_number}_id")
+    point["returner_player_rank"] = int(point.get(f"player_{returner_player_number}_rank") or None)
+    point["returner_player_seed"] = point.get(f"player_{returner_player_number}_seed")
+    point["returner_player_entry"] = point.get(f"player_{returner_player_number}_entry")
+    del point[f"player_{server_player_number}_id"]
+    del point[f"player_{server_player_number}_hand"]
+    del point[f"player_{server_player_number}_rank"]
+    del point[f"player_{server_player_number}_seed"]
+    del point[f"player_{server_player_number}_entry"]
+    del point[f"player_{returner_player_number}_id"]
+    del point[f"player_{returner_player_number}_hand"]
+    del point[f"player_{returner_player_number}_rank"]
+    del point[f"player_{returner_player_number}_seed"]
+    del point[f"player_{returner_player_number}_entry"]
+    return point
+
+def update_point_pressure_metrics(point, server_player_number, returner_player_number):
+    server_sets = int(point.get(f"set_{server_player_number}") or None)
+    returner_sets = int(point.get(f"set_{server_player_number}") or None)
+    server_games = int(point.get(f"game_{server_player_number}") or 0)
+    returner_games = int(point.get(f"game_{returner_player_number}") or 0)
+    score_parts = point.get("game_score").split("-")
+    server_points, returner_points = parse_score(score_parts[server_player_number - 1],score_parts[returner_player_number - 1], point.get("tb_point"))
+    
+    best_of = int(point.get("best_of", None) or 3) # Fallback: normalize for best-of-3
+    
+    # MATCH PRESSURE
+    total_sets = server_sets + returner_sets
+    progress_sets = total_sets / best_of
+    closeness_sets = 1 - abs(server_sets - returner_sets) / 2
+    elimination_sets = 1 + max(0, returner_sets - server_sets) * 0.5  # elimination pressure
+    point["server_set_diff"] = server_sets - returner_sets
+    # point["total_sets"] = total_sets
+    point["match_pressure"] = progress_sets * closeness_sets * elimination_sets
+
+    # SET
+    total_games = server_games + returner_games
+    diff_games = abs(server_games - returner_games)
+    # Time component (progression)
+    if total_games <= 6:
+        time_pressure_games = 0.2
+    elif total <= 10:
+        time_pressure_games = 0.5
+    else:
+        time_pressure_games = 0.9
+    if diff_games == 0:
+        closeness_games = 1.0   # 5-5, 6-6 → max pressure
+    elif diff_games == 1:
+        closeness_games = 0.7
+    else:
+        closeness_games = 0.3
+    # point["total_games"] = total_games
+    point["server_game_diff"] = server_games - returner_games
+    # point["game_abs_diff"] = diff_games
+    point["set_pressure"] = time_pressure_games * closeness_games
+
+    # GAME PRESSURE
+    s = int(server_points or 0)
+    r = int(returner_points or 0)
+    total_points = s + r
+    diff_points = abs(s - r)
+    # Progress (how deep into game)
+    progress_points = total_points / 6   # ~max around deuce
+    # Closeness
+    closeness_points = 1 - (diff_points / 4)
+    point["server_point_diff"] = diff_points
+    point["game_pressure"] = progress_points * closeness_points
+    return point
+
 
 if __name__ == "__main__":
     charting_points = data_objects.DataObjectFactory.create(DATA_DIR / "prod/charting_points.jsonl")
@@ -35,47 +144,26 @@ if __name__ == "__main__":
                 print(f"[FATAL] - Skipping, no charting match found: {match_id}")
                 continue
             
-            server_player_number = p.get("server_player_number")
+            if p.get("match_date") is None:
+                p["match_date"] = match_id.split("-")[0]
+
+            if "best_of" not in p:
+                p["best_of"] = int(charting_match.get("best_of", None) or None)
+            
+            server_player_number = int(p.get("server_player_number"))
             returner_player_number = 1 if server_player_number == 2 else 2
-            result = {
-                "match_id": match_id,
-                "match_date": charting_match.get("match_date"),
-                "surface": charting_match.get("surface"),
-                "match_duration": charting_match.get("match_duration"),
-                "level": charting_match.get("level"),
-                "server_player_id": charting_match.get(p.get(f"player_{server_player_number}_id")),
-                "returner_player_id": charting_match.get(p.get(f"player_{returner_player_number}_id")),
-                "server_player_seed": charting_match.get(p.get(f"player_{server_player_number}_seed")),
-                "server_player_entry": charting_match.get(p.get(f"player_{server_player_number}_entry")),
-                "server_player_rank": charting_match.get(p.get(f"player_{server_player_number}_rank")),
-                "returner_player_seed": charting_match.get(p.get(f"player_{returner_player_number}_seed")),
-                "returner_player_entry": charting_match.get(p.get(f"player_{returner_player_number}_entry")),
-                "returner_player_rank": charting_match.get(p.get(f"player_{returner_player_number}_rank")),
-                "point_number": p.get("point_number"),
-                "server_sets": p.get(f"set_{server_player_number}"),
-                "returner_sets": p.get(f"set_{returner_player_number}"),
-                "server_games": p.get(f"game_{server_player_number}"),
-                "returner_games": p.get(f"game_{returner_player_number}"),
-                "game_score": p.get("game_score"),
-                "game_number": p.get("game_number"),
-                "is_tiebreaker_set": p.get("is_tiebreaker_set"),
-                "tb_point_number": p.get("tb_point_number"),
-                "tb_point": p.get("tb_point_number"),
-                "first_serve_rally": p.get("first_serve_rally"),
-                "second_serve_rally": p.get("second_serve_rally"),
-                "point_winner": p.get("point_winner"),
-                "is_server_winner": p.get("is_server_winner"), # DEPRACATED
-                "first_serve_in_play": p.get("first_serve_in_play"),
-                "second_serve_in_play": p.get("second_serve_in_play"),
-                "rally": p.get("rally"),
-                "is_ace": p.get("is_ace"),
-                "is_unret": p.get("is_unret"),
-                "is_rally_winner": p.get("is_rally_winner"),
-                "is_forced__error": p.get("is_forced__error"),
-                "is_unforced__error": p.get("is_unforced__error"),
-                "is_double": p.get("is_double"),
-                "rally_length": p.get("rally_length"),
-                "gender": p.get("gender")
-            }
-            print(json.dumps(result, indent=4))
+            point = update_point_player_data(p, server_player_number, returner_player_number)
+            point = update_point_pressure_metrics(point, server_player_number, returner_player_number)
+
+            for k, v in point.items():
+                if v in [None, "", [], {}]:
+                    point[k] = None
+                if isinstance(v, str) and v.strip().isdigit():
+                    if "." in v:
+                        point[k] = float(v)
+                    else:
+                        point[k] = int(v)
+                elif isinstance(v, str) and v.strip() == "":
+                    
+            print(json.dumps(point, indent=4))
             quit()
