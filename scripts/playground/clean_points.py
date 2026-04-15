@@ -4,6 +4,7 @@ import json
 import logging
 sys.path.append(str(pathlib.Path(__file__).resolve().parent.parent.parent))
 import tennisabstractscraper.models.data_objects as data_objects
+from collections import defaultdict, deque
 
 DATA_DIR = pathlib.Path(__file__).resolve().parent.parent.parent / "data"
 METADATA_DIR = DATA_DIR / "canonical/tennisabstract/_meta"
@@ -16,15 +17,16 @@ def parse_score(server_game_score, returner_game_score, is_tb_point):
             return None, None
         
         score_map = {"0": 0, "15": 1, "30": 2, "40": 3, "AD": 4}
-        if is_tb_point:
-            if server_game_score.isdigit():
-                s = int(server_game_score or None)
-            else:
-                s = score_map.get(server_game_score)
-            if returner_game_score.isdigit():
-                r = int(returner_game_score or None)
-            else:
-                r = score_map.get(returner_game_score)
+        is_tb = int(is_tb_point) == 1
+        # CASE 1: TIEBREAK
+        if is_tb:
+            if server_game_score.strip() == "AD":
+                server_game_score = 4
+            if returner_game_score.strip() == "AD":
+                returner_game_score = 4
+            s = int(server_game_score)
+            r = int(returner_game_score)
+            return s, r  # already server-relative
         else:
             # CASE 2: NORMAL GAME
             s = score_map.get(server_game_score)
@@ -44,8 +46,8 @@ def update_point_player_data(point, server_player_number, returner_player_number
     point["server_country"] = server_player_data.get("country")
     point["server_player_id"] = point.get(f"player_{server_player_number}_id")
     point["server_player_rank"] = point.get(f"player_{server_player_number}_rank")
-    point["server_player_seed"] = point.get(f"player_{server_player_number}_seed")
-    point["server_player_entry"] = point.get(f"player_{server_player_number}_entry")
+    # point["server_player_seed"] = point.get(f"player_{server_player_number}_seed")
+    # point["server_player_entry"] = point.get(f"player_{server_player_number}_entry")
     point["returner_country"] = returner_player_data.get("country")
     point["returner_dob"] = returner_player_data.get("dob")
     point["returner_hand"] = returner_player_data.get("hand")
@@ -53,8 +55,8 @@ def update_point_player_data(point, server_player_number, returner_player_number
     point["returner_country"] = returner_player_data.get("country")
     point["returner_player_id"] = point.get(f"player_{returner_player_number}_id")
     point["returner_player_rank"] = point.get(f"player_{returner_player_number}_rank")
-    point["returner_player_seed"] = point.get(f"player_{returner_player_number}_seed")
-    point["returner_player_entry"] = point.get(f"player_{returner_player_number}_entry")
+    # point["returner_player_seed"] = point.get(f"player_{returner_player_number}_seed")
+    # point["returner_player_entry"] = point.get(f"player_{returner_player_number}_entry")
     del point[f"player_{server_player_number}_id"]
     del point[f"player_{server_player_number}_hand"]
     del point[f"player_{server_player_number}_rank"]
@@ -67,7 +69,6 @@ def update_point_player_data(point, server_player_number, returner_player_number
     del point[f"player_{returner_player_number}_entry"]
 
     if point.get("best_of", None) in [None, ""]:
-        print(f"Missing best of: {p}")
         matches = json.loads(server_player_data.get("matches"))
         for match_id, match in matches.items():
             charting_id = match.get("charting_id") 
@@ -75,17 +76,29 @@ def update_point_player_data(point, server_player_number, returner_player_number
                 if match.get("best_of") not in [None, ""]:
                     point["best_of"] = int(match.get("best_of"))
                 else:
-                    print(match_id, f"{match.get('charting_id')}")
+                    print(match)
                     quit()
     return point
 
 def update_point_pressure_metrics(point, server_player_number, returner_player_number):
     server_sets = int(point.get(f"set_{server_player_number}") or None)
-    returner_sets = int(point.get(f"set_{server_player_number}") or None)
+    returner_sets = int(point.get(f"set_{returner_player_number}") or None)
     server_games = int(point.get(f"game_{server_player_number}") or 0)
     returner_games = int(point.get(f"game_{returner_player_number}") or 0)
     score_parts = point.get("game_score").split("-")
     server_points, returner_points = parse_score(score_parts[server_player_number - 1],score_parts[returner_player_number - 1], point.get("tb_point"))
+    point["server_sets"] = point.get(f"set_{server_player_number}")
+    point["server_games"] = point.get(f"set_{server_player_number}")
+    point["server_points"] = point.get(f"set_{server_player_number}")
+    point["returner_sets"] = point.get(f"set_{returner_player_number}")
+    point["returner_games"] = point.get(f"set_{returner_player_number}")
+    point["returner_points"] = point.get(f"set_{returner_player_number}")
+
+    del p[f"set_{server_player_number}"]
+    del p[f"game_{server_player_number}"]
+    del p[f"set_{returner_player_number}"]
+    del p[f"game_{returner_player_number}"]
+
     
     best_of = int(point.get("best_of", None) or 3) # Fallback: normalize for best-of-3
     
@@ -125,10 +138,12 @@ def update_point_pressure_metrics(point, server_player_number, returner_player_n
     total_points = s + r
     diff_points = abs(s - r)
     # Progress (how deep into game)
-    progress_points = total_points / 6   # ~max around deuce
+    # cap progress so deuce doesn't explode scaling
+    progress_points = min(total_points / 8, 1.0)
+    # progress_points = total_points / 6   # ~max around deuce
     # Closeness
-    closeness_points = 1 - (diff_points / 4)
-    point["server_point_diff"] = diff_points
+    closeness_points = 1 / (1 + diff_points)
+    point["server_point_diff"] = s - r
     point["game_pressure"] = progress_points * closeness_points
     return point
 
@@ -184,12 +199,12 @@ if __name__ == "__main__":
 
     CHARTING_MATCHES = data_objects.JsonlDataObject(DATA_DIR / "prod/charting_matches.jsonl").data
     CHARTING_MATCHES_BY_ID = build_dict(CHARTING_MATCHES, "match_id")
-
-
     
     points_by_match = {}
+    all_points = []
     c = 0
     c_u = 0
+    dups = 0
     for _, points_batch in enumerate(charting_points):
         for p in points_batch:
             match_id = p.get("match_id")
@@ -223,9 +238,91 @@ if __name__ == "__main__":
                     else:
                         point[k] = int(v)
             
+            if "point_number" not in point or point.get("point_number") in [None, ""]:
+                print(f"Missing Point Number: {point}")
+                quit()
+            if "surface" not in point or point.get("surface") == "Eva Asderaki-Moore":
+                if point.get("match_id") in ["20240915-M-Davis_Cup_World_Group-RR-Tallon_Griekspoor-Flavio_Cobolli", "20221111-W-BJK_Cup_Finals-RR-Danielle_Collins-Marketa_Vondrousova"]:
+                    point["surface"] = "Hard"
+                else:
+                    print(f"Umpire as Surface: {point}")
+                    quit()
+            if point.get("rally_length") in [0, "", None]:
+                point["rally_count"] = 1
+            else:
+                point["rally_count"] = point["rally_length"] + 1
+            del point["rally_length"]
+
             if point not in points_by_match[match_id]:
                 points_by_match[match_id].append(point)
                 c_u += 1
+            else:
+                dups += 1
             c += 1
     print(f"Total Points: {c}")
     print(f"Unique Points: {c_u}")
+    print(f"Duplicates: {dups}")
+
+    point_features = []
+    for charting_match in points_by_match.keys():
+        sorted_points = sorted(points_by_match[charting_match], key=lambda x: x["point_number"])
+        match_state = defaultdict(lambda: defaultdict(lambda: {
+            "df_3": deque(maxlen=3),
+            "df_5": deque(maxlen=5),
+            "df_10": deque(maxlen=10),
+            "df_15": deque(maxlen=15),
+            "last_df_index": None,
+            "serve_index": 0
+        }))
+
+        last_df = None
+        df_diff = None
+        for p in sorted_points:
+            player_id = p.get("server_player_id")
+            state = match_state[charting_match][player_id]
+            
+            is_df = int(p.get("is_double") or 0)
+            state["serve_index"] += 1
+
+            state["df_3"].append(is_df)
+            state["df_5"].append(is_df)
+            state["df_10"].append(is_df)
+            state["df_15"].append(is_df)
+
+            def ratio(window): return sum(window) / len(window) if window else 0
+
+            p["df_ratio_last_3_serves"] = ratio(state["df_3"])
+            p["df_ratio_last_5_serves"] = ratio(state["df_5"])
+            p["df_ratio_last_10_serves"] = ratio(state["df_10"])
+            p["df_ratio_last_15_serves"] = ratio(state["df_15"])
+
+            # ---- df_distance FIRST ----
+            if state["last_df_index"] is None:
+                p["df_distance"] = None
+            else:
+                p["df_distance"] = state["serve_index"] - state["last_df_index"]
+
+            # ---- NEW FEATURES HERE ----
+            if p["df_distance"] is not None:
+                p["df_distance_log"] = np.log1p(p["df_distance"])
+                p["df_recent_df"] = int(p["df_distance"] <= 3)
+            else:
+                p["df_distance_log"] = None
+                p["df_recent_df"] = 0
+
+            # ---- THEN update state ----
+            if is_df == 1:
+                state["last_df_index"] = state["serve_index"]
+
+            point_features.append(p)
+
+
+    with open(DATA_DIR / "prod/charting_points_clean.jsonl", "w", encoding="utf-8") as f:
+        # for p, points_arr in points_by_match.items():
+        for p in point_features:
+            f.write(json.dumps(p, ensure_ascii=False) + "\n")
+
+"""
+def ratio(window):
+            return sum(window) / len(window) if window else 0
+"""
