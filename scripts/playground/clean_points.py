@@ -14,24 +14,24 @@ def build_dict(seq, key):
 def parse_score(server_game_score, returner_game_score, is_tb_point):
         if not server_game_score or not returner_game_score:
             return None, None
-        # Detect tiebreak safely
-        is_tb = p.get("tb_point") == 1
-        # also fallback: both are numeric
-        if not is_tb:
-            if server_game_score.isdigit() and returner_game_score.isdigit():
-                is_tb = True
-        # CASE 1: TIEBREAK
-        if is_tb:
-            s = int(server_game_score)
-            r = int(returner_game_score)
-            return s, r  # already server-relative
-        # CASE 2: NORMAL GAME
+        
         score_map = {"0": 0, "15": 1, "30": 2, "40": 3, "AD": 4}
-        s = score_map.get(server_game_score)
-        r = score_map.get(returner_game_score)
-        # safety fallback
-        if s is None or r is None:
-            return None, None
+        if is_tb_point:
+            if server_game_score.isdigit():
+                s = int(server_game_score or None)
+            else:
+                s = score_map.get(server_game_score)
+            if returner_game_score.isdigit():
+                r = int(returner_game_score or None)
+            else:
+                r = score_map.get(returner_game_score)
+        else:
+            # CASE 2: NORMAL GAME
+            s = score_map.get(server_game_score)
+            r = score_map.get(returner_game_score)
+            # safety fallback
+            if s is None or r is None:
+                return None, None
         return s, r
 
 def update_point_player_data(point, server_player_number, returner_player_number):
@@ -43,7 +43,7 @@ def update_point_player_data(point, server_player_number, returner_player_number
     point["server_backhand"] = server_player_data.get("backhand")
     point["server_country"] = server_player_data.get("country")
     point["server_player_id"] = point.get(f"player_{server_player_number}_id")
-    point["server_player_rank"] = int(point.get(f"player_{server_player_number}_rank") or None)
+    point["server_player_rank"] = point.get(f"player_{server_player_number}_rank")
     point["server_player_seed"] = point.get(f"player_{server_player_number}_seed")
     point["server_player_entry"] = point.get(f"player_{server_player_number}_entry")
     point["returner_country"] = returner_player_data.get("country")
@@ -52,7 +52,7 @@ def update_point_player_data(point, server_player_number, returner_player_number
     point["returner_backhand"] = returner_player_data.get("backhand")
     point["returner_country"] = returner_player_data.get("country")
     point["returner_player_id"] = point.get(f"player_{returner_player_number}_id")
-    point["returner_player_rank"] = int(point.get(f"player_{returner_player_number}_rank") or None)
+    point["returner_player_rank"] = point.get(f"player_{returner_player_number}_rank")
     point["returner_player_seed"] = point.get(f"player_{returner_player_number}_seed")
     point["returner_player_entry"] = point.get(f"player_{returner_player_number}_entry")
     del point[f"player_{server_player_number}_id"]
@@ -65,6 +65,18 @@ def update_point_player_data(point, server_player_number, returner_player_number
     del point[f"player_{returner_player_number}_rank"]
     del point[f"player_{returner_player_number}_seed"]
     del point[f"player_{returner_player_number}_entry"]
+
+    if point.get("best_of", None) in [None, ""]:
+        print(f"Missing best of: {p}")
+        matches = json.loads(server_player_data.get("matches"))
+        for match_id, match in matches.items():
+            charting_id = match.get("charting_id") 
+            if charting_id is not None and charting_id == point.get("match_id"):
+                if match.get("best_of") not in [None, ""]:
+                    point["best_of"] = int(match.get("best_of"))
+                else:
+                    print(match_id, f"{match.get('charting_id')}")
+                    quit()
     return point
 
 def update_point_pressure_metrics(point, server_player_number, returner_player_number):
@@ -92,7 +104,7 @@ def update_point_pressure_metrics(point, server_player_number, returner_player_n
     # Time component (progression)
     if total_games <= 6:
         time_pressure_games = 0.2
-    elif total <= 10:
+    elif total_games <= 10:
         time_pressure_games = 0.5
     else:
         time_pressure_games = 0.9
@@ -120,6 +132,50 @@ def update_point_pressure_metrics(point, server_player_number, returner_player_n
     point["game_pressure"] = progress_points * closeness_points
     return point
 
+def get_last_double_fault1(points_by_match, match_id, player_id=None, player_number=None):
+    """
+    Returns the most recent double fault committed by a player in a match.
+
+    You can specify:
+      - player_id (preferred, uses player_1_id / player_2_id)
+      - OR player_number (1 or 2)
+
+    Returns:
+      dict (point) or None if no double fault exists
+    """
+
+    if match_id not in points_by_match:
+        return None
+
+    last_df = None
+    all_dfs = []
+
+    for p in points_by_match[match_id]:
+        is_double = int(p.get("is_double") or 0)
+
+        if not is_double:
+            continue
+
+        # Identify who committed the DF (server always commits it)
+        server = int(p["server_player_number"])
+
+        # Resolve player number if needed
+        if player_number is None and player_id is not None:
+            if p.get("player_1_id") == player_id:
+                player_number = 1
+            elif p.get("player_2_id") == player_id:
+                player_number = 2
+            else:
+                continue
+
+        if player_number is not None and server != player_number:
+            continue
+
+        last_df = p  # overwrite → keeps the latest one
+        if p not in all_dfs:
+            all_dfs.append(p)
+
+    return last_df, all_dfs
 
 if __name__ == "__main__":
     charting_points = data_objects.DataObjectFactory.create(DATA_DIR / "prod/charting_points.jsonl")
@@ -128,14 +184,12 @@ if __name__ == "__main__":
 
     CHARTING_MATCHES = data_objects.JsonlDataObject(DATA_DIR / "prod/charting_matches.jsonl").data
     CHARTING_MATCHES_BY_ID = build_dict(CHARTING_MATCHES, "match_id")
-    
+
+
     
     points_by_match = {}
-    double_faults = {}
-    df = 0
-    up = []
     c = 0
-    dupes = 0
+    c_u = 0
     for _, points_batch in enumerate(charting_points):
         for p in points_batch:
             match_id = p.get("match_id")
@@ -143,12 +197,15 @@ if __name__ == "__main__":
             if not charting_match:
                 print(f"[FATAL] - Skipping, no charting match found: {match_id}")
                 continue
+
+            if match_id not in points_by_match:
+                points_by_match[match_id] = []
             
             if p.get("match_date") is None:
                 p["match_date"] = match_id.split("-")[0]
 
-            if "best_of" not in p:
-                p["best_of"] = int(charting_match.get("best_of", None) or None)
+            if "best_of" not in p or p.get("best_of") in [None, ""]:
+                p["best_of"] = charting_match.get("best_of", None)
             
             server_player_number = int(p.get("server_player_number"))
             returner_player_number = 1 if server_player_number == 2 else 2
@@ -156,14 +213,19 @@ if __name__ == "__main__":
             point = update_point_pressure_metrics(point, server_player_number, returner_player_number)
 
             for k, v in point.items():
-                if v in [None, "", [], {}]:
+                if v in [None, [], {}]:
                     point[k] = None
-                if isinstance(v, str) and v.strip().isdigit():
-                    if "." in v:
+                elif isinstance(v, str) and v.strip().isdigit():
+                    if v.strip() == "":
+                        point[k] = None
+                    elif "." in v:
                         point[k] = float(v)
                     else:
                         point[k] = int(v)
-                elif isinstance(v, str) and v.strip() == "":
-                    
-            print(json.dumps(point, indent=4))
-            quit()
+            
+            if point not in points_by_match[match_id]:
+                points_by_match[match_id].append(point)
+                c_u += 1
+            c += 1
+    print(f"Total Points: {c}")
+    print(f"Unique Points: {c_u}")
