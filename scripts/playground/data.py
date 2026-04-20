@@ -7,123 +7,125 @@ import statsmodels.formula.api as smf
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, roc_auc_score
-from datetime import datetime
-import matplotlib.pyplot as plt
-from pathlib import Path
 import pathlib
 import sys
+
 sys.path.append(str(pathlib.Path(__file__).resolve().parent.parent.parent))
 
 DATA_DIR = pathlib.Path(__file__).resolve().parent.parent.parent / "data"
-METADATA_DIR = DATA_DIR / "canonical/tennisabstract/_meta"
-
-# df = pd.read_json(DATA_DIR / "prod/charting_points_clean.jsonl", lines=True)
-
-# print(df.info())
-# print("--------------------------------------------")
-# print(df.head(20))
-
 
 print("==================================")
-
+print("LOADING DATA")
+print("==================================")
 
 chunks = []
-for chunk in pd.read_json(DATA_DIR / "prod/charting_points_clean.jsonl", lines=True, chunksize=10000):
+for chunk in pd.read_json(DATA_DIR / "prod/charting_points_clean.jsonl",
+                          lines=True,
+                          chunksize=10000):
     chunks.append(chunk)
+
 df = pd.concat(chunks, ignore_index=True)
-df["is_double"] = df["is_double"].fillna(-1)
-df["second_serve_in_play"] = df["second_serve_in_play"].fillna(-1)
 
-# =========================
-# LOAD YOUR DATA
-# =========================
-# Replace this with your actual load
-# df = pd.read_parquet("your_file.parquet")
-# df = pd.read_csv("your_file.csv")
-
-# Example placeholder:
-df = df.copy()  # assume already loaded
-
+# -------------------------
+# TARGET SETUP
+# -------------------------
 TARGET = "is_server_winner"
 
-# =========================
-# BASIC CLEANING
-# =========================
 df = df.replace([np.inf, -np.inf], np.nan)
+df = df[df[TARGET].notna()].copy()
 
-# Keep only rows with target
-df = df[df[TARGET].notna()]
-
-# =========================
-# NUMERIC COLUMNS
-# =========================
-numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+# FORCE NUMERIC CLEANING (CRITICAL FIX)
+df = df.apply(pd.to_numeric, errors="ignore")
 
 # =========================
-# 1. CORRELATION
+# FEATURES
 # =========================
-print("\n================ CORRELATION ================\n")
-
-corr = df[numeric_cols].corr()[TARGET].sort_values(ascending=False)
-print(corr)
-
-# =========================
-# 2. T-TESTS (WIN vs LOSS)
-# =========================
-print("\n================ T-TESTS ================\n")
-
-features_to_test = [
+features = [
     "game_pressure",
     "set_pressure",
     "match_pressure",
-    "df_ratio_last_5_serves",
-    "df_distance"
+    "server_point_diff",
+    "rally_count",
+
+    "is_ace",
+    "is_forced_error",
+    "is_unforced_error",
+    "is_unret",
+
+    "tb_point",
+    "is_tiebreaker_set",
 ]
 
-for col in features_to_test:
-    if col not in df.columns:
-        continue
+features = [f for f in features if f in df.columns]
 
-    win = df[df[TARGET] == 1][col].dropna()
-    lose = df[df[TARGET] == 0][col].dropna()
+# =========================
+# CLEAN MODEL DATA
+# =========================
+df_model = df[features + [TARGET]].copy()
+
+# FORCE EVERYTHING NUMERIC (CRITICAL)
+df_model = df_model.apply(pd.to_numeric, errors="coerce")
+
+# DROP MISSING AFTER CONVERSION
+df_model = df_model.dropna()
+
+X = df_model[features].copy()
+y = df_model[TARGET].astype(float)
+
+# =========================
+# REMOVE ZERO-VARIANCE FEATURES
+# =========================
+from sklearn.feature_selection import VarianceThreshold
+
+vt = VarianceThreshold(threshold=0.0)
+vt.fit(X)
+
+kept = X.columns[vt.get_support()]
+X = X[kept]
+
+# =========================
+# REMOVE PERFECT MULTICOLLINEARITY
+# =========================
+corr_matrix = X.corr().abs()
+upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
+
+to_drop = [col for col in upper.columns if any(upper[col] > 0.999)]
+X = X.drop(columns=to_drop)
+
+# =========================
+# CORRELATION
+# =========================
+print("\n================ CORRELATION ================\n")
+corr = df_model[X.columns.tolist() + [TARGET]].corr()[TARGET].sort_values(ascending=False)
+print(corr)
+
+# =========================
+# T-TESTS
+# =========================
+print("\n================ T-TESTS ================\n")
+
+for col in X.columns:
+    win = df_model[df_model[TARGET] == 1][col].dropna()
+    lose = df_model[df_model[TARGET] == 0][col].dropna()
 
     if len(win) > 0 and len(lose) > 0:
         t_stat, p_val = stats.ttest_ind(win, lose, equal_var=False)
         print(f"{col}: t={t_stat:.4f}, p={p_val:.6f}")
 
 # =========================
-# 3. LOGISTIC REGRESSION
+# LOGISTIC REGRESSION (FIXED)
 # =========================
 print("\n================ LOGISTIC REGRESSION ================\n")
 
-features = [
-    "server_point_diff",
-    "game_pressure",
-    "set_pressure",
-    "match_pressure",
-    "df_ratio_last_5_serves",
-    "df_distance"
-]
+X_sm = sm.add_constant(X, has_constant="add")
 
-features = [f for f in features if f in df.columns]
-
-df_model = df[features + [TARGET]].dropna()
-
-X = df_model[features]
-y = df_model[TARGET]
-
-X = sm.add_constant(X)
-
-logit_model = sm.Logit(y, X).fit()
+logit_model = sm.Logit(y, X_sm).fit(maxiter=200)
 print(logit_model.summary())
 
 # =========================
-# 4. RANDOM FOREST IMPORTANCE
+# RANDOM FOREST
 # =========================
 print("\n================ RANDOM FOREST ================\n")
-
-X = df_model[features]
-y = df_model[TARGET]
 
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42
@@ -138,37 +140,46 @@ y_prob = rf.predict_proba(X_test)[:, 1]
 print("Accuracy:", accuracy_score(y_test, y_pred))
 print("ROC-AUC:", roc_auc_score(y_test, y_prob))
 
-importances = pd.Series(rf.feature_importances_, index=features)
+importances = pd.Series(rf.feature_importances_, index=X.columns)
 print("\nFeature Importances:")
 print(importances.sort_values(ascending=False))
 
 # =========================
-# 5. INTERACTION EFFECT
+# INTERACTION EFFECT
 # =========================
-print("\n================ INTERACTION EFFECT ================\n")
 
 if "df_ratio_last_5_serves" in df.columns and "game_pressure" in df.columns:
-    df["df_pressure_interaction"] = (
-        df["df_ratio_last_5_serves"] * df["game_pressure"]
+
+    df_int = df.copy()
+    df_int["df_ratio_last_5_serves"] = pd.to_numeric(df_int["df_ratio_last_5_serves"], errors="coerce")
+    df_int["game_pressure"] = pd.to_numeric(df_int["game_pressure"], errors="coerce")
+
+    df_int["df_pressure_interaction"] = (
+        df_int["df_ratio_last_5_serves"] * df_int["game_pressure"]
     )
 
-    formula = "is_server_winner ~ df_ratio_last_5_serves + game_pressure + df_pressure_interaction"
+    formula = """
+    is_server_winner ~ df_ratio_last_5_serves
+                      + game_pressure
+                      + df_pressure_interaction
+    """
 
-    interaction_model = smf.logit(formula, data=df).fit()
+    interaction_model = smf.logit(formula, data=df_int.dropna()).fit()
     print(interaction_model.summary())
 
 # =========================
-# 6. GROUPED MEANS (INTERPRETABILITY)
+# GROUPED MEANS
 # =========================
 print("\n================ GROUPED MEANS ================\n")
 
 for col in ["df_ratio_last_5_serves", "df_distance"]:
     if col in df.columns:
+        df[col] = pd.to_numeric(df[col], errors="coerce")
         print(f"\n{col}:")
         print(df.groupby(TARGET)[col].mean())
 
 # =========================
-# 7. SANITY CHECKS
+# SANITY CHECKS
 # =========================
 print("\n================ SANITY CHECKS ================\n")
 

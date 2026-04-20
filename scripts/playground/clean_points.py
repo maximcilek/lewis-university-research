@@ -5,6 +5,8 @@ import logging
 sys.path.append(str(pathlib.Path(__file__).resolve().parent.parent.parent))
 import tennisabstractscraper.models.data_objects as data_objects
 from collections import defaultdict, deque
+import numpy as np
+
 
 DATA_DIR = pathlib.Path(__file__).resolve().parent.parent.parent / "data"
 METADATA_DIR = DATA_DIR / "canonical/tennisabstract/_meta"
@@ -267,10 +269,10 @@ if __name__ == "__main__":
     for charting_match in points_by_match.keys():
         sorted_points = sorted(points_by_match[charting_match], key=lambda x: x["point_number"])
         match_state = defaultdict(lambda: defaultdict(lambda: {
-            "df_3": deque(maxlen=3),
             "df_5": deque(maxlen=5),
             "df_10": deque(maxlen=10),
             "df_15": deque(maxlen=15),
+            "df_20": deque(maxlen=20),
             "last_df_index": None,
             "serve_index": 0
         }))
@@ -284,17 +286,17 @@ if __name__ == "__main__":
             is_df = int(p.get("is_double") or 0)
             state["serve_index"] += 1
 
-            state["df_3"].append(is_df)
-            state["df_5"].append(is_df)
-            state["df_10"].append(is_df)
-            state["df_15"].append(is_df)
-
             def ratio(window): return sum(window) / len(window) if window else 0
 
-            p["df_ratio_last_3_serves"] = ratio(state["df_3"])
             p["df_ratio_last_5_serves"] = ratio(state["df_5"])
             p["df_ratio_last_10_serves"] = ratio(state["df_10"])
             p["df_ratio_last_15_serves"] = ratio(state["df_15"])
+            p["df_ratio_last_20_serves"] = ratio(state["df_20"])
+            
+            state["df_5"].append(is_df)
+            state["df_10"].append(is_df)
+            state["df_15"].append(is_df)
+            state["df_20"].append(is_df)
 
             # ---- df_distance FIRST ----
             if state["last_df_index"] is None:
@@ -305,7 +307,7 @@ if __name__ == "__main__":
             # ---- NEW FEATURES HERE ----
             if p["df_distance"] is not None:
                 p["df_distance_log"] = np.log1p(p["df_distance"])
-                p["df_recent_df"] = int(p["df_distance"] <= 3)
+                p["df_recent_df"] = int(p["df_distance"] <= 5)
             else:
                 p["df_distance_log"] = None
                 p["df_recent_df"] = 0
