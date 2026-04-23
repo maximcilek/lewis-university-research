@@ -20,6 +20,104 @@ def load_parquet(fp):
         chunks.append(chunk)
     return pd.concat(chunks, ignore_index=True)
 
+def get_df_empty_summary(df, show_empty=False):
+    summary = pd.DataFrame({
+        "nan_count": df.isna().sum(),
+        "empty_or_whitespace_count": (
+            df.astype("string").apply(lambda col: col.str.strip().eq(""))
+        ).sum(),
+    })
+    summary["total_missing_like"] = (summary["nan_count"] + summary["empty_or_whitespace_count"])
+    summary["pct_missing_like"] = summary["total_missing_like"] / len(df)
+    if not show_empty:
+        summary = summary[summary["total_missing_like"] > 0]
+    return (summary.sort_values("total_missing_like", ascending=False))
+
+def compute_serve_rally_counts(df):
+    df_new = df.copy()
+
+    def is_serve_in(series):
+        """
+        Vectorized version:
+        Returns:
+            1 if serve is in
+            0 if serve is out
+            NaN if undefined
+        """
+        cond_valid = series.notna() & (series.str.len() > 1)
+        second_char = series.str[1]
+        is_in = (~second_char.isin(list("wdnxgeVPQRS"))).astype(float)
+        is_in = is_in.where(cond_valid, other=np.nan)
+        return is_in
+
+    # Clean rally patterns
+    df_new["first_clean"] = (df["first_serve_rally"].fillna("").str.replace(r"\)\*", "0*", regex=True).str.replace(r"&\*", "0*", regex=True).str.replace(r"\?", "0", regex=True))
+    df_new["second_clean"] = (df["second_serve_rally"].fillna("").str.replace(r"\)\*", "0*", regex=True).str.replace(r"&\*", "0*", regex=True).str.replace(r"\?", "0", regex=True))
+
+    # remove lets ("c")
+    df_new["first_no_lets"] = df_new["first_clean"].str.replace("c", "", regex=False)
+    df_new["second_no_lets"] = df_new["second_clean"].str.replace("c", "", regex=False)
+
+    # Serve in/out
+    df_new["first_in"] = is_serve_in(df_new["first_no_lets"])
+    df_new["second_in"] = is_serve_in(df_new["second_no_lets"])
+
+    # Rally detection
+    df_new["is_rally_first"] = np.where(df_new["first_in"] == 0, 0, (df_new["first_no_lets"].str.len() > 2).astype(int))
+    df_new["is_rally_second"] = np.where(df_new["second_in"] == 0, 0, (df_new["second_no_lets"].str.len() > 2).astype(int))
+
+    # Extract serve outcomes
+    df_new["serve1"] = np.where(df_new["is_rally_first"] == 0, df_new["first_no_lets"], df_new["first_no_lets"].str[0])
+    df_new["serve2"] = np.where(df_new["is_rally_second"] == 0, df_new["second_no_lets"], df_new["second_no_lets"].str[0])
+    df_new["rally_part"] = np.where(df_new["is_rally_first"] == 1, df_new["first_no_lets"].str[1:], np.where(df_new["is_rally_second"] == 1, df_new["second_no_lets"].str[1:], None))
+
+    # Outcome flags (vectorized)
+    df_new["is_rally_winner"] = df_new["rally_part"].str.contains(r"\*", na=False)
+    df_new["is_forced_error"] = df_new["rally_part"].str.contains(r"#", na=False)
+    df_new["is_unforced_error"] = df_new["rally_part"].str.contains(r"@", na=False)
+
+    # double fault
+    df_new["is_double"] = ((df_new["first_in"] == 0) & (df_new["second_in"] == 0)).astype(float)
+    df_new["rally_no_spec"] = df_new["rally_part"].str.replace(r"[-=@#*;+]", "", regex=True)
+    df_new["rally_no_error"] = df_new["rally_no_spec"].str.replace(r"[dwxen]", "", regex=True)
+    df_new["rally_no_direction"] = df_new["rally_no_error"].str.replace(r"[123789]", "", regex=True)
+    df_new["rally_len"] = df_new["rally_no_direction"].str.len().fillna(0)
+    rally_counts = []
+    rally_parts = []
+    is_doubles = []
+    for i, row in df_new.iterrows():
+        w = row.get("serve1", "")
+        y = row.get("rally_part", "")
+        ai = row.get("rally_len", np.nan)  # THIS is critical (previous value)
+        is_double = bool(row.get("is_double", False))
+        rally_parts.append(y)
+        is_doubles.append(is_double)
+        # 1. blank serve1 server sequence
+        if pd.isna(w) or w == "":
+            rally_counts.append(np.nan)
+            continue
+        # 2. terminal rally
+        if isinstance(y, str) and y.endswith(("@", "#")):
+            rally_counts.append(ai)
+            continue
+        # 3. double fault
+        if is_double:
+            rally_counts.append(0)
+            continue
+        # 4. default
+        if pd.isna(ai):
+            rally_counts.append(np.nan)
+        else:
+            rally_counts.append(ai + 1)
+    df["rally_count"] = rally_counts
+    df["rally_count"] = df["rally_count"].fillna(0)
+    df["rally"] = rally_parts
+    df["rally"] = df["rally"].fillna("")
+    df["is_double"] = is_doubles
+    df["first_serve_in_play"] = df_new["first_in"]
+    df["second_serve_in_play"] = df_new["second_in"]
+    return df
+
 def plot_distribution(df, col_name):
     col = df[col_name]
 
@@ -325,36 +423,125 @@ def gmm_hmm(df, n_states=5, n_mix=2, n_iter=200):
 
     return df, model
 
+def build_serve_features(df):
+    df = df.copy()
+
+    srv1 = df["first_serve_rally"].astype("string").str.strip().str.replace("c", "", regex=False)
+    srv2 = df["second_serve_rally"].astype("string").str.strip().str.replace("c", "", regex=False)
+
+    srv1_is_empty = srv1.isna() | (srv1 == "")
+    srv2_is_empty = srv2.isna() | (srv2 == "")
+
+    srv1_is_generic = srv1.isin(["R", "S"])
+    srv1_is_penalty = srv1.isin(["P", "Q"])
+    srv1_is_fault = srv1.str.contains(r"\*?\d*[gnedVxw]$", na=False)
+    srv1_is_let = srv1.str.contains(r"\*?\d*c$", na=False)
+    srv1_is_valid = ~(srv1_is_empty | srv1_is_generic | srv1_is_penalty | srv1_is_fault | srv1_is_let)
+
+    srv2_is_generic = srv2.isin(["R", "S"])
+    srv2_is_penalty = srv2.isin(["P", "Q"])
+    srv2_is_fault = srv2.str.contains(r"\*?\d*[gnedVxw]$", na=False)
+    srv2_is_let = srv2.str.contains(r"\*?\d*c$", na=False)
+    srv2_is_valid = ~(srv2_is_empty | srv2_is_generic | srv2_is_penalty | srv2_is_fault | srv2_is_let)
+
+    df["first_serve_rally_status"] = np.select(
+        [srv1_is_generic, srv1_is_penalty, srv1_is_fault, srv1_is_let, srv1_is_empty, srv1_is_valid],
+        ["generic", "penalty", "fault", "let", "unknown", "valid"],
+        default="unknown"
+    )
+
+    df["second_serve_rally_status"] = np.select(
+        [ srv2_is_generic, srv2_is_penalty, srv2_is_fault, srv2_is_let, srv2_is_empty, srv2_is_valid],
+        ["generic", "penalty", "fault", "let", "unknown", "valid"],
+        default="unknown"
+    )
+
+    df["serve_info_missing"] = df["first_serve_in_play"].isna().astype(int)
+
+    df["first_serve_in_play_clean"] = np.select(
+        [
+            df["first_serve_rally_status"].isin(["generic", "fault", "penalty", "let"]),
+            df["first_serve_rally_status"].eq("unknown"),
+            df["first_serve_rally_status"].eq("valid")
+        ],
+        [
+            0,                                  # confirmed non-in-play or invalid structured event
+            np.nan,                             # truly unknown
+            df["first_serve_in_play"]           # trusted signal
+        ],
+        default=np.nan
+    )
+
+    df["second_serve_in_play_clean"] = np.select(
+        [
+            df["second_serve_rally_status"].isin(["generic", "fault", "penalty", "let"]),
+            df["second_serve_rally_status"].eq("unknown"),
+            df["second_serve_rally_status"].eq("valid")
+        ],
+        [
+            0,                                  # confirmed non-in-play or invalid structured event
+            np.nan,                             # truly unknown
+            df["second_serve_in_play"]           # trusted signal
+        ],
+        default=np.nan
+    )
+
+    print(df["first_serve_rally_status"].value_counts(dropna=False))
+    print(df["first_serve_in_play"].value_counts(dropna=False))
+    print(df["first_serve_in_play_clean"].value_counts(dropna=False))
+    quit()
+    return df
+
+
 if __name__ == "__main__":
 
     # =========================
     # LOAD DATA
     # =========================
     DATA_DIR = pathlib.Path(__file__).resolve().parent.parent.parent / "data"
-    parquet_file = pq.ParquetFile(DATA_DIR / "dev/tennisabstract/charting-points.parquet")
+    parquet_file = pq.ParquetFile(DATA_DIR / "prod/charting-points.parquet")
     df = load_parquet(parquet_file)
     df = df[df["match_date"] > "2000-01-01"]
-    df["first_serve_in_play"] = df["first_serve_in_play"].fillna(-1)
-    df["df_distance_missing"] = df["df_distance"].isna().astype(int)
-    df["df_distance"] = np.where(
-        df["df_distance"].isna(),
-        0.0,
-        df["df_distance"]
-    )
-    df["df_distance"] = np.log1p(df["df_distance"])
-
     if "match_id" in df.columns and "point_number" in df.columns:
         df = df.sort_values(["match_id", "point_number"])
-    
+
+    df = df[df["match_id"] != "20241127-M-Maia_CH-R32-Pedro_Araujo-Alex_Marti_Pujolras"]
+
+    #print(df["first_serve_rally"].value_counts(dropna=False))
+    #print(df["first_serve_in_play"].value_counts(dropna=False))
+
+    df = build_serve_features(df)
+
+    # print(df.head())
+    quit()
+    """
     # Set Pressure
     total_games = df["server_games"] + df["returner_games"]
     time_pressure_games = np.minimum(total_games / 13, 1.0)
     closeness_games = np.maximum(1 - (np.abs(df["server_game_diff"]) / 6), 0)
     df["set_pressure"] = 0.5 * time_pressure_games + 0.5 * closeness_games
+    """
 
     # Features
-    meta_cols = ["match_id", "point_number"]
-    cols_to_keep = ["first_serve_in_play", "match_pressure", "set_pressure", "game_pressure", "server_point_diff", "df_distance"]
+    cols_to_keep = ["first_serve_in_play", "match_pressure", "set_pressure", "game_pressure", "server_point_diff", "df_distance",
+    "is_server_winner", "is_unret", "rally_count"]
+    point_outcomes = [
+        "is_forced_error",
+        "is_unforced_error",
+        "is_double",
+        "is_rally_winner",
+        "is_ace"
+    ]
+
+    # count how many True per row
+    true_counts = df[point_outcomes].sum(axis=1)
+
+    # valid rows: 0 or 1 True
+    valid_mask = true_counts <= 1
+
+    print(f"Valid rows: {valid_mask.sum()}")
+    print(f"Invalid rows (multiple outcomes): {(~valid_mask).sum()}")
+    quit()
     features = df[cols_to_keep].copy()
     meta = df[meta_cols]
     

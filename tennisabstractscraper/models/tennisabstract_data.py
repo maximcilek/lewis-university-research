@@ -528,3 +528,90 @@ def assign_case(score_state, server, point_winner, p1_server=True):
         return "CASE_2"
 
     return None
+
+
+"""
+def compute_serve_rally_counts(df):
+    df_new = df.copy()
+
+    def is_serve_in(series):
+        \"""
+        Vectorized version:
+        Returns:
+            1 if serve is in
+            0 if serve is out
+            NaN if undefined
+        \"""
+        cond_valid = series.notna() & (series.str.len() > 1)
+        second_char = series.str[1]
+        is_in = (~second_char.isin(list("wdnxgeVPQRS"))).astype(float)
+        is_in = is_in.where(cond_valid, other=np.nan)
+        return is_in
+
+    # Clean rally patterns
+    df_new["first_clean"] = (df["first_serve_rally"].fillna("").str.replace(r"\)\*", "0*", regex=True).str.replace(r"&\*", "0*", regex=True).str.replace(r"\?", "0", regex=True))
+    df_new["second_clean"] = (df["second_serve_rally"].fillna("").str.replace(r"\)\*", "0*", regex=True).str.replace(r"&\*", "0*", regex=True).str.replace(r"\?", "0", regex=True))
+
+    # remove lets ("c")
+    df_new["first_no_lets"] = df_new["first_clean"].str.replace("c", "", regex=False)
+    df_new["second_no_lets"] = df_new["second_clean"].str.replace("c", "", regex=False)
+
+    # Serve in/out
+    df_new["first_in"] = is_serve_in(df_new["first_no_lets"])
+    df_new["second_in"] = is_serve_in(df_new["second_no_lets"])
+
+    # Rally detection
+    df_new["is_rally_first"] = np.where(df_new["first_in"] == 0, 0, (df_new["first_no_lets"].str.len() > 2).astype(int))
+    df_new["is_rally_second"] = np.where(df_new["second_in"] == 0, 0, (df_new["second_no_lets"].str.len() > 2).astype(int))
+
+    # Extract serve outcomes
+    df_new["serve1"] = np.where(df_new["is_rally_first"] == 0, df_new["first_no_lets"], df_new["first_no_lets"].str[0])
+    df_new["serve2"] = np.where(df_new["is_rally_second"] == 0, df_new["second_no_lets"], df_new["second_no_lets"].str[0])
+    df_new["rally_part"] = np.where(df_new["is_rally_first"] == 1, df_new["first_no_lets"].str[1:], np.where(df_new["is_rally_second"] == 1, df_new["second_no_lets"].str[1:], None))
+
+    # Outcome flags (vectorized)
+    df_new["is_rally_winner"] = df_new["rally_part"].str.contains(r"\*", na=False)
+    df_new["is_forced_error"] = df_new["rally_part"].str.contains(r"#", na=False)
+    df_new["is_unforced_error"] = df_new["rally_part"].str.contains(r"@", na=False)
+
+    # double fault
+    df_new["is_double"] = ((df_new["first_in"] == 0) & (df_new["second_in"] == 0)).astype(float)
+    df_new["rally_no_spec"] = df_new["rally_part"].str.replace(r"[-=@#*;+]", "", regex=True)
+    df_new["rally_no_error"] = df_new["rally_no_spec"].str.replace(r"[dwxen]", "", regex=True)
+    df_new["rally_no_direction"] = df_new["rally_no_error"].str.replace(r"[123789]", "", regex=True)
+    df_new["rally_len"] = df_new["rally_no_direction"].str.len().fillna(0)
+    rally_counts = []
+    rally_parts = []
+    is_doubles = []
+    for i, row in df_new.iterrows():
+        w = row.get("serve1", "")
+        y = row.get("rally_part", "")
+        ai = row.get("rally_len", np.nan)  # THIS is critical (previous value)
+        is_double = bool(row.get("is_double", False))
+
+        rally_parts.append(y)
+        is_doubles.append(is_double)
+        # 1. blank serve1 server sequence
+        if pd.isna(w) or w == "":
+            rally_counts.append(np.nan)
+            continue
+        # 2. terminal rally
+        if isinstance(y, str) and y.endswith(("@", "#")):
+            rally_counts.append(ai)
+            continue
+        # 3. double fault
+        if is_double:
+            rally_counts.append(0)
+            continue
+        # 4. default
+        if pd.isna(ai):
+            rally_counts.append(np.nan)
+        else:
+            rally_counts.append(ai + 1)
+    df["rally_count"] = rally_counts
+    df["rally_count"] = df["rally_count"].fillna(0)
+    df["rally"] = rally_parts
+    df["rally"] = df["rally"].fillna("")
+    df["is_double"] = is_doubles
+    return df
+"""
