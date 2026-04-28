@@ -287,7 +287,7 @@ class TennisAbstractPointsData:
     
     
     def _is_serve_in(self, clean_rally_pattern):
-      # 1st Rally In: =IF(N18="","",IF(LEN(FIRST_SERVE_RALLY_PATTERN)=1,"",IF(ISERROR(FIND(MID(FIRST_SERVE_RALLY_PATTERN_NO_LETS,2,1),"wdnxgeVPQRS"))=TRUE(),1,0)))
+      # 1st Rally In: =IF(FIRST_SERVE_RALLY_PATTERN="","",IF(LEN(FIRST_SERVE_RALLY_PATTERN)=1,"",IF(ISERROR(FIND(MID(FIRST_SERVE_RALLY_PATTERN_NO_LETS,2,1),"wdnxgeVPQRS"))=TRUE(),1,0)))
       if not clean_rally_pattern or len(clean_rally_pattern) == 1:
           is_in = None
       else:
@@ -380,7 +380,7 @@ class TennisAbstractPointsData:
                     tb_set = self._is_point_in_tiebreaker_set(point.get("tiebreaker_set"))
                     point, prev_point = self._update_tiebreak_point_flag(point, prev_point, tb_set)
                     
-                    # IsRally1st =IF(N18="","",IF(S18=0,0,IF(LEN(Q18)>2,1,0)))
+                    # IsRally1st =IF(FIRST_SERVE_RALLY_PATTERN="","",IF(FIRST_SERVE_IN=0,0,IF(LEN(FIRST_SERVE_RALLY_PATTERN_NO_LETS)>2,1,0)))
                     is_rally_first = 0 if first_in == 0 else int(len(first_no_let) > 2)
                     is_rally_second = 0 if second_in == 0 else int(len(second_no_let) > 2)
 

@@ -1,38 +1,52 @@
 import pyarrow.json as paj
 import pyarrow.parquet as pq
-import sys
-sys.path.append(str(pathlib.Path(__file__).resolve().parent.parent.parent))
+import pandas as pd
+import pathlib
+import dask.dataframe as dd
 
 # ENV VARIABLES
 DATA_DIR = pathlib.Path(__file__).resolve().parent.parent.parent / "data/prod"
-INPUT_FILE = DATA_DIR / "players.jsonl"
+INPUT_FILE = "/home/mcilek/Desktop/TennisAbstract-Old/charting_matches.jsonl"
+OUTPUT_FILE = DATA_DIR / "charting-matches.parquet"
 
 def load_full_file(fp):
-  parquet_file = pq.ParquetFile(fp)
-  chunks = []
-  for batch in parquet_file.iter_batches(batch_size=10000):
-      chunk = batch.to_pandas()
-      chunks.append(chunk)
+    # Read JSONL properly
+    table = paj.read_json(fp)
 
-  df = pd.concat(chunks, ignore_index=True)
+    # Convert to pandas
+    df = table.to_pandas()
 
-reader = paj.open_json(INPUT_FILE)
-# reader = paj.open_json(INPUT_FILE, parse_options=paj.ParseOptions(explicit_schema=None))
+    # Save as parquet
+    df.to_parquet(OUTPUT_FILE, index=False)
 
-with pq.ParquetWriter("data/prod/charting_matches.parquet", reader.schema) as writer:
-    for batch in reader:
-        writer.write_batch(batch)
+    print(f"Saved parquet to: {OUTPUT_FILE}")
+    print(df.shape)
 
-import dask.dataframe as dd
+def write_in_batches(fp):
+    # reader = paj.open_json(fp)
+    reader = paj.open_json(INPUT_FILE, parse_options=paj.ParseOptions(explicit_schema=None))
 
-df = dd.read_json(
-    "data/dev/tennisabstract/players_all.jsonl",
-    lines=True,
-    blocksize="64MB",
-    dtype="object"
-)
+    with pq.ParquetWriter(OUTPUT_FILE, reader.schema) as writer:
+        for batch in reader:
+            writer.write_batch(batch)
 
-df.to_parquet(
-    "data/prod/players.parquet",
-    engine="pyarrow"
-)
+def dask_to_parquet(fp):
+    df = dd.read_json(
+        fp,
+        lines=True,
+        blocksize="64MB",
+        dtype="object"   # <-- forces everything to string-like first
+    )
+
+    # Optional: clean columns after load
+    df["best_of"] = df["best_of"].astype("float6")
+
+    df.to_parquet(
+        OUTPUT_FILE,
+        engine="pyarrow",
+        write_index=False
+    )
+
+    print("Saved parquet:", OUTPUT_FILE)
+# write_in_batches(INPUT_FILE)
+dask_to_parquet(INPUT_FILE)

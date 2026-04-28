@@ -2,6 +2,7 @@ import pandas as pd
 import pathlib
 import numpy as np
 from collections import defaultdict
+import json
 # import sys
 # sys.path.append(str(pathlib.Path(__file__).resolve().parent.parent.parent))
 
@@ -116,6 +117,8 @@ def compute_serve_rally_counts(df):
     df["is_double"] = is_doubles
     df["first_serve_in_play"] = df_new["first_in"]
     df["second_serve_in_play"] = df_new["second_in"]
+    df["first_no_lets"] = df_new["first_no_lets"]
+    df["second_no_lets"] = df_new["second_no_lets"]
     return df
 
 def plot_distribution(df, col_name):
@@ -423,74 +426,205 @@ def gmm_hmm(df, n_states=5, n_mix=2, n_iter=200):
 
     return df, model
 
+def iterate_matches(df):
+    """
+    Iterates through dataframe grouped by match_id,
+    with each match sorted by point_number.
+    """
+    for match_id, match_df in df.groupby("match_id", sort=False):
+        match_df = match_df.sort_values("point_number")
+        yield match_id, match_df
+
+
 def build_serve_features(df):
-    df = df.copy()
 
-    srv1 = df["first_serve_rally"].astype("string").str.strip().str.replace("c", "", regex=False)
-    srv2 = df["second_serve_rally"].astype("string").str.strip().str.replace("c", "", regex=False)
+    def is_serve_in(x):
+        if x is None or pd.isna(x):
+            return np.nan
+        x = str(x).strip()
+        if len(x) == 0:
+            return np.nan
+        char = x[1] if len(x) > 1 else x[0]
+        char = char.replace("D", "d")
+        if len(char) == 1 and char in ["P", "Q", "R", "S"]:
+            return np.nan
+        elif char in "nwdxge!V":
+            return 0
+        return 1
+    
+    def is_fault(x):
+        if x is None or pd.isna(x):
+            return np.nan
 
-    srv1_is_empty = srv1.isna() | (srv1 == "")
-    srv2_is_empty = srv2.isna() | (srv2 == "")
+        x = str(x).strip()
+        if len(x) == 0:
+            return np.nan
 
-    srv1_is_generic = srv1.isin(["R", "S"])
-    srv1_is_penalty = srv1.isin(["P", "Q"])
-    srv1_is_fault = srv1.str.contains(r"\*?\d*[gnedVxw]$", na=False)
-    srv1_is_let = srv1.str.contains(r"\*?\d*c$", na=False)
-    srv1_is_valid = ~(srv1_is_empty | srv1_is_generic | srv1_is_penalty | srv1_is_fault | srv1_is_let)
+        char = x[1] if len(x) > 1 else x[0]
+        char = char.replace("D", "d")
 
-    srv2_is_generic = srv2.isin(["R", "S"])
-    srv2_is_penalty = srv2.isin(["P", "Q"])
-    srv2_is_fault = srv2.str.contains(r"\*?\d*[gnedVxw]$", na=False)
-    srv2_is_let = srv2.str.contains(r"\*?\d*c$", na=False)
-    srv2_is_valid = ~(srv2_is_empty | srv2_is_generic | srv2_is_penalty | srv2_is_fault | srv2_is_let)
+        # penalties → not faults
+        if len(char) == 1 and char in ["P", "Q", "R", "S"]:
+            return np.nan
 
+        # serve faults
+        if char in "nwdxg!V":
+            return 1
+
+        return 0
+    new_df = df.copy()
+
+    # -------------------------
+    # RAW INPUTS
+    # -------------------------
+    srv1 = df["first_serve_rally"].astype("string").str.strip().str.replace(" ", "")
+    srv2 = df["second_serve_rally"].astype("string").str.strip().str.replace(" ", "")
+
+    srv1_no_lets = srv1.str.replace("c", "", regex=False)
+    srv2_no_lets = srv2.str.replace("c", "", regex=False)
+
+    # -------------------------
+    # SERVE IN PLAY
+    # -------------------------
+    new_df["first_serve_in"] = srv1_no_lets.apply(is_serve_in)
+    new_df["second_serve_in"] = srv2_no_lets.apply(is_serve_in)
+
+    first_in = new_df["first_serve_in"]
+    second_in = new_df["second_serve_in"]
+    is_srv1_empty = srv1.isna() | (srv1_no_lets == "")
+    is_srv2_empty = srv2.isna() | (srv2_no_lets == "")
+    new_df["is_first_serve_empty"] = is_srv1_empty
+    new_df["is_second_serve_empty"] = is_srv2_empty
+
+    # RALLY FLAGS
+    is_rally_first = pd.Series(np.nan, index=df.index)
+    is_rally_second = pd.Series(np.nan, index=df.index)
+
+    is_rally_first[is_srv1_empty] = np.nan
+    is_rally_first[first_in == 0] = 0
+    is_rally_first[(first_in == 1) & (srv1_no_lets.str.len() > 2)] = 1
+    is_rally_first[(first_in == 1) & (srv1_no_lets.str.len() <= 2)] = 0
+
+    is_rally_second[is_srv2_empty] = np.nan
+    is_rally_second[second_in == 0] = 0
+    is_rally_second[(second_in == 1) & (srv2_no_lets.str.len() > 2)] = 1
+    is_rally_second[(second_in == 1) & (srv2_no_lets.str.len() <= 2)] = 0
+
+    new_df["is_rally_first"] = is_rally_first
+    new_df["is_rally_second"] = is_rally_second
+    
+    # ---- FIRST SERVE STATUS ----
+    srv1_is_empty = is_srv1_empty
+    srv1_is_valid = first_in == 1
+    first_fault = srv1_no_lets.apply(is_fault)
+    # srv1_is_fault = first_in == 0
+    is_penalty = srv1_no_lets.isin(["P", "Q"]) | srv2_no_lets.isin(["P", "Q"])
+    # srv1_is_let = srv1.str.contains("c", na=False)
+
+    # ---- SECOND SERVE STATUS ----
+    srv2_is_empty = is_srv2_empty
+    srv2_is_valid = second_in == 1
+    second_fault = srv2_no_lets.apply(is_fault)
+    # srv2_is_fault = second_in == 0
+    # is_double = (first_in == 0) & (second_in == 0)
+    # srv2_is_let = srv2.str.contains("c", na=False)
+
+    new_df["has_second_serve_info"] = (~second_in.isna()).astype(int)
+    new_df["first_serve_is_fault"] = (first_fault)# .astype("Int64")
+    new_df["second_serve_is_fault"] = (second_fault) #.astype("Int64")
+    new_df["is_penalty"] = (is_penalty).astype(int)
+    is_double = (first_fault == 1) & (second_fault == 1)
+    new_df["is_double"] = is_double
+    
+
+    """if is_rally_first == 1:
+        rally_part = first_no_let[1:]
+    elif is_rally_second == 1:
+        rally_part = second_no_let[1:]
+    else:
+        rally_part = None
+
+    serve1 = first_no_let if is_rally_first == 0 else first_no_let[0]
+    serve2 = second_no_let if is_rally_second == 0 else second_no_let[0]
+    is_unret = "#" in serve1 if serve2 in [None, ""] else "#" in serve2
+    is_rally_winner = "*" in rally_part if rally_part else False
+    is_forced = "#" in rally_part if rally_part else False
+    is_unforced = "@" in rally_part if rally_part else False
+    rally_no_spec = rally_part.translate(str.maketrans("", "", "-=@#*;+")) if rally_part else None
+    # RallyNoError: =SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(RALLY_NO_SPEC, "d", ""), "w", ""), "x", ""), "e", ""), "n", "")
+    rally_no_error = rally_no_spec.translate(str.maketrans("", "", "dwxen")) if rally_no_spec else None
+    # RallyNoDirection: =SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(RALLY_NO_ERROR, "1", ""), "2", ""), "3", ""), "7", ""), "8", ""), "9", "")
+    rally_no_direction = rally_no_error.translate(str.maketrans("", "", "123789")) if rally_no_error else None
+    # RallyLen: =IF(N18="","",LEN(RALLY_NO_DIRECTION))
+    rally_len = None if rally_no_direction is None else len(rally_no_direction)"""
+    return new_df
+    
+
+    # srv1_outcome_only = srv1nolets.isin(["R", "S"])
+    # srv1_is_penalty = srv1nolets.isin(["P", "Q"])
+    # srv1_is_fault = srv1nolets.str.contains(r"\*?\d*[gnedVxw]$", na=False)
+    # srv1_is_let = srv1.str.contains(r"\*?\d*c$", na=False)
+    # srv1_is_valid = ~(srv1_is_empty | srv1_outcome_only | srv1_is_penalty | srv1_is_fault | srv1_is_let)
+# 
+    # srv2_outcome_only = srv2nolets.isin(["R", "S"])
+    # srv2_is_penalty = srv2nolets.isin(["P", "Q"])
+    # srv2_is_fault = srv2nolets.str.contains(r"\*?\d*[gnedVxw]$", na=False)
+    # srv2_is_let = srv2.str.contains(r"\*?\d*c$", na=False)
+    # srv2_is_valid = ~(srv2_is_empty | srv2_outcome_only | srv2_is_penalty | srv2_is_fault | srv2_is_let)
+    # new_df["is_first_serve_valid"] = srv1_is_valid.astype(bool)
+    # new_df["is_second_serve_valid"] = srv2_is_valid.astype(bool)
+    # return new_df
+
+    """srv_outcomes = ["point outcome only", "penalty", "fault", "let", "unknown", "valid"]
     df["first_serve_rally_status"] = np.select(
         [srv1_is_generic, srv1_is_penalty, srv1_is_fault, srv1_is_let, srv1_is_empty, srv1_is_valid],
-        ["generic", "penalty", "fault", "let", "unknown", "valid"],
+        rally_outcomes,
         default="unknown"
     )
-
     df["second_serve_rally_status"] = np.select(
-        [ srv2_is_generic, srv2_is_penalty, srv2_is_fault, srv2_is_let, srv2_is_empty, srv2_is_valid],
-        ["generic", "penalty", "fault", "let", "unknown", "valid"],
+        [ srv2_outcome_only, srv2_is_penalty, srv2_is_fault, srv2_is_let, srv2_is_empty, srv2_is_valid],
+        rally_outcomes,
         default="unknown"
     )
 
     df["serve_info_missing"] = df["first_serve_in_play"].isna().astype(int)
+    """
 
-    df["first_serve_in_play_clean"] = np.select(
-        [
-            df["first_serve_rally_status"].isin(["generic", "fault", "penalty", "let"]),
-            df["first_serve_rally_status"].eq("unknown"),
-            df["first_serve_rally_status"].eq("valid")
-        ],
-        [
-            0,                                  # confirmed non-in-play or invalid structured event
-            np.nan,                             # truly unknown
-            df["first_serve_in_play"]           # trusted signal
-        ],
-        default=np.nan
-    )
-
-    df["second_serve_in_play_clean"] = np.select(
-        [
-            df["second_serve_rally_status"].isin(["generic", "fault", "penalty", "let"]),
-            df["second_serve_rally_status"].eq("unknown"),
-            df["second_serve_rally_status"].eq("valid")
-        ],
-        [
-            0,                                  # confirmed non-in-play or invalid structured event
-            np.nan,                             # truly unknown
-            df["second_serve_in_play"]           # trusted signal
-        ],
-        default=np.nan
-    )
-
-    print(df["first_serve_rally_status"].value_counts(dropna=False))
-    print(df["first_serve_in_play"].value_counts(dropna=False))
-    print(df["first_serve_in_play_clean"].value_counts(dropna=False))
-    quit()
+def add_hazard_df_distance(df):
+    hazard_values = []
+    for match_id, match_df in iterate_matches(df):
+        for idx, row in match_df.iterrows():
+            t = row["df_distance"]
+            if pd.isna(t):
+                hazard = 0.0
+            else:
+                hazard = 1 / (1 + float(t))
+            hazard_values.append((idx, hazard))
+    # assign back to original dataframe
+    for idx, hazard in hazard_values:
+        df.loc[idx, "hazard_df_distance"] = hazard
     return df
+
+def plot_hazard_df_distance(df):
+    total_n = len(df["hazard_df_distance"])
+    x = df["hazard_df_distance"].dropna().sort_values()
+    kept_n = len(x)
+    dropped_n = total_n - kept_n
+
+    print(f"Total values: {total_n}")
+    print(f"Non-missing values used in CDF: {kept_n}")
+    print(f"Dropped missing values: {dropped_n}")
+
+    # cumulative probabilities
+    y = np.arange(1, kept_n + 1) / kept_n
+
+    plt.figure(figsize=(8,5))
+    plt.plot(x, y)
+    plt.xlabel("hazard_df_distance")
+    plt.ylabel("Cumulative Probability")
+    plt.title("Cumulative Distribution of hazard_df_distance")
+    plt.grid(True)
+    plt.show()
 
 
 if __name__ == "__main__":
@@ -499,49 +633,65 @@ if __name__ == "__main__":
     # LOAD DATA
     # =========================
     DATA_DIR = pathlib.Path(__file__).resolve().parent.parent.parent / "data"
-    parquet_file = pq.ParquetFile(DATA_DIR / "prod/charting-points.parquet")
+    parquet_file = pq.ParquetFile(DATA_DIR / f"prod/charting-points.parquet")
     df = load_parquet(parquet_file)
-    df = df[df["match_date"] > "2000-01-01"]
+    # df = df[df["match_date"] > "2000-01-01"]
     if "match_id" in df.columns and "point_number" in df.columns:
         df = df.sort_values(["match_id", "point_number"])
 
-    df = df[df["match_id"] != "20241127-M-Maia_CH-R32-Pedro_Araujo-Alex_Marti_Pujolras"]
-
-    #print(df["first_serve_rally"].value_counts(dropna=False))
-    #print(df["first_serve_in_play"].value_counts(dropna=False))
-
+    rmv_match_ids = ["20241127-M-Maia_CH-R32-Pedro_Araujo-Alex_Marti_Pujolras", "20030701-M-Wimbledon-SF-Mark_Philippoussis-Sebastien_Grosjean", "20120113-W-Hobart-SF-Angelique_Kerber-Mona_Barthel"] # , '20040222-M-Rotterdam-F-Juan_Carlos_Ferrero-Lleyton_Hewitt', '20091011-M-Shanghai_Masters-R16-Fernando_Gonzalez-Nikolay_Davydenko', '20101003-M-Kuala_Lumpur-F-Andrey_Golubev-Mikhail_Youzhny', '20110614-W-Eastbourne-R32-Ana_Ivanovic-Julia_Goerges', '20120319-M-Indian_Wells_Masters-F-Roger_Federer-John_Isner', '20130105-M-Brisbane-SF-Kei_Nishikori-Andy_Murray', '20130217-M-Rotterdam-F-Julien_Benneteau-Juan_Martin_Del_Potro', '20130808-M-Canada_Masters-R16-Ernests_Gulbis-Andy_Murray', '20150927-M-Metz-SF-Jo_Wilfried_Tsonga-Philipp_Kohlschreiber', '20151006-M-Beijing-R32-Novak_Djokovic-Simone_Bolelli', '20151101-M-Basel-F-Rafael_Nadal-Roger_Federer', '20170206-M-Davis_Cup_World_Group_R1-RR-Kyle_Edmund-Denis_Shapovalov', '20180122-W-Australian_Open-R16-Su_Wei_Hsieh-Angelique_Kerber', '20180326-W-Miami-R16-Monica_Puig-Danielle_Collins', '20180329-W-Miami-SF-Jelena_Ostapenko-Danielle_Collins', '20190716-M-Amersfoort_CH-R64-Gijs_Brouwer-Holger_Rune', '20210605-M-Roland_Garros-R32-Roger_Federer-Dominik_Koepfer', '20211027-M-Vienna-R32-Reilly_Opelka-Jannik_Sinner', '20220117-W-Australian_Open-R128-Madison_Keys-Sofia_Kenin', '20220721-M-Hamburg-R16-Andrey_Rublev-Francisco_Cerundolo', '20220916-M-Davis_Cup_Finals-RR-Tallon_Griekspoor-Daniel_Evans', '20230104-M-United_Cup-RR-Hubert_Hurkacz-Matteo_Berrettini', '20230605-M-Roland_Garros-R16-Grigor_Dimitrov-Alexander_Zverev', '20230607-M-Roland_Garros-QF-Casper_Ruud-Holger_Rune', '20230703-M-Wimbledon-R128-Emil_Ruusuvuori-Stan_Wawrinka', '20230831-M-US_Open-R64-Hubert_Hurkacz-Jack_Draper', '20230904-M-US_Open-R16-Jannik_Sinner-Alexander_Zverev', '20231015-M-Shanghai_Masters-F-Hubert_Hurkacz-Andrey_Rublev', '20231028-M-Basel-SF-Ugo_Humbert-Hubert_Hurkacz', '20231031-M-Paris_Masters-R64-Hubert_Hurkacz-Sebastian_Korda', '20240210-M-Marseille-SF-Hubert_Hurkacz-Ugo_Humbert', '20240213-M-Rotterdam-R32-Hubert_Hurkacz-Jiri_Lehecka', '20240215-M-Rotterdam-R16-Hubert_Hurkacz-Tallon_Griekspoor', '20240325-M-Miami_Masters-R32-Ben_Shelton-Lorenzo_Musetti', '20240602-M-Roland_Garros-R16-Jannik_Sinner-Corentin_Moutet', '20240701-M-Wimbledon-R128-Alex_Michelsen-Lloyd_Harris', '20250320-M-Miami_Masters-R128-Learner_Tien-Joao_Fonseca', '20250509-W-Rome-R64-Emiliana_Arango-Mirra_Andreeva', '20250512-M-Rome_Masters-R32-Hubert_Hurkacz-Marcos_Giron', '20250513-M-Rome_Masters-R16-Jakub_Mensik-Hubert_Hurkacz', '20250530-W-Roland_Garros-R32-Iga_Swiatek-Jaqueline_Cristian', '20250630-M-Wimbledon-R128-Giovanni_Mpetshi_Perricard-Taylor_Fritz', '20250702-M-Wimbledon-R64-Gabriel_Diallo-Taylor_Fritz', '20250711-M-Wimbledon-SF-Novak_Djokovic-Jannik_Sinner', '20251121-M-Davis_Cup_Finals-RR-Flavio_Cobolli-Zizou_Bergs']
+    df = df[~df["match_id"].isin(rmv_match_ids)]
+    # df = compute_serve_rally_counts(df)
     df = build_serve_features(df)
 
-    # print(df.head())
+    print(df["first_serve_in"].value_counts(dropna=False))
+    print(df["second_serve_in"].value_counts(dropna=False))
+    print("=======================================")
+    print(df["is_first_serve_empty"].value_counts(dropna=False))
+    print(df["is_second_serve_empty"].value_counts(dropna=False))
+    print("=======================================")
+    print(df["is_rally_first"].value_counts(dropna=False))
+    print(df["is_rally_second"].value_counts(dropna=False))
+    print("=======================================")
+    print(df["first_serve_is_fault"].value_counts(dropna=False))
+    print(df["second_serve_is_fault"].value_counts(dropna=False))
+    print("=======================================")
+    print(df["is_penalty"].value_counts(dropna=False))
+    print(df["has_second_serve_info"].value_counts(dropna=False))
+    df = df.drop(columns=["first_serve_in_play", "second_serve_in_play"])
+    df["is_double"] = (df["is_double"].map(lambda x: str(x).lower() if pd.notnull(x) else None).map({"1": 1, "0": 0, "true": 1, "false": 0, "yes": 1, "no": 0}).astype("int"))
+    
+    print(df["is_double"].value_counts())
+    print(get_df_empty_summary(df))
     quit()
-    """
-    # Set Pressure
-    total_games = df["server_games"] + df["returner_games"]
-    time_pressure_games = np.minimum(total_games / 13, 1.0)
-    closeness_games = np.maximum(1 - (np.abs(df["server_game_diff"]) / 6), 0)
-    df["set_pressure"] = 0.5 * time_pressure_games + 0.5 * closeness_games
-    """
+
+    df["is_ace"] = (df["is_ace"].map(lambda x: str(x).lower() if pd.notnull(x) else None).map({"1": 1, "0": 0, "true": 1, "false": 0, "yes": 1, "no": 0}).astype("int"))
+    df["is_rally_winner"] = (df["is_rally_winner"].map(lambda x: str(x).lower() if pd.notnull(x) else None).map({"1": 1, "0": 0, "true": 1, "false": 0, "yes": 1, "no": 0}).astype("int"))
+    df["is_forced_error"] = (df["is_forced_error"].map(lambda x: str(x).lower() if pd.notnull(x) else None).map({"1": 1, "0": 0, "true": 1, "false": 0, "yes": 1, "no": 0}).astype("int"))
+    df["is_unforced_error"] = (df["is_unforced_error"].map(lambda x: str(x).lower() if pd.notnull(x) else None).map({"1": 1, "0": 0, "true": 1, "false": 0, "yes": 1, "no": 0}).astype("int"))
+    df["is_unret"] = (df["is_unret"].map(lambda x: str(x).lower() if pd.notnull(x) else None).map({"1": 1, "0": 0, "true": 1, "false": 0, "yes": 1, "no": 0}).astype("int"))
+    df['has_df_distance'] = df['df_distance'].notna().astype(int)
+    df['df_distance'] = df['df_distance'].notna().astype(int)
+    
+    #df.to_parquet(DATA_DIR / "dev/charting-points.parquet", engine="pyarrow", index=False)
+    df = add_hazard_df_distance(df)
+    df['has_second_serve'] = (df['first_serve_rally_status'] != 'valid').astype(int)
+    df["first_serve_in_play"] = df["first_serve_in_play"].astype(int)
+    df['second_serve_in_play'] = df['second_serve_in_play'].fillna(0).astype(int)
 
     # Features
-    cols_to_keep = ["first_serve_in_play", "match_pressure", "set_pressure", "game_pressure", "server_point_diff", "df_distance",
-    "is_server_winner", "is_unret", "rally_count"]
-    point_outcomes = [
-        "is_forced_error",
-        "is_unforced_error",
-        "is_double",
-        "is_rally_winner",
-        "is_ace"
-    ]
+    # "point_number", "first_no_lets", "second_no_lets", 
+    cols_to_keep = ["first_serve_in_play", "has_second_serve", "second_serve_in_play", "server_point_diff", "has_df_distance", "df_distance", "is_server_winner", "is_unret", "rally_count", "first_serve_rally_status", "second_serve_rally_status"]
+    point_outcomes = ["is_forced_error", "is_unforced_error", "is_double", "is_rally_winner", "is_ace"]
+    df = df[cols_to_keep + point_outcomes].copy() # ["match_id", "point_number"]
+    print(df["second_serve_in_play"].value_counts())
+    print(df["has_second_serve"].value_counts())
 
-    # count how many True per row
-    true_counts = df[point_outcomes].sum(axis=1)
-
-    # valid rows: 0 or 1 True
-    valid_mask = true_counts <= 1
-
-    print(f"Valid rows: {valid_mask.sum()}")
-    print(f"Invalid rows (multiple outcomes): {(~valid_mask).sum()}")
+    #print(df.head(20))
+    #print(df.info())
+    # plot_hazard_df_distance(df)
     quit()
+
     features = df[cols_to_keep].copy()
     meta = df[meta_cols]
     
@@ -610,7 +760,7 @@ if __name__ == "__main__":
 """
 (E) Missing value / segmentation check
 
-You didn’t explicitly validate:
+You didn't explicitly validate:
 
 NaNs per feature after scaling
 segment imbalance (players, matches, surfaces)
@@ -627,12 +777,20 @@ Check:
 
 does scaling leak across matches?
 
-Better practice:
-👉 scale within match, not globally
+Better practice: scale within match, not globally
 
 Otherwise:
 
 match pressure becomes “cross-match comparable”
 which can distort state learning
 
+"""
+
+
+"""
+# Set Pressure
+total_games = df["server_games"] + df["returner_games"]
+time_pressure_games = np.minimum(total_games / 13, 1.0)
+closeness_games = np.maximum(1 - (np.abs(df["server_game_diff"]) / 6), 0)
+df["set_pressure"] = 0.5 * time_pressure_games + 0.5 * closeness_games
 """

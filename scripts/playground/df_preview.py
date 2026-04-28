@@ -9,25 +9,42 @@ sys.path.append(str(pathlib.Path(__file__).resolve().parent.parent.parent))
 import pyarrow.parquet as pq
 
 
-DATA_DIR = pathlib.Path(__file__).resolve().parent.parent.parent / "data"
-METADATA_DIR = DATA_DIR / "canonical/tennisabstract/_meta"
 
-# df = pd.read_json(DATA_DIR / "prod/charting_points_clean.jsonl", lines=True)
+DATA_DIR = pathlib.Path(__file__).resolve().parent.parent.parent / "data/prod"
+INPUT_FILE = "/home/mcilek/Desktop/TennisAbstract-Old/charting_matches.jsonl"
+OUTPUT_FILE = DATA_DIR / "charting-matches.parquet"
+
+df = pd.read_json(INPUT_FILE, lines=True)
+df["best_of"] = pd.to_numeric(df["best_of"], errors="coerce")
+df["is_final_tiebreaker"] = (
+    df["is_final_tiebreaker"]
+    .map(lambda x: str(x).lower() if pd.notnull(x) else None)
+    .map({
+        "1": True,
+        "0": False,
+        "true": True,
+        "false": False,
+        "yes": True,
+        "no": False
+    })
+    .astype("boolean")
+)
 
 # print(df.info())
 # print("--------------------------------------------")
 # print(df.head(20))
 
 
-parquet_file = pq.ParquetFile(DATA_DIR / "dev/tennisabstract/class/points.parquet")
+#parquet_file = pq.ParquetFile(INPUT_FILE)
 
-chunks = []
+#chunks = []
 
-for batch in parquet_file.iter_batches(batch_size=10000):
-    chunk = batch.to_pandas()
-    chunks.append(chunk)
+#for batch in parquet_file.iter_batches(batch_size=10000):
+#    chunk = batch.to_pandas()
+#    chunks.append(chunk)
 
-df = pd.concat(chunks, ignore_index=True)
+#df = pd.concat(chunks, ignore_index=True)
+df.to_parquet(OUTPUT_FILE, index=False)
 
 print(df.info())
 
