@@ -536,27 +536,104 @@ def build_serve_features(df):
     is_double = (first_fault == 1) & (second_fault == 1)
     new_df["is_double"] = is_double
     
+    # RALLY FLAGS
+    is_rally_first = pd.Series(np.nan, index=df.index)
+    is_rally_second = pd.Series(np.nan, index=df.index)
 
-    """if is_rally_first == 1:
-        rally_part = first_no_let[1:]
-    elif is_rally_second == 1:
-        rally_part = second_no_let[1:]
-    else:
-        rally_part = None
+    is_rally_first[is_srv1_empty] = np.nan
+    is_rally_first[first_in == 0] = 0
+    is_rally_first[(first_in == 1) & (srv1_no_lets.str.len() > 2)] = 1
+    is_rally_first[(first_in == 1) & (srv1_no_lets.str.len() <= 2)] = 0
+    is_rally_second[is_srv2_empty] = np.nan
+    is_rally_second[second_in == 0] = 0
+    is_rally_second[(second_in == 1) & (srv2_no_lets.str.len() > 2)] = 1
+    is_rally_second[(second_in == 1) & (srv2_no_lets.str.len() <= 2)] = 0
 
-    serve1 = first_no_let if is_rally_first == 0 else first_no_let[0]
-    serve2 = second_no_let if is_rally_second == 0 else second_no_let[0]
-    is_unret = "#" in serve1 if serve2 in [None, ""] else "#" in serve2
-    is_rally_winner = "*" in rally_part if rally_part else False
-    is_forced = "#" in rally_part if rally_part else False
-    is_unforced = "@" in rally_part if rally_part else False
+    #is_rally_first = pd.Series(pd.NA, index=df.index, dtype="Int64")
+    #is_rally_second = pd.Series(pd.NA, index=df.index, dtype="Int64")
+
+    new_df["is_rally_first"] = is_rally_first
+    new_df["is_rally_second"] = is_rally_second
+    
+    # ---- FIRST SERVE STATUS ----
+    srv1_is_empty = is_srv1_empty
+    srv1_is_valid = first_in == 1
+    first_fault = srv1_no_lets.apply(is_fault)
+    # srv1_is_fault = first_in == 0
+    is_penalty = srv1_no_lets.isin(["P", "Q"]) | srv2_no_lets.isin(["P", "Q"])
+    # srv1_is_let = srv1.str.contains("c", na=False)
+
+    # ---- SECOND SERVE STATUS ----
+    srv2_is_empty = is_srv2_empty
+    srv2_is_valid = second_in == 1
+    second_fault = srv2_no_lets.apply(is_fault)
+    # srv2_is_fault = second_in == 0
+    # is_double = (first_in == 0) & (second_in == 0)
+    # srv2_is_let = srv2.str.contains("c", na=False)
+
+    new_df["has_second_serve_info"] = (~second_in.isna()).astype(int)
+    new_df["first_serve_is_fault"] = (first_fault)# .astype("Int64")
+    new_df["second_serve_is_fault"] = (second_fault) #.astype("Int64")
+    new_df["is_penalty"] = (is_penalty).astype(int)
+    is_double = (first_fault == 1) & (second_fault == 1)
+    new_df["is_double"] = is_double
+    
+    # Choose the rally string depending on whether rally started on 1st or 2nd serve
+    rally_raw = np.where(
+        is_rally_first.fillna(0).eq(1),
+        srv1_no_lets.str[1:],
+        np.where(
+            is_rally_second.fillna(0).eq(1),
+            srv2_no_lets.str[1:],
+            np.nan
+        )
+    )
+
+    rally_part = pd.Series(rally_raw, index=df.index)
+    print("NaN rally_part:", rally_part.isna().sum())
+    print("Total rows:", len(rally_part))
+    print(rally_part.head(20))
+    quit()
+    is_winner = "*"
+    error_mask = rally_part.str.contains(r"[nwdx!]", na=True)
+    new_df["is_error"] = error_mask
+
+    # Rally outcome flags
+    new_df["is_rally_winner"] = (rally_part.str.contains(r"\*", na=False)).astype(int)
+    #new_df["is_forced_error"] = rally_part.str.contains(r"#", na=True).astype(int)
+    #new_df["is_unforced_error"] = rally_part.str.contains(r"@", na=True).astype(int)
+    new_df["is_ace"] = (
+        srv1_no_lets.str.contains(r"\*", na=False) |
+        srv2_no_lets.str.contains(r"\*", na=False)
+    ).astype(int)
+
+    new_df["is_unret"] = (
+        srv1_no_lets.str.contains(r"#", na=False) |
+        srv2_no_lets.str.contains(r"#", na=False)
+    ).astype(int)
+
+    # Remove special symbols
+    rally_no_spec = rally_part.str.replace(r"[-=@#*;+]", "", regex=True)
+
+    # Remove error markers
+    rally_no_error = rally_no_spec.str.replace(r"[dwxen]", "", regex=True)
+
+    # Remove direction markers
+    rally_no_direction = rally_no_error.str.replace(r"[123789]", "", regex=True)
+
+    # Rally length
+    new_df["rally_len"] = rally_no_direction.str.len()
+    
+
+    """
     rally_no_spec = rally_part.translate(str.maketrans("", "", "-=@#*;+")) if rally_part else None
     # RallyNoError: =SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(RALLY_NO_SPEC, "d", ""), "w", ""), "x", ""), "e", ""), "n", "")
     rally_no_error = rally_no_spec.translate(str.maketrans("", "", "dwxen")) if rally_no_spec else None
     # RallyNoDirection: =SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(RALLY_NO_ERROR, "1", ""), "2", ""), "3", ""), "7", ""), "8", ""), "9", "")
     rally_no_direction = rally_no_error.translate(str.maketrans("", "", "123789")) if rally_no_error else None
     # RallyLen: =IF(N18="","",LEN(RALLY_NO_DIRECTION))
-    rally_len = None if rally_no_direction is None else len(rally_no_direction)"""
+    rally_len = None if rally_no_direction is None else len(rally_no_direction)
+    """
     return new_df
     
 
@@ -657,12 +734,20 @@ if __name__ == "__main__":
     print(df["second_serve_is_fault"].value_counts(dropna=False))
     print("=======================================")
     print(df["is_penalty"].value_counts(dropna=False))
+    print(df["is_ace"].value_counts(dropna=False))
     print(df["has_second_serve_info"].value_counts(dropna=False))
+    print(df["is_rally_winner"].value_counts(dropna=False))
+    #print(df["is_forced_error"].value_counts(dropna=False))
+    #print(df["is_unforced_error"].value_counts(dropna=False))
+    print(df["is_unret"].value_counts(dropna=False))
+    print(df["is_error"].value_counts(dropna=False))
+
     df = df.drop(columns=["first_serve_in_play", "second_serve_in_play"])
     df["is_double"] = (df["is_double"].map(lambda x: str(x).lower() if pd.notnull(x) else None).map({"1": 1, "0": 0, "true": 1, "false": 0, "yes": 1, "no": 0}).astype("int"))
     
-    print(df["is_double"].value_counts())
     print(get_df_empty_summary(df))
+    print(df["is_double"].value_counts(dropna=False))
+    print(df["rally_len"].value_counts(dropna=False))
     quit()
 
     df["is_ace"] = (df["is_ace"].map(lambda x: str(x).lower() if pd.notnull(x) else None).map({"1": 1, "0": 0, "true": 1, "false": 0, "yes": 1, "no": 0}).astype("int"))
