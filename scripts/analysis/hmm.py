@@ -571,15 +571,16 @@ def build_serve_features(df):
             return rally_length + 1
         return pd.NA
     def score_diff(row):
-        points1, points2 = (row["game_score"].split("-"))
+        points = (row["game_score"].split("-"))
         is_tb_point = row["tb_point"]
         server_player_number = row["server_player_number"]
         if is_tb_point == 0:
-            if points1 and points2 in ["0", "15", "30", "40", "AD"]:
+            if points[0].strip() and points2.strip() in ["0", "15", "30", "40", "AD"]:
                 print(f"Server ({row["server_player_number"]}): {points1} to {points2}")
                 print("------------------------------------------------")
             else:
                 print(f"Unexpected Point Value: {row}")
+                print()
                 quit()
         else:
             # Handle TB Point
@@ -692,36 +693,41 @@ def bin_rally_length(x):
 def build_dict(seq, key):
     return {d[key]: dict(d, index=i) for i, d in enumerate(seq)}
 
-def build_match_point_dict(seq):
+def build_match_point_dict(seq, key):
     grouped = defaultdict(dict)
 
     for i, d in enumerate(seq):
-        match_id = d["match_id"]
-        point_num = d["Pt"]   # your point number field
+        match_id = d[key]
+        point_num = int(d["Pt"])   # your point number field
 
         grouped[match_id][point_num] = dict(d, index=i)
 
     return dict(grouped)
 
+
+
 if __name__ == "__main__":
     DATA_DIR = pathlib.Path(__file__).resolve().parent.parent.parent / "data"
+    CHARTING_MATCHES = data_objects.DataObjectFactory.create(DATA_DIR / "prod/charting-matches.parquet").data
+    CHARTING_MATCHES_ALL = []
+    for batch in CHARTING_MATCHES:
+        for _, match in batch.to_pandas().iterrows():
+            CHARTING_MATCHES_ALL.append(match.to_dict())
 
-    raw_points = [DATA_DIR / "raw/tennisabstract/tennis_MatchChartingProject-master/charting-m-points-to-2009.csv", 
-                  DATA_DIR / "raw/tennisabstract/tennis_MatchChartingProject-master/charting-m-points-2010s.csv",
-                  DATA_DIR / "raw/tennisabstract/tennis_MatchChartingProject-master/charting-m-points-2020s.csv"
-    ]
-    CHARTING_POINTS_ALL = []
+    print(CHARTING_MATCHES_ALL[0])
+    quit()
+    CHARTING_MATCHES_BY_ID = build_dict(CHARTING_MATCHES_ALL, "match_id")
 
-    for f in raw_points:
-        charting_points = data_objects.DataObjectFactory.create(f)
-        # print(charting_points.data)
-        CHARTING_POINTS_ALL.extend(charting_points.data)
-    CHARTING_POINTS_BY_ID = build_match_point_dict(CHARTING_POINTS_ALL)
-    points = (CHARTING_POINTS_BY_ID["20170924-M-Laver_Cup-RR-Roger_Federer-Nick_Kyrgios"])
-    print(len(points), type(points), points.keys())
-    print(points["154"])
+     
 
-    #quit()
+    print(f"Found {len(CHARTING_MATCHES)} Matches")
+    print(f"Found {len(CHARTING_POINTS_ALL)} Points")
+    # print(CHARTING_POINTS_ALL[0])
+    # points = (CHARTING_POINTS_BY_ID["20170924-M-Laver_Cup-RR-Roger_Federer-Nick_Kyrgios"])
+    # print(len(points), type(points), points.keys())
+    # print(points["154"])
+
+    quit()
 
     # =========================
     # LOAD DATA
