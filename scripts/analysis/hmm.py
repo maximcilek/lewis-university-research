@@ -3,8 +3,9 @@ import pathlib
 import numpy as np
 from collections import defaultdict
 import json
-# import sys
-# sys.path.append(str(pathlib.Path(__file__).resolve().parent.parent.parent))
+import sys
+sys.path.append(str(pathlib.Path(__file__).resolve().parent.parent.parent))
+import tennisabstractscraper.models.data_objects as data_objects
 
 import pyarrow.parquet as pq
 from sklearn.preprocessing import StandardScaler, RobustScaler
@@ -569,8 +570,24 @@ def build_serve_features(df):
         if pd.notna(rally):
             return rally_length + 1
         return pd.NA
+    def score_diff(row):
+        points1, points2 = (row["game_score"].split("-"))
+        is_tb_point = row["tb_point"]
+        server_player_number = row["server_player_number"]
+        if is_tb_point == 0:
+            if points1 and points2 in ["0", "15", "30", "40", "AD"]:
+                print(f"Server ({row["server_player_number"]}): {points1} to {points2}")
+                print("------------------------------------------------")
+            else:
+                print(f"Unexpected Point Value: {row}")
+                quit()
+        else:
+            # Handle TB Point
+            pass
 
     new_df = df.copy()
+    new_df["score_diff"] = new_df.apply(score_diff, axis=1).astype("Int64")
+    quit()
     srv1 = df["first_serve_rally"].astype("string").str.strip().str.replace(" ", "").str.replace("D", "d").str.replace("W", "w").str.replace("M", "m").str.replace(")*", "0*").str.replace("&*", "0*").str.replace("?", "0").str.replace(".", "")
     srv1 = srv1.replace("", pd.NA)
     srv2 = df["second_serve_rally"].astype("string").str.strip().str.replace(" ", "").str.replace("D", "d").str.replace("W", "w").str.replace("M", "m").str.replace(".", "")
@@ -671,20 +688,54 @@ def bin_rally_length(x):
     else:
         return 4      # long
 
+
+def build_dict(seq, key):
+    return {d[key]: dict(d, index=i) for i, d in enumerate(seq)}
+
+def build_match_point_dict(seq):
+    grouped = defaultdict(dict)
+
+    for i, d in enumerate(seq):
+        match_id = d["match_id"]
+        point_num = d["Pt"]   # your point number field
+
+        grouped[match_id][point_num] = dict(d, index=i)
+
+    return dict(grouped)
+
 if __name__ == "__main__":
+    DATA_DIR = pathlib.Path(__file__).resolve().parent.parent.parent / "data"
+
+    raw_points = [DATA_DIR / "raw/tennisabstract/tennis_MatchChartingProject-master/charting-m-points-to-2009.csv", 
+                  DATA_DIR / "raw/tennisabstract/tennis_MatchChartingProject-master/charting-m-points-2010s.csv",
+                  DATA_DIR / "raw/tennisabstract/tennis_MatchChartingProject-master/charting-m-points-2020s.csv"
+    ]
+    CHARTING_POINTS_ALL = []
+
+    for f in raw_points:
+        charting_points = data_objects.DataObjectFactory.create(f)
+        # print(charting_points.data)
+        CHARTING_POINTS_ALL.extend(charting_points.data)
+    CHARTING_POINTS_BY_ID = build_match_point_dict(CHARTING_POINTS_ALL)
+    points = (CHARTING_POINTS_BY_ID["20170924-M-Laver_Cup-RR-Roger_Federer-Nick_Kyrgios"])
+    print(len(points), type(points), points.keys())
+    print(points["154"])
+
+    #quit()
 
     # =========================
     # LOAD DATA
     # =========================
-    DATA_DIR = pathlib.Path(__file__).resolve().parent.parent.parent / "data"
     parquet_file = pq.ParquetFile(DATA_DIR / f"prod/charting-points.parquet")
     df = load_parquet(parquet_file)
     #df = df[df["match_date"] > "2000-01-01"]
     if "match_id" in df.columns and "point_number" in df.columns:
         df = df.sort_values(["match_id", "point_number"])
     
-    rmv_match_ids = ["20241127-M-Maia_CH-R32-Pedro_Araujo-Alex_Marti_Pujolras", "20030701-M-Wimbledon-SF-Mark_Philippoussis-Sebastien_Grosjean", "20120113-W-Hobart-SF-Angelique_Kerber-Mona_Barthel"] # , '20040222-M-Rotterdam-F-Juan_Carlos_Ferrero-Lleyton_Hewitt', '20091011-M-Shanghai_Masters-R16-Fernando_Gonzalez-Nikolay_Davydenko', '20101003-M-Kuala_Lumpur-F-Andrey_Golubev-Mikhail_Youzhny', '20110614-W-Eastbourne-R32-Ana_Ivanovic-Julia_Goerges', '20120319-M-Indian_Wells_Masters-F-Roger_Federer-John_Isner', '20130105-M-Brisbane-SF-Kei_Nishikori-Andy_Murray', '20130217-M-Rotterdam-F-Julien_Benneteau-Juan_Martin_Del_Potro', '20130808-M-Canada_Masters-R16-Ernests_Gulbis-Andy_Murray', '20150927-M-Metz-SF-Jo_Wilfried_Tsonga-Philipp_Kohlschreiber', '20151006-M-Beijing-R32-Novak_Djokovic-Simone_Bolelli', '20151101-M-Basel-F-Rafael_Nadal-Roger_Federer', '20170206-M-Davis_Cup_World_Group_R1-RR-Kyle_Edmund-Denis_Shapovalov', '20180122-W-Australian_Open-R16-Su_Wei_Hsieh-Angelique_Kerber', '20180326-W-Miami-R16-Monica_Puig-Danielle_Collins', '20180329-W-Miami-SF-Jelena_Ostapenko-Danielle_Collins', '20190716-M-Amersfoort_CH-R64-Gijs_Brouwer-Holger_Rune', '20210605-M-Roland_Garros-R32-Roger_Federer-Dominik_Koepfer', '20211027-M-Vienna-R32-Reilly_Opelka-Jannik_Sinner', '20220117-W-Australian_Open-R128-Madison_Keys-Sofia_Kenin', '20220721-M-Hamburg-R16-Andrey_Rublev-Francisco_Cerundolo', '20220916-M-Davis_Cup_Finals-RR-Tallon_Griekspoor-Daniel_Evans', '20230104-M-United_Cup-RR-Hubert_Hurkacz-Matteo_Berrettini', '20230605-M-Roland_Garros-R16-Grigor_Dimitrov-Alexander_Zverev', '20230607-M-Roland_Garros-QF-Casper_Ruud-Holger_Rune', '20230703-M-Wimbledon-R128-Emil_Ruusuvuori-Stan_Wawrinka', '20230831-M-US_Open-R64-Hubert_Hurkacz-Jack_Draper', '20230904-M-US_Open-R16-Jannik_Sinner-Alexander_Zverev', '20231015-M-Shanghai_Masters-F-Hubert_Hurkacz-Andrey_Rublev', '20231028-M-Basel-SF-Ugo_Humbert-Hubert_Hurkacz', '20231031-M-Paris_Masters-R64-Hubert_Hurkacz-Sebastian_Korda', '20240210-M-Marseille-SF-Hubert_Hurkacz-Ugo_Humbert', '20240213-M-Rotterdam-R32-Hubert_Hurkacz-Jiri_Lehecka', '20240215-M-Rotterdam-R16-Hubert_Hurkacz-Tallon_Griekspoor', '20240325-M-Miami_Masters-R32-Ben_Shelton-Lorenzo_Musetti', '20240602-M-Roland_Garros-R16-Jannik_Sinner-Corentin_Moutet', '20240701-M-Wimbledon-R128-Alex_Michelsen-Lloyd_Harris', '20250320-M-Miami_Masters-R128-Learner_Tien-Joao_Fonseca', '20250509-W-Rome-R64-Emiliana_Arango-Mirra_Andreeva', '20250512-M-Rome_Masters-R32-Hubert_Hurkacz-Marcos_Giron', '20250513-M-Rome_Masters-R16-Jakub_Mensik-Hubert_Hurkacz', '20250530-W-Roland_Garros-R32-Iga_Swiatek-Jaqueline_Cristian', '20250630-M-Wimbledon-R128-Giovanni_Mpetshi_Perricard-Taylor_Fritz', '20250702-M-Wimbledon-R64-Gabriel_Diallo-Taylor_Fritz', '20250711-M-Wimbledon-SF-Novak_Djokovic-Jannik_Sinner', '20251121-M-Davis_Cup_Finals-RR-Flavio_Cobolli-Zizou_Bergs']
-    df = df[~df["match_id"].isin(rmv_match_ids)]
+
+
+    #rmv_match_ids = ["20241127-M-Maia_CH-R32-Pedro_Araujo-Alex_Marti_Pujolras", "20030701-M-Wimbledon-SF-Mark_Philippoussis-Sebastien_Grosjean", "20120113-W-Hobart-SF-Angelique_Kerber-Mona_Barthel"] # , '20040222-M-Rotterdam-F-Juan_Carlos_Ferrero-Lleyton_Hewitt', '20091011-M-Shanghai_Masters-R16-Fernando_Gonzalez-Nikolay_Davydenko', '20101003-M-Kuala_Lumpur-F-Andrey_Golubev-Mikhail_Youzhny', '20110614-W-Eastbourne-R32-Ana_Ivanovic-Julia_Goerges', '20120319-M-Indian_Wells_Masters-F-Roger_Federer-John_Isner', '20130105-M-Brisbane-SF-Kei_Nishikori-Andy_Murray', '20130217-M-Rotterdam-F-Julien_Benneteau-Juan_Martin_Del_Potro', '20130808-M-Canada_Masters-R16-Ernests_Gulbis-Andy_Murray', '20150927-M-Metz-SF-Jo_Wilfried_Tsonga-Philipp_Kohlschreiber', '20151006-M-Beijing-R32-Novak_Djokovic-Simone_Bolelli', '20151101-M-Basel-F-Rafael_Nadal-Roger_Federer', '20170206-M-Davis_Cup_World_Group_R1-RR-Kyle_Edmund-Denis_Shapovalov', '20180122-W-Australian_Open-R16-Su_Wei_Hsieh-Angelique_Kerber', '20180326-W-Miami-R16-Monica_Puig-Danielle_Collins', '20180329-W-Miami-SF-Jelena_Ostapenko-Danielle_Collins', '20190716-M-Amersfoort_CH-R64-Gijs_Brouwer-Holger_Rune', '20210605-M-Roland_Garros-R32-Roger_Federer-Dominik_Koepfer', '20211027-M-Vienna-R32-Reilly_Opelka-Jannik_Sinner', '20220117-W-Australian_Open-R128-Madison_Keys-Sofia_Kenin', '20220721-M-Hamburg-R16-Andrey_Rublev-Francisco_Cerundolo', '20220916-M-Davis_Cup_Finals-RR-Tallon_Griekspoor-Daniel_Evans', '20230104-M-United_Cup-RR-Hubert_Hurkacz-Matteo_Berrettini', '20230605-M-Roland_Garros-R16-Grigor_Dimitrov-Alexander_Zverev', '20230607-M-Roland_Garros-QF-Casper_Ruud-Holger_Rune', '20230703-M-Wimbledon-R128-Emil_Ruusuvuori-Stan_Wawrinka', '20230831-M-US_Open-R64-Hubert_Hurkacz-Jack_Draper', '20230904-M-US_Open-R16-Jannik_Sinner-Alexander_Zverev', '20231015-M-Shanghai_Masters-F-Hubert_Hurkacz-Andrey_Rublev', '20231028-M-Basel-SF-Ugo_Humbert-Hubert_Hurkacz', '20231031-M-Paris_Masters-R64-Hubert_Hurkacz-Sebastian_Korda', '20240210-M-Marseille-SF-Hubert_Hurkacz-Ugo_Humbert', '20240213-M-Rotterdam-R32-Hubert_Hurkacz-Jiri_Lehecka', '20240215-M-Rotterdam-R16-Hubert_Hurkacz-Tallon_Griekspoor', '20240325-M-Miami_Masters-R32-Ben_Shelton-Lorenzo_Musetti', '20240602-M-Roland_Garros-R16-Jannik_Sinner-Corentin_Moutet', '20240701-M-Wimbledon-R128-Alex_Michelsen-Lloyd_Harris', '20250320-M-Miami_Masters-R128-Learner_Tien-Joao_Fonseca', '20250509-W-Rome-R64-Emiliana_Arango-Mirra_Andreeva', '20250512-M-Rome_Masters-R32-Hubert_Hurkacz-Marcos_Giron', '20250513-M-Rome_Masters-R16-Jakub_Mensik-Hubert_Hurkacz', '20250530-W-Roland_Garros-R32-Iga_Swiatek-Jaqueline_Cristian', '20250630-M-Wimbledon-R128-Giovanni_Mpetshi_Perricard-Taylor_Fritz', '20250702-M-Wimbledon-R64-Gabriel_Diallo-Taylor_Fritz', '20250711-M-Wimbledon-SF-Novak_Djokovic-Jannik_Sinner', '20251121-M-Davis_Cup_Finals-RR-Flavio_Cobolli-Zizou_Bergs']
+    #df = df[~df["match_id"].isin(rmv_match_ids)]
     # df = compute_serve_rally_counts(df)
     df = build_serve_features(df)
     cols_to_keep = ["first_serve_in_play", "second_serve_in_play", "last_serve_double_fault", "rally_length",
