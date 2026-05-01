@@ -3,6 +3,7 @@ import pathlib
 import numpy as np
 from collections import defaultdict
 import json
+import re
 import sys
 sys.path.append(str(pathlib.Path(__file__).resolve().parent.parent.parent))
 import tennisabstractscraper.models.data_objects as data_objects
@@ -35,7 +36,32 @@ def build_dict(seq, key):
     return {d[key]: dict(d, index=i) for i, d in enumerate(seq)}
 
 def is_tiebreak_set(set1, set2, best_of):
-    print(set1, set2, (int(set1)+int(set2)+1)<best_of, best_of)
+    if not (int(set1)+int(set2)+1)<best_of:
+        return True
+    return False
+
+def is_tiebreak_point(set1, set2, game1, game2, best_of, is_tb_set, point, match):
+    """
+    0 = Advantage Set
+    S = 10-point Super-Tiebreak
+    W = 8-all Tiebreak
+    A = 6-all 10-point Super-Tiebreak
+    T = 12-all Tiebreak
+    V = No Tiebreakers
+    """
+    set_scores = re.sub(r"\([^)]*\)", "", match.get("score")).split(" ")
+    try:
+        if int(game1) == 6 and int(game2) == 6:
+            if "10" in set_scores[0] or "11" in set_scores[0] or "10" in set_scores[1] or "11" in set_scores[1]:
+                print(set_scores)
+                quit()
+        if int(game1) > 6 or int(game2) > 6:
+            print(f"{match}")
+            print(f"{point}")
+            quit()    
+    except:
+        print(f"{match}")
+        print(f"{point}")
 
 def is_serve_in(x):
     if x is None or pd.isna(x):
@@ -93,12 +119,19 @@ if __name__ == "__main__":
     print(f"Found {len(points)} Points")
 
     for m in matches:
+        if m.get("match_id") not in points_by_id:
+            continue
+        if m.get("match_id") == "19931107-M-Paris_Masters-SF-Stefan_Edberg-Goran_Ivanisevic":
+            continue
+        if pd.isna(m["best_of"]):
+            if (len(m.get("score").split(" ")))<=3:
+                m["best_of"] = 3
         match_points = points_by_id[m.get("match_id")]
-        print(f"Match {m.get('match_id')} has {len(match_points)} points")
-        print(match_points[max(match_points)])
+        # print(f"Match {m.get('match_id')} has {len(match_points)} points")
+        # print(match_points[max(match_points)])
         for point_number, point in match_points.items():
-            is_tiebreak_set(point["Set1"], point["Set2"], int(m["best_of"]))
-            print(point)
+            is_tb_set = is_tiebreak_set(point["Set1"], point["Set2"], int(m["best_of"]))
+            is_tb_point = is_tiebreak_point(point["Set1"], point["Set2"],point["Gm1"], point["Gm2"], int(m["best_of"]), is_tb_set, point, m)
             continue
             srv1 = point["1st"].strip().replace(" ", "").replace("D", "d").replace("W", "w").replace("M", "m").replace(")*", "0*").replace("&*", "0*").replace("?", "0").replace(".", "")
             srv2 = point["2nd"].strip().replace(" ", "").replace("D", "d").replace("W", "w").replace("M", "m").replace(".", "")
@@ -124,5 +157,5 @@ if __name__ == "__main__":
             if srv2 in [None, ""]:
                 point["2nd"] = None
 
-            print(f"Point (#{point_number}): {point}")
+            # print(f"Point (#{point_number}): {point}")
         # quit()
