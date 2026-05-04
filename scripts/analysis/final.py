@@ -146,11 +146,15 @@ def infer_match_scoring_format(match, last_point):
     set_scores = official_score.split(" ")
     results = {}
     year = int(match.get("match_id")[:4])
+    tb_final_points_format = None
+    tb_final_games_format = None
+    tb_final_win_by_2_points = None
+    final_win_by_2_games = None
     if "US_Open" in match["match_id"]:
         tb_points_format = 7
         tb_games_format = 6
         tb_win_by_2_points = 1
-        win_by_2_sets = 0
+        win_by_2_games = 0
         if year < 2022:
             tb_final_points_format = 10
             tb_final_games_format = 6
@@ -236,19 +240,46 @@ def infer_match_scoring_format(match, last_point):
         tb_final_games_format = 6
         tb_final_win_by_2_points = 1
         final_win_by_2_games = 1
+    
     else:
         s1 = re.sub(r"\[(\d+-\d+|\*)\]", r"\1", re.sub(r"\(\d+\)", "", " ".join(set_scores[:-1])))
         s2 = re.sub(r"\[(\d+-\d+|\*)\]", r"\1", re.sub(r"\(\d+\)", "", set_scores[-1]))
         nums = [int(x) for x in re.findall(r"\d+", s1)]
         nums2 = [int(x) for x in re.findall(r"\d+", s2)]
-
-        if (abs(nums2[0] - nums2[1]) == 1):
+        if max(nums) <= 7:
+            tb_points_format = 7
+            tb_games_format = 6
+            tb_win_by_2_points = 1
+            win_by_2_games = 0
+            if int(last_point["Gm1"]) > 6 or int(last_point["Gm2"]) > 6:
+                tb_final_points_format = None
+                tb_final_games_format = 6
+                tb_final_win_by_2_points = 1
+                final_win_by_2_games = 1
+            else:
+                final_win_by_2_games = 0
+                tb_final_win_by_2_points = 1
+                tb_final_games_format = 6
+        elif max(nums) >= 8 and abs(nums[0] - nums[1]) >= 2:
+            print(f"Adv Set: {official_score}")
+            tb_points_format = None
+            tb_games_format = 6
+            tb_win_by_2_points = 1
+            win_by_2_games = 2
+            if not tb_final_points_format:
+                tb_final_points_format = None
+            if not tb_final_games_format:
+                tb_final_games_format = 6
+            tb_final_win_by_2_points = 1
+            final_win_by_2_games = 1
+        else:
             print(match)
             print(nums, nums2)
             print(last_point)
             quit()
 
-        """if (abs(nums2[0] - nums2[1]) >= 2) and (any(n > 7 for n in nums2)) and (prev_point["server_games"] != 6 and prev_point["returner_games"] != 6):
+        """
+        if (abs(nums2[0] - nums2[1]) >= 2) and (any(n > 7 for n in nums2)) and (prev_point["server_games"] != 6 and prev_point["returner_games"] != 6):
             tb_points_format = None
             tb_games_format = 6
             tb_win_by_2_points = 1
