@@ -473,8 +473,9 @@ if __name__ == "__main__":
                     point["server_points"] = point_map[server]
                     point["returner_points"] = point_map[returner]
                     point["is_game_point"] = int((point["server_points"] == 3 and point["returner_points"] <= 2) or (point["server_points"] >= 4 and point["server_points"] == point["returner_points"] + 1))
+                    point["is_break_point"] = int((point["returner_points"] == 3 and point["server_points"] <= 2) or (point["returner_points"] >= 4 and point["returner_points"] == point["server_points"] + 1))
                     diff = abs(int(server) - int(prev_server)) + abs(int(returner) - int(prev_returner))
-                    if point["is_game_point"] == 1:
+                    if point["is_break_point"] == 1:
                         print(f"Diff: {diff}")
 
                         print(set_info)
