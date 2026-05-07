@@ -46,7 +46,7 @@ def rename_point_keys(point, prev, match):
     point["server_games"] = point[f"Gm{server_num}"]
     point["returner_games"] = point[f"Gm{returner_num}"]
     point["game_number"] = point["Gm#"]
-    point["is_tb_set"] = point["TbSet"]
+    # point["is_tb_set"] = point["TbSet"]
     point["server_player_number"] = point["Svr"]
     point["returner_player_number"] = returner_num
     point["first_serve_rally"] = point["1st"]
@@ -251,15 +251,9 @@ def infer_match_scoring_format(match, last_point):
             tb_games_format = 6
             tb_win_by_2_points = 1
             win_by_2_games = 0
-            if int(last_point["Gm1"]) > 6 or int(last_point["Gm2"]) > 6:
-                tb_final_points_format = None
-                tb_final_games_format = 6
-                tb_final_win_by_2_points = 1
-                final_win_by_2_games = 1
-            else:
-                final_win_by_2_games = 0
-                tb_final_win_by_2_points = 1
-                tb_final_games_format = 6
+            final_win_by_2_games = 0
+            tb_final_win_by_2_points = 1
+            tb_final_games_format = 6
         elif max(nums) >= 8 and abs(nums[0] - nums[1]) >= 2:
             print(f"Adv Set: {official_score}")
             tb_points_format = None
@@ -278,63 +272,6 @@ def infer_match_scoring_format(match, last_point):
             print(last_point)
             quit()
 
-        """
-        if (abs(nums2[0] - nums2[1]) >= 2) and (any(n > 7 for n in nums2)) and (prev_point["server_games"] != 6 and prev_point["returner_games"] != 6):
-            tb_points_format = None
-            tb_games_format = 6
-            tb_win_by_2_points = 1
-            win_by_2_games = 1
-            tb_final_points_format = None
-            tb_final_games_format = 6
-            tb_final_win_by_2_points = 1
-            final_win_by_2_games = 1
-        elif max(nums+nums2) == 6 or max(nums+nums2) == 7:
-            tb_points_format = 7
-            tb_games_format = 6
-            tb_win_by_2_points = 1
-            win_by_2_games = 0
-            tb_final_points_format = None
-            tb_final_games_format = 6
-            tb_final_win_by_2_points = 1
-            final_win_by_2_games = 0
-        else:
-            print(match)
-            print(nums, nums2)
-            print(last_point)
-            quit()"""
-        
-        #if any(n > 10 for n in nums):
-        #    tb_points_format = None
-        #    tb_games_format = 6
-        #    tb_win_by_2_points = 1
-        #    win_by_2_games = 1
-        #
-        #if any(n >= 10 for n in nums2):
-        #    tb_final_points_format = 10
-        #    tb_final_games_format = 6
-        #    tb_final_win_by_2_points = 1
-        #    final_win_by_2_games = 0
-        #elif max(nums2) not in [6,7]:
-        #    print(match, nums2)
-        #    quit()
-#
-    # for set_num, set_score in enumerate(set_scores):
-    #     set_info = {
-    #         "set_score": set_score,
-    #         "is_super_tb_set": 0,
-    #         "is_tb_set": 0
-    #     }
-    #     if "[" in set_score or "]" in set_score:
-    #         set_info["is_super_tb"] = 1
-    #     if "(" in set_score or ")" in set_score:
-    #         set_info["is_tb_set"] = 1
-    #     clean_set_score = re.sub(r"\(\d+\)", "", set_score)
-    #     a, b = map(int, clean_set_score.split("-"))
-    #     # is_advantage_set = max(a, b) > 7 and abs(a - b) >= 2
-    #     # set_info["is_advantage_set"] = int(is_advantage_set)
-    #         
-    #     results[set_num+1] = set_info
-    # return results, official_score
 
 def is_serve_in(x):
     if x is None or pd.isna(x):
@@ -431,14 +368,12 @@ def rally_length(rally):
     return None
 def normalize_points(point):
     points = point.get("Pts").split("-")
-    server_number = point["server_player_number"] - 1
-    returner_number = point["returner_player_number"] - 1
-    if points[server_number].lower().strip() == "ad":
-        points[server_number] = 45
-    if points[returner_number].lower().strip() == "ad":
-        points[returner_number] = 45
-    point["server_points"] = int(points[server_number])
-    point["returner_points"] = int(points[returner_number])
+    if points[0].lower().strip() == "ad":
+        points[0] = 45
+    if points[1].lower().strip() == "ad":
+        points[1] = 45
+    point["server_points"] = int(points[0])
+    point["returner_points"] = int(points[1])
     return point
 
 if __name__ == "__main__":
@@ -498,25 +433,56 @@ if __name__ == "__main__":
             continue
 
         m["official_score"] = official_score
-        for set_num, set_score in enumerate(official_score.split(" ")):
+        set_scores = official_score.split(" ")
+        for set_num, set_score in enumerate(set_scores):
+            s1 = re.sub(r"\[(\d+-\d+|\*)\]", r"\1", re.sub(r"\(\d+\)", "", set_score))
+            nums = [int(x) for x in re.findall(r"\d+", s1)]
             set_scores_info[f"{set_num+1}"] = {
-                "set_score": re.sub(r"\(\d+\)", "", set_score),
+                "set_num": set_num,
+                "set_score_raw": set_score,
+                "set_score": s1,
                 "is_super_tb_set": 0,
-                "is_tb_set": 0
+                "is_tb_set": 0,
+                "max_game_number": max(nums),
+                "diff": abs(nums[0]-nums[1]),
+                "official_score": official_score
             }
             if "[" in set_score or "]" in set_score:
                 set_scores_info[f"{set_num+1}"]["is_super_tb_set"] = 1
-            if "(" in set_score or ")" in set_score:
+            elif "(" in set_score or ")" in set_score:
                 set_scores_info[f"{set_num+1}"]["is_tb_set"] = 1
-        infer_match_scoring_format(m, last_point)
+            
         serve_window = defaultdict(lambda: deque(maxlen=5))
         prev_point = None
+        point_map = {"0": 0, "15": 1, "30": 2, "40": 3, "45": 4}
         for point_number, point in match_points.items():
             del point["index"]
             point = rename_point_keys(point, prev_point, m)
             set_num = int(point['server_sets']) + int(point['returner_sets'])+1
             set_info = set_scores_info[str(set_num)]
             point.update({k: set_info[k] for k in ("is_super_tb_set", "is_tb_set")})
+            point["is_game_point"] = 0
+            if prev_point == None:
+                point["is_game_point"] = 0
+                point["is_set_point"] = 0
+                point["is_match_point"] = 0
+            else:
+                if point["game_number"] == prev_point["game_number"] and point["is_tb_set"] == 0 and point["is_super_tb_set"] == 0:
+                    prev_server, prev_returner = (prev_point["Pts"].lower().replace("ad", "45").split("-"))
+                    server, returner = (point["Pts"].lower().replace("ad", "45").split("-"))
+                    point["server_points"] = point_map[server]
+                    point["returner_points"] = point_map[returner]
+                    point["is_game_point"] = int((point["server_points"] == 3 and point["returner_points"] <= 2) or (point["server_points"] >= 4 and point["server_points"] == point["returner_points"] + 1))
+                    diff = abs(int(server) - int(prev_server)) + abs(int(returner) - int(prev_returner))
+                    if point["is_game_point"] == 1:
+                        print(f"Diff: {diff}")
+
+                        print(set_info)
+                        print(json.dumps(prev_point, indent=4))
+                        print(json.dumps(point, indent=4))
+                        quit()
+            prev_point = point
+            continue
             point["server_player_id"] = m[f"player_{point['server_player_number']}_id"]
             point["returner_player_id"] = m[f"player_{point['returner_player_number']}_id"]
             
