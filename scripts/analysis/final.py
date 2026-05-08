@@ -137,9 +137,74 @@ def get_official_score(match):
     #return official_score
     # return merge_scores(score, match_score)
 
+def get_regular_set_tb_rule(tournament):
+    if tournament == "NextGen":
+        return {"trigger": 3, "target": 7}
+    # Masters 1000, ATP 500/250, WTA 1000/500/250, Challengers (_CH), ITFs (ITF_), Davis Cup / BJK Cup (modern standard format)
+    return {"trigger": 6, "target": 7}
 
-def infer_match_scoring_format(match, last_point):
-    
+def get_final_set_tb_rule(tournament, year):
+    if tournament == "NextGen_Finals":
+        return {"trigger": 3, "target": 7}
+
+    if tournament == "Australian_Open":
+        if year >= 2019:
+            return {"trigger": 6, "target": 10}
+        return None
+
+    if tournament == "Wimbledon":
+        if year >= 2022:
+            return {"trigger": 6, "target": 10}
+        elif year >= 2019:
+            return {"trigger": 12, "target": 7}
+        return None
+
+    if tournament == "Roland_Garros":
+        if year >= 2022:
+            return {"trigger": 6, "target": 10}
+        return None
+
+    if tournament == "US_Open":
+        if year >= 2022:
+            return {"trigger": 6, "target": 10}
+        return {"trigger": 6, "target": 7}
+
+    return {"trigger": 6, "target": 7}
+
+
+def infer_match_scoring_format(match, set_info):
+    print(m["match_id"], set_info)
+    year = int(match.get("match_id")[:4])
+    if "Wimbledon" in match.get("match_id"):
+        if year < 2019:
+            tb_points_format = None
+            set_info["tb_games_format"] = 6
+            set_info["tb_win_by_2_point0s"] = 1
+            set_info["win_by_2_games"] = 1
+            set_info["tb_final_points_format"] = None
+            set_info["tb_final_games_format"] = 6
+            set_info["tb_final_win_by_2_points"] = 1
+            set_info["final_win_by_2_games"] = 1
+        if 2019 <= year <= 2021:
+            tb_points_format = 7
+            tb_games_format = 6
+            tb_win_by_2_points = 1
+            tb_final_points_format = 7
+            tb_final_games_format = 12
+            tb_final_win_by_2_points = 1
+            win_by_2_games = 0
+            final_win_by_2_games = 0
+        elif year >= 2022:
+            tb_points_format = 7
+            tb_games_format = 6
+            tb_win_by_2_points = 1
+            tb_final_points_format = 10
+            tb_final_games_format = 6
+            tb_final_win_by_2_points = 1
+            win_by_2_games = 0
+            final_win_by_2_games = 0
+    #quit()
+    """
     official_score = get_official_score(match)
     terminating_set = int(last_point['Set1']) + int(last_point['Set2']) + 1
 
@@ -271,6 +336,7 @@ def infer_match_scoring_format(match, last_point):
             print(nums, nums2)
             print(last_point)
             quit()
+    """
 
 
 def is_serve_in(x):
@@ -393,9 +459,11 @@ if __name__ == "__main__":
     matches_by_id = build_dict(matches, "match_id")
     print(f"Found {len(matches)} Matches")
     print(f"Found {len(points)} Points")
-
+    um = []
     for m in matches:
         if m.get("match_id") not in points_by_id:
+            continue
+        if "Olympics" in m["match_id"]:
             continue
         if m.get("match_id") in ["20190208-W-Fed_Cup_G1-RR-Yulia_Putintseva-Ankita_Raina", "20140423-M-Barcelona-R32-Albert_Ramos-Rafael_Nadal", '20200918-W-Rome-R16-Victoria_Azarenka-Daria_Kasatkina', '20190701-W-Wimbledon-R128-Daria_Saville-Elina_Svitolina', '20131005-M-Tokyo-SF-Nicolas_Almagro-Juan_Martin_Del_Potro', '19910604-M-Roland_Garros-QF-Michael_Chang-Boris_Becker']:
             continue
@@ -445,21 +513,29 @@ if __name__ == "__main__":
                 "is_tb_set": 0,
                 "max_game_number": max(nums),
                 "diff": abs(nums[0]-nums[1]),
-                "official_score": official_score
+                "official_score": official_score,
+                "is_final_set": 0
             }
             if "[" in set_score or "]" in set_score:
                 set_scores_info[f"{set_num+1}"]["is_super_tb_set"] = 1
             elif "(" in set_score or ")" in set_score:
                 set_scores_info[f"{set_num+1}"]["is_tb_set"] = 1
-            
+        set_scores[-1]["is_final_set"] = 1
+        set_scores = get_regular_set_tb_rule(m["match_id"].split("-")[2])
+
         serve_window = defaultdict(lambda: deque(maxlen=5))
         prev_point = None
         point_map = {"0": 0, "15": 1, "30": 2, "40": 3, "45": 4}
+        if m["match_id"].split("-")[2] not in um:
+            um.append(m["match_id"].split("-")[2])
         for point_number, point in match_points.items():
             del point["index"]
             point = rename_point_keys(point, prev_point, m)
             set_num = int(point['server_sets']) + int(point['returner_sets'])+1
             set_info = set_scores_info[str(set_num)]
+            
+            # set_scores_info = infer_match_scoring_format(m, set_info)
+
             point.update({k: set_info[k] for k in ("is_super_tb_set", "is_tb_set")})
             point["is_game_point"] = 0
             if prev_point == None:
@@ -475,13 +551,20 @@ if __name__ == "__main__":
                     point["is_game_point"] = int((point["server_points"] == 3 and point["returner_points"] <= 2) or (point["server_points"] >= 4 and point["server_points"] == point["returner_points"] + 1))
                     point["is_break_point"] = int((point["returner_points"] == 3 and point["server_points"] <= 2) or (point["returner_points"] >= 4 and point["returner_points"] == point["server_points"] + 1))
                     diff = abs(int(server) - int(prev_server)) + abs(int(returner) - int(prev_returner))
-                    if set_info["is_break_point"] == 1:
-                        print(f"Diff: {diff}")
+                    if "NextGen" in m["match_id"] and point["is_game_point"] == 1 and point["server_games"] + 1 >= 4:
+                        point["is_set_point"] = 1
 
+                    if set_info["max_game_number"] == 6 and point["is_game_point"] == 1 and point["server_games"] + 1 == 6:
+                        point["is_set_point"] = 1
+                    elif set_info["max_game_number"] == 7 and point["is_game_point"] == 1 and point["server_games"] + 1 == 7:
+                        point["is_set_point"] = 1
+                    elif 7 < set_info["max_game_number"] < 10:
+                        print(f"By 2 (7 point): {diff}")
+                    elif set_info["max_game_number"] >= 10:
                         print(set_info)
                         print(json.dumps(prev_point, indent=4))
                         print(json.dumps(point, indent=4))
-                        quit()
+                        # quit()
             prev_point = point
             continue
             point["server_player_id"] = m[f"player_{point['server_player_number']}_id"]
@@ -576,7 +659,8 @@ if __name__ == "__main__":
                 #         print("-------------------------------------------------")
                 #         quit()
             prev_point = point
-
+    print(len(um))
+    print(um)
 
             #if m.get("match_id") == "20000708-W-Wimbledon-SF-Venus_Williams-Serena_Williams" and int(point['server_sets']) + int(point['returner_sets']) + 1 > 1:
             # if point["server_games"] == 6 and point["returner_games"] == 6 and set_info["is_advantage_set"] == 0 and set_info["is_tb_set"] == 0:
