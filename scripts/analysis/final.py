@@ -9,6 +9,9 @@ import sys
 sys.path.append(str(pathlib.Path(__file__).resolve().parent.parent.parent))
 import tennisabstractscraper.models.data_objects as data_objects
 import pyarrow.parquet as pq
+IGNORED_TOURNAMENT_TYPES = ("Olympics", "Hobart", "Birmingham", "Fort_Worth", "Cancun", "ITF_Midland", "United_Cup", "Davis_Cup", "Laver_Cup", "BJK_", "Fed_Cup",
+                            "Pepsi_Grand_Slam", "WITC_Hilton_Head", "_WCT", "Wembley", "Virginia_Slims_Championships") # "Tour_Championships" "_Indoor", "_Outdoor", 
+UNIQUE_TOUNRNS = []
 
 def load_points(filenames):
     result = []
@@ -136,6 +139,34 @@ def get_official_score(match):
 
     #return official_score
     # return merge_scores(score, match_score)
+
+def get_set_info(m):
+    official_score = get_official_score(m)
+    set_scores_info = {}
+    m["official_score"] = official_score
+    set_scores = official_score.split(" ")
+    for set_num, set_score in enumerate(set_scores):
+        s1 = re.sub(r"\[(\d+-\d+|\*)\]", r"\1", re.sub(r"\(\d+\)", "", set_score))
+        nums = [int(x) for x in re.findall(r"\d+", s1)]
+        set_scores_info[f"{set_num+1}"] = {
+            "set_score_raw": set_score,
+            "set_score": s1,
+            "is_super_tb_set": 0,
+            "is_tb_set": 0,
+            "diff": abs(nums[0]-nums[1]),
+            "official_score": official_score,
+            "match_score": m["match_score"],
+            "raw_match_score": m["score"],
+            "is_final_set": 0
+        }
+        if "[" in set_score or "]" in set_score:
+            set_scores_info[f"{set_num+1}"]["is_super_tb_set"] = 1
+        elif "(" in set_score or ")" in set_score:
+            set_scores_info[f"{set_num+1}"]["is_tb_set"] = 1
+    if set_scores_info:
+        last_set_key = str(len(set_scores))
+        set_scores_info[f"{last_set_key}"]["is_final_set"] = 1
+    return set_scores_info
 
 def get_regular_set_tb_rule(tournament):
     if tournament == "NextGen":
@@ -432,15 +463,158 @@ def rally_length(rally):
         rally_no_direction = rally_no_error.replace("1", "").replace("2", "").replace("3", "").replace("7", "").replace("8", "").replace("9", "")
         return len(rally_no_direction)
     return None
-def normalize_points(point):
-    points = point.get("Pts").split("-")
-    if points[0].lower().strip() == "ad":
-        points[0] = 45
-    if points[1].lower().strip() == "ad":
-        points[1] = 45
+def normalize_points(points):
+    points_map = {"0": 0, "15": 1, "30": 2, "40": 3, "45": 4}
+    server_points, returner_points = points.lower().replace("ad", "45").split("-")
     point["server_points"] = int(points[0])
     point["returner_points"] = int(points[1])
     return point
+
+def get_tournament_tiebreak_format(tourn_name, match_id):
+    match_year = int(match_id[:4])
+    result = {}
+
+    if ("Australian_Open" in tourn_name and match_year <= 1970) or \
+        ("Wimbledon" in tourn_name and match_year <= 1970) or \
+        ("Roland_Garros" in tourn_name and match_year <= 1972) or \
+        ("US_Open" in tourn_name and match_year < 1970):
+            result["is_advantage_sets"] = True
+
+    if "NextGen" in tourn_name:
+        result["regular_tb_games_trigger"] = 3
+        result["regular_tb_points_needed"] = 7
+        result["final_tb_games_trigger"] = 3
+        result["final_tb_points_needed"] = 10
+    elif "Australian_Open" in tourn_name:
+        result["regular_tb_games_trigger"] = 6
+        result["regular_tb_points_needed"] = 7
+        if 1971 <= match_year < 2019:
+            result["final_tb_games_trigger"] = 6
+            result["final_tb_points_needed"] = 7
+        elif match_year >= 2019:
+            result["final_tb_games_trigger"] = 6
+            result["final_tb_points_needed"] = 10
+    elif "Wimbledon" in tourn_name:
+        result["regular_tb_points_needed"] = 7
+        result["regular_tb_games_trigger"] = 6
+        if 1971 <= match_year < 2019:
+            result["regular_tb_games_trigger"] = 8
+            # No tiebreak final set
+        elif 2019 <= match_year <= 2021:
+            result["final_tb_games_trigger"] = 12
+            result["final_tb_points_needed"] = 7
+        elif match_year >= 2022:
+            result["final_tb_games_trigger"] = 6
+            result["final_tb_points_needed"] = 10
+    elif "Roland_Garros" in tourn_name:
+        result["regular_tb_games_trigger"] = 6
+        result["regular_tb_points_needed"] = 7
+        if match_year >= 2022:
+            result["final_tb_games_trigger"] = 6
+            result["final_tb_points_needed"] = 10
+    elif "US_Open" in tourn_name or "Forest_Hills" in tourn_name:
+        result["regular_tb_games_trigger"] = 6
+        result["regular_tb_points_needed"] = 7
+        result["final_tb_games_trigger"] = 6
+        # 1970–1974: 5-point sudden-death tiebreak
+        if 1970 <= match_year <= 1974:
+            result["regular_tb_points_needed"] = 5
+            result["final_tb_points_needed"] = 5
+        # 1975–2021: standard 7-point tiebreak
+        elif 1975 <= match_year <= 2021:
+            result["final_tb_points_needed"] = 7
+        # 2022+: 10-point final-set tiebreak
+        elif match_year >= 2022:
+            result["final_tb_points_needed"] = 10
+    elif "Grand_Slam_Cup" in tourn_name:
+        result["regular_tb_games_trigger"] = 6
+        result["regular_tb_points_needed"] = 7
+
+    else:
+        if tourn_name not in UNIQUE_TOUNRNS and tourn_name[-3:] != "_CH":
+            #print(f"Unknown Tournament Name: {tourn_name} - {match_id}")
+            UNIQUE_TOUNRNS.append(tourn_name)
+            # quit()
+    return result
+
+
+def get_tb_info(match_id, match_year, best_of, is_final_set, server_sets, returner_sets, server_games, returner_games, points, set_score, set_scores_info, diff):
+
+    is_tb_point = 0
+    is_game_point = 0
+    is_break_point = 0
+    sets_needed = (best_of // 2) + 1
+    points_map = {"0": 0, "15": 1, "30": 2, "40": 3, "45": 4}
+    server_points, returner_points = points.lower().replace("ad", "45").split("-")
+    server_points = int(server_points)
+    returner_points = int(returner_points)
+
+    tourn_name = match_id.split("-")[2]
+    is_super_tb = is_10_point_super_tb(tourn_name, match_year, server_games, returner_games, is_final_set)
+    if "Wimbledon" in tourn_name:
+        if int(2019 <= year <= 2021 and sgames == 12 and rgames == 12):
+            pass
+    if "US_Open" in tourn_name:
+        if 1970 <= year >= 1974 and sgames == 4 and rgames == 4:
+            is_tb_point = 1
+            points_needed = 5
+        elif match_year >= 1975 and server_games == 6 and returner_games == 6:
+            return 1, 7
+    is_tb_point  = any([is_super_tb, is_12_game_tb, is_usopen_super_tb])
+
+    
+    if is_tb_point == 0:
+        try:
+            server_points = int(points_map[str(server_points)])
+            returner_points = int(points_map[str(returner_points)])
+        except Exception as e:
+            print(f"Failed to normalize point scores: {e}")
+            print(server_points, returner_points)
+            print(f"{set_scores_info}")
+            print(points)
+            print(match_id)
+            print("----------------------------------------------------\n")
+        is_game_point = ((server_points + 1 >= 4) and ((server_points + 1) - returner_points >= 2))
+        is_break_point = ((returner_points + 1 >= 4) and ((returner_points + 1) - server_points >= 2))
+
+    else:
+        try:
+            is_game_point = ((server_points + 1 >= points_needed) and ((server_points + 1) - returner_points >= 2))
+        except:
+            print(f"Failed Game Point (is_tb_point: {is_tb_point}, is_game_point: {is_game_point}, is_break_point: {is_break_point}): {match_id} | Points: {server_points} (S), {returner_points} (R) |  Games: {server_games} (S), {returner_games} (R) | Official Score: {set_score['official_score']}")
+            quit()
+    return
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    if is_tb_point == 1:
+        # 10 point
+        if is_final_set == 1 and (("Wimbledon" in match_id and match_year >= 2022) or \
+            ("Australian_Open" in match_id and match_year >= 2019) or \
+            ("Roland Garros" in match_id and match_year >= 2022) or \
+            ("US_Open" in match_id and match_year >= 2022)):
+            points_needed = 10
+        elif is_final_set == 1 and (("Wimbledon" in match_id and match_year < 2019) or \
+            ("Australian_Open" in match_id and match_year < 2019) or \
+            ("Roland Garros" in match_id and match_year < 2022)):
+            points_needed = None # win by 2 games
+        else:
+            points_needed = 7
+        
+        if points_needed is not None and ((server_points + 1) >= points_needed and ((server_points+1) - returner_points) >= 2):
+            is_game_point = 1
+
+
+    if is_game_point == 1 and server_sets + 1 >= sets_needed:
+        is_match_point = 1
+    else:
+        is_match_point = 0
 
 if __name__ == "__main__":
     DATA_DIR = pathlib.Path(__file__).resolve().parent.parent.parent / "data"
@@ -454,117 +628,108 @@ if __name__ == "__main__":
     charting_matches_filename = DATA_DIR / "prod/charting-matches.parquet"
     points = load_points(raw_points_filenames)
     points_by_id = build_match_point_dict(points, "match_id")
-
     matches = load_charting_matches(charting_matches_filename)
     matches_by_id = build_dict(matches, "match_id")
     print(f"Found {len(matches)} Matches")
     print(f"Found {len(points)} Points")
-    um = []
+    um = {}
+    c = 0
+    ttypes = []
+
     for m in matches:
-        if m.get("match_id") not in points_by_id:
-            continue
-        if "Olympics" in m["match_id"]:
-            continue
-        if m.get("match_id") in ["20190208-W-Fed_Cup_G1-RR-Yulia_Putintseva-Ankita_Raina", "20140423-M-Barcelona-R32-Albert_Ramos-Rafael_Nadal", '20200918-W-Rome-R16-Victoria_Azarenka-Daria_Kasatkina', '20190701-W-Wimbledon-R128-Daria_Saville-Elina_Svitolina', '20131005-M-Tokyo-SF-Nicolas_Almagro-Juan_Martin_Del_Potro', '19910604-M-Roland_Garros-QF-Michael_Chang-Boris_Becker']:
-            continue
-        
+        match_id = m["match_id"]
+        tournament_type = match_id.split("-")[2]
+        if tournament_type.endswith("_CH"):
+            tournament_type = tournament_type[:-3]
+        match_year = int(match_id[:4])
+        #if match_year < 2000:
+        #    continue
+
+        #if match_id not in points_by_id or (any(keyword in match_id for keyword in IGNORED_TOURNAMENT_TYPES)) or (("RET" in str(m["score"]) or "RET" in str(m["match_score"])) or ("DEF" in str(m["score"]) or "DEF" in str(m["match_score"]))):
+        #    continue
+        #if m["match_id"] in ["20190701-W-Wimbledon-R128-Daria_Saville-Elina_Svitolina", "19880722-M-Davis_Cup_World_Group_SF-RR-Stefan_Edberg-Henri_Leconte"]:
+        #    continue
+        c += 1
+        # if match_id in ["20140624-M-Wimbledon-R128-Rafael_Nadal-Martin_Klizan",
+        #                 "20160710-M-Winnetka_CH-F-Yoshihito_Nishioka-Francis_Tiafoe",
+        #                 "20160807-M-Granby_CH-F-Marcelo_Arevalo-Francis_Tiafoe",
+        #                 "20170210-M-San_Francisco_CH-QF-Vasek_Pospisil-Francis_Tiafoe",
+        #                 "20170327-M-Miami_Masters-R32-Roger_Federer-Juan_Martin_Del_Potro",
+        #                 "20171119-M-Tour_Finals-F-Grigor_Dimitrov-David_Goffin"]:
+        #     print(f"Missing Best Of: {m}")
+        #     print(pd.isna(m["best_of"]))
+        #     print("-------------------------------------------------------------")
         if pd.isna(m["best_of"]):
+            print(f"Missing Best Of: {match_id}")
             if (len(m.get("score").split(" ")))<=3:
                 m["best_of"] = 3
+        continue
         match_points = dict(sorted(points_by_id[m.get("match_id")].items(), key=lambda x: int(x[0])))
-        last_point_number, last_point = next(reversed(match_points.items()))
+        # tourn_set_info = get_tournament_tiebreak_format(m["match_id"].split("-")[2], m["match_id"])
 
-        official_score = get_official_score(m)
-        set_scores_info = {}
-        if "RET" in official_score or "DEF" in official_score:
-            tmp = official_score.split(" ")[-2:]
-            # ended on set end
-            if m["score"].replace(tmp[-1], "").strip() == str(m["match_score"]).strip():
-                # set_scores = re.sub(r"\(\d+\)", "", official_score.strip().split(" "))
-                set_scores = official_score.replace(tmp[-1], "").strip().split(" ")
-                clean_set_score = re.sub(r"\(\d+\)", "", set_scores[-1])
-                a, b = map(int, clean_set_score.split("-"))
-                if (f"{int(last_point["Gm1"]) + 1}-{int(last_point["Gm2"])}".strip() == clean_set_score or f"{int(last_point["Gm1"])}-{int(last_point["Gm2"])+1}".strip() == clean_set_score) or \
-                (f"{int(last_point["Gm2"]) + 1}-{int(last_point["Gm1"])}".strip() == clean_set_score or f"{int(last_point["Gm2"])}-{int(last_point["Gm1"])+1}".strip() == clean_set_score):
-                    pass
-                else:
-                    g1 = int(last_point["Gm1"])
-                    g2 = int(last_point["Gm2"])
-                    deciding_set = f"{max(g1, g2)}-{min(g1, g2)}"
-                    set_scores.append(f"{deciding_set}")
-            else:
-                # print(m["match_id"], ": ", official_score.replace(tmp[-1], '').strip(), " | ", m['score'], " | ", m["match_score"])
-                # print(json.dumps(last_point, indent=4))
-                set_scores = official_score.replace(tmp[-1], '').strip().split(" ")
-            m["official_score"] = " ".join(set_scores)
-            official_score = m["official_score"]
-            continue
+        # last_point_number, last_point = next(reversed(match_points.items()))
+        
 
-        m["official_score"] = official_score
-        set_scores = official_score.split(" ")
-        for set_num, set_score in enumerate(set_scores):
-            s1 = re.sub(r"\[(\d+-\d+|\*)\]", r"\1", re.sub(r"\(\d+\)", "", set_score))
-            nums = [int(x) for x in re.findall(r"\d+", s1)]
-            set_scores_info[f"{set_num+1}"] = {
-                "set_num": set_num,
-                "set_score_raw": set_score,
-                "set_score": s1,
-                "is_super_tb_set": 0,
-                "is_tb_set": 0,
-                "max_game_number": max(nums),
-                "diff": abs(nums[0]-nums[1]),
-                "official_score": official_score,
-                "is_final_set": 0
-            }
-            if "[" in set_score or "]" in set_score:
-                set_scores_info[f"{set_num+1}"]["is_super_tb_set"] = 1
-            elif "(" in set_score or ")" in set_score:
-                set_scores_info[f"{set_num+1}"]["is_tb_set"] = 1
-        set_scores[-1]["is_final_set"] = 1
-        set_scores = get_regular_set_tb_rule(m["match_id"].split("-")[2])
+        #set_scores_info = get_set_info(m)
+        #match_year = int(m.get("match_id")[:4])
 
-        serve_window = defaultdict(lambda: deque(maxlen=5))
         prev_point = None
-        point_map = {"0": 0, "15": 1, "30": 2, "40": 3, "45": 4}
-        if m["match_id"].split("-")[2] not in um:
-            um.append(m["match_id"].split("-")[2])
         for point_number, point in match_points.items():
             del point["index"]
-            point = rename_point_keys(point, prev_point, m)
-            set_num = int(point['server_sets']) + int(point['returner_sets'])+1
-            set_info = set_scores_info[str(set_num)]
+            if int(point["Gm1"]) >= 6 and int(point["Gm2"]) >= 6 and tournament_type not in ttypes:
+                ttypes.append(tournament_type)
+                if "6-7" not in m["score"] and "7-6" not in m["score"]:
+                    print(tournament_type, m["score"])
+            continue
+            # print(point)
             
-            # set_scores_info = infer_match_scoring_format(m, set_info)
+            
+            if prev_point == None or point["Pts"] == "0-0":
+                point.update({"is_game_point": 0, "is_set_point": 0, "is_match_point": 0})
+                point = rename_point_keys(point, prev_point, m)
 
-            point.update({k: set_info[k] for k in ("is_super_tb_set", "is_tb_set")})
-            point["is_game_point"] = 0
-            if prev_point == None:
-                point["is_game_point"] = 0
-                point["is_set_point"] = 0
-                point["is_match_point"] = 0
-            else:
-                if point["game_number"] == prev_point["game_number"] and point["is_tb_set"] == 0 and point["is_super_tb_set"] == 0:
-                    prev_server, prev_returner = (prev_point["Pts"].lower().replace("ad", "45").split("-"))
-                    server, returner = (point["Pts"].lower().replace("ad", "45").split("-"))
-                    point["server_points"] = point_map[server]
-                    point["returner_points"] = point_map[returner]
-                    point["is_game_point"] = int((point["server_points"] == 3 and point["returner_points"] <= 2) or (point["server_points"] >= 4 and point["server_points"] == point["returner_points"] + 1))
-                    point["is_break_point"] = int((point["returner_points"] == 3 and point["server_points"] <= 2) or (point["returner_points"] >= 4 and point["returner_points"] == point["server_points"] + 1))
-                    diff = abs(int(server) - int(prev_server)) + abs(int(returner) - int(prev_returner))
-                    if "NextGen" in m["match_id"] and point["is_game_point"] == 1 and point["server_games"] + 1 >= 4:
-                        point["is_set_point"] = 1
+            elif prev_point is not None:
+                point = rename_point_keys(point, prev_point, m)
+                tmp_set_num = (int(point['server_sets']) + int(point['returner_sets']))
+                if int(point['server_sets']) + 1 >= m["best_of"] or int(point['returner_sets']) + 1 >= m["best_of"]:
+                    set_info = set_scores_info[str(tmp_set_num)]
+                else:
+                    set_info = set_scores_info[str(tmp_set_num+1)]
 
-                    if set_info["max_game_number"] == 6 and point["is_game_point"] == 1 and point["server_games"] + 1 == 6:
-                        point["is_set_point"] = 1
-                    elif set_info["max_game_number"] == 7 and point["is_game_point"] == 1 and point["server_games"] + 1 == 7:
-                        point["is_set_point"] = 1
-                    elif 7 < set_info["max_game_number"] < 10:
-                        print(f"By 2 (7 point): {diff}")
-                    elif set_info["max_game_number"] >= 10:
-                        print(set_info)
-                        print(json.dumps(prev_point, indent=4))
-                        print(json.dumps(point, indent=4))
-                        # quit()
+                server_points, returner_points = point["Pts"].lower().replace("ad", "45").split("-")
+                server_points = int(server_points)
+                returner_points = int(returner_points)
+                prev_server_points, prev_returner_points = prev_point["Pts"].lower().replace("ad", "45").split("-")
+                diff = abs((int(server_points)+int(returner_points)) - (int(prev_server_points)+int(prev_returner_points)))
+                if diff not in [1, 5, 10, 15]:
+                    print(f"Unexpected Point Differential")
+                    print(json.dumps(point, indent=4))
+                sets_needed = (m["best_of"] // 2) + 1
+                get_tb_info(m["match_id"], match_year, m["best_of"], set_info["is_final_set"], point["server_sets"], point["returner_sets"], point["server_games"], point["returner_games"], point["Pts"], set_info, set_scores_info, diff)
+                
+
+
+
+                
+                # if max(map(int, set_info["set_score"].split("-"))) < 6:
+                #     print("Bad Values")
+                #     print(json.dumps(point, indent=4))
+                #     print(json.dumps(m, indent=4))
+                #     print(json.dumps(set_info, indent=4))
+                #     quit()
+
+                
+                    
+                # try:
+                #     tmp_set_num = (int(point['server_sets']) + int(point['returner_sets']))
+                #     set_info = set_scores_info[str(tmp_set_num)]
+                # except Exception as e:
+                #     print(tmp_set_num, set_scores_info)
+                #     print(json.dumps(prev_point, indent=4))
+                #     print(json.dumps(point, indent=4))
+                #     c += 1
+                #     print(e)
+                #     quit()
             prev_point = point
             continue
             point["server_player_id"] = m[f"player_{point['server_player_number']}_id"]
@@ -659,63 +824,22 @@ if __name__ == "__main__":
                 #         print("-------------------------------------------------")
                 #         quit()
             prev_point = point
-    print(len(um))
-    print(um)
 
-            #if m.get("match_id") == "20000708-W-Wimbledon-SF-Venus_Williams-Serena_Williams" and int(point['server_sets']) + int(point['returner_sets']) + 1 > 1:
-            # if point["server_games"] == 6 and point["returner_games"] == 6 and set_info["is_advantage_set"] == 0 and set_info["is_tb_set"] == 0:
-            #     print(json.dumps(point, indent=4))
-            #     print(set_num, scoring_format)
-            #     print(m.get("match_id"), m.get("official_score"))
-            #     print("=============================================================")
+    # print(sorted(UNIQUE_TOUNRNS))
+    # print(len(UNIQUE_TOUNRNS))
+    # print(f"Total Matches: {c}")
+    # print(f"\nTournament Tiebreak Types")
+    # print(ttypes)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#key = (m["match_id"], point["server_player_id"])
-#hist = serve_window[key]
-
-#point["server_last5_serve_win_rate"] = (
-#    sum(hist) / len(hist) if len(hist) > 0 else None
-#)
-#hist.append(point["is_server_point_winner"])
-# print(json.dumps(point, indent=4))        
-# quit()
-#is_tb_set = is_tiebreak_set(point["Set1"], point["Set2"], int(m["best_of"]))
-#is_tb_point = is_tiebreak_point(point["Set1"], point["Set2"],point["Gm1"], point["Gm2"], int(m["best_of"]), is_tb_set, point, m)
-# print(f"Point (#{point_number}): {point} - {is_tb_point}")
+"""
+| Tournament/Event                          | Rationale for Exclusion                                                                                                                                                                                                                                                                         |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Wimbledon Championships (`Wimbedon`)      | Wimbledon used a non-standard non-deciding-set tiebreak rule from 1971-2018, with tiebreaks played at 8-8 instead of the standard 6-6. Prior to 1971, no tiebreaks were used. These historical differences create structural incompatibility with tournaments using the modern standard format. |
+| Tour Championships (`Tour_Championships`) | Year-end championships historically used round-robin formats and occasionally altered competition structures relative to standard tour events, potentially affecting match incentives and set-level dynamics.                                                                                   |
+| `Dallas_WCT`                              | Early World Championship Tennis (WCT) events occurred during the transitional era of tiebreak adoption in professional tennis and may contain non-standard historical scoring implementations.                                                                                                  |
+| `Forest_Hills_WCT`                        | Excluded due to potential overlap with early experimental tiebreak structures during the 1970s professional transition period.                                                                                                                                                                  |
+| `Wembley`                                 | Older professional-era event with historical scoring and competition structures not fully standardized with modern ATP/WTA formats.                                                                                                                                                             |
+| `Tokyo_Indoor`                            | Historical indoor-circuit event potentially overlapping with transitional scoring-rule periods and differing event structures.                                                                                                                                                                  |
+| `Sydney_Indoor`                           | Historical indoor event excluded to avoid inconsistencies arising from early-era professional scoring experimentation and format variation.                                                                                                                                                     |
+| `Virginia_Slims_Championships`            | Historical women's championship event from an early professional era with potential structural inconsistencies relative to standardized modern WTA scoring formats.                                                                                                                             |
+"""
